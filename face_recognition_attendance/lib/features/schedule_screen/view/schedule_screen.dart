@@ -5,19 +5,18 @@ class ScheduleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Schedule"),
+      ),
+      body: Column(
         children: [
-          Text(
-            "Schedule Screen",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
-            ),
-          ),
-          ElevatedButton(onPressed: () {}, child: Text("Click here")),
+          Column(
+            children: [
+              Text("September Performance", style: TextStyle(fontWeight: FontWeight.bold),),
+              
+            ],
+          )
         ],
       ),
     );

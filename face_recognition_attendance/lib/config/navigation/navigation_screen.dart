@@ -1,6 +1,6 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/home_screen.dart';
-import 'package:face_recognition_attendance/features/myteam_screen/view/mytem_screen.dart';
+import 'package:face_recognition_attendance/features/myteam_screen/view/myteam_screen.dart';
 import 'package:face_recognition_attendance/features/profile_screen/view/profile_screen.dart';
 import 'package:face_recognition_attendance/features/request_screen/view/request_screen.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/view/schedule_screen.dart';
@@ -21,7 +21,7 @@ class NavigationScreen extends GetView<NavigationController> {
     final List<Widget> screens = [
       const HomeScreen(),
       const ScheduleScreen(),
-      const MytemScreen(),
+      const MyteamScreen(),
       const RequestScreen(),
       const ProfileScreen(),
     ];

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class MytemScreen extends StatelessWidget {
-  const new({super.key});
+class MyteamScreen extends StatelessWidget {
+  const MyteamScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,5 @@
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 class LoginScreen extends GetView<LoginController> {

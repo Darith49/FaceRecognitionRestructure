@@ -6,17 +6,17 @@ class ScheduleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Schedule"),
-      ),
+      appBar: AppBar(title: Text("Schedule")),
       body: Column(
         children: [
           Column(
             children: [
-              Text("September Performance", style: TextStyle(fontWeight: FontWeight.bold),),
-              
+              Text(
+                "September Performance",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ],
-          )
+          ),
         ],
       ),
     );

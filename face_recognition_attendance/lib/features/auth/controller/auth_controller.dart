@@ -30,57 +30,57 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<bool> login({required String email, required String password}) async {                                                     
-        try {                                                                                                                           
-          isLoading.value = true;                                                                                                       
-          errorMessage.value = "";                                                                                                      
-                                                                                                                                        
-          final user = await _firebaseService.login(                                                                                    
-            email: email,                                                                                                               
-            password: password,                                                                                                         
-          );                                                                                                                            
-                                                                                                                                        
-          if (user != null) {                                                                                                           
-            currentuser.value = user; // 1. Save user state                                                                             
-            _navigationBasedOnRole(user.role);                                                                                          
-            return true;                                                                                                                
-          } else {                                                                                                                      
-            // 2. User exists in Auth, but NO document found in Firestore                                                               
-            await _firebaseService.logout(); // Clean up auth session so they aren't stuck in a half-logged-in state                    
-                                                                                                                                        
-            errorMessage.value = "User profile not found in database. Please contact an administrator.";                                
-                                                                                                                                        
-            Get.snackbar(                                                                                                               
-              'Account Not Found',                                                                                                      
-              errorMessage.value,                                                                                                       
-              snackPosition: SnackPosition.BOTTOM,                                                                                      
-              backgroundColor: Colors.red.shade600,                                                                                     
-              colorText: Colors.white,                                                                                                  
-              icon: const Icon(Icons.error_outline, color: Colors.white),                                                               
-              margin: const EdgeInsets.all(16),                                                                                         
-              borderRadius: 12,                                                                                                         
-              duration: const Duration(seconds: 4),                                                                                     
-            );                                                                                                                          
-            return false;                                                                                                               
-          }                                                                                                                             
-        } catch (e) {                                                                                                                   
-          errorMessage.value = _friendlyError(e);                                                                                       
-          Get.snackbar(                                                                                                                 
-            'Login Failed',                                                                                                             
-            errorMessage.value,                                                                                                         
-            snackPosition: SnackPosition.BOTTOM,                                                                                        
-            backgroundColor: Colors.red.shade600,                                                                                       
-            colorText: Colors.white,                                                                                                    
-            icon: const Icon(Icons.error_outline, color: Colors.white),                                                                 
-            margin: const EdgeInsets.all(16),                                                                                           
-            borderRadius: 12,                                                                                                           
-            duration: const Duration(seconds: 4),
-          );
-          return false;
-        } finally {
-          isLoading.value = false;
-        }
+  Future<bool> login({required String email, required String password}) async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = "";
+
+      final user = await _firebaseService.login(
+        email: email,
+        password: password,
+      );
+
+      if (user != null) {
+        currentuser.value = user; // 1. Save user state
+        _navigationBasedOnRole(user.role);
+        return true;
+      } else {
+        // 2. User exists in Auth, but NO document found in Firestore
+        await _firebaseService.logout(); // Clean up auth session so they aren't stuck in a half-logged-in state
+
+        errorMessage.value = "User profile not found in database. Please contact an administrator.";
+
+        Get.snackbar(
+          'Account Not Found',
+          errorMessage.value,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.shade600,
+          colorText: Colors.white,
+          icon: const Icon(Icons.error_outline, color: Colors.white),
+          margin: const EdgeInsets.all(16),
+          borderRadius: 12,
+          duration: const Duration(seconds: 4),
+        );
+        return false;
       }
+    } catch (e) {
+      errorMessage.value = _friendlyError(e);
+      Get.snackbar(
+        'Login Failed',
+        errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+        icon: const Icon(Icons.error_outline, color: Colors.white),
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
+      );
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   Future<void> logOut() async {
     await _firebaseService.logout();

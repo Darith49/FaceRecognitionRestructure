@@ -289,7 +289,11 @@ class LoginScreen extends GetView<LoginController> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        icon: Image.asset("assets/login/Google.png",width: 24,height: 24,),
+                        icon: Image.asset(
+                          "assets/login/Google.png",
+                          width: 24,
+                          height: 24,
+                        ),
                         label: const Text(
                           'Sign in with Google',
                           style: TextStyle(
@@ -304,9 +308,9 @@ class LoginScreen extends GetView<LoginController> {
                     Column(
                       children: [
                         Text('user : sonarseang@gmail.com'),
-                        Text('pw : 123456')
+                        Text('pw : 123456'),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ],

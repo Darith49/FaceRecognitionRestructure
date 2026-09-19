@@ -24,7 +24,6 @@ class FirebaseService {
     final firebaseUser = credential.user;
     if (firebaseUser == null) return null;
 
-
     return getUserByUid(firebaseUser.uid);
   }
 

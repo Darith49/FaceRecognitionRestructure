@@ -6,7 +6,6 @@ import 'package:face_recognition_attendance/features/auth/view/login_screen.dart
 import 'package:get/get.dart';
 
 class AppPages {
-
   static final INITIAL = AppRoutes.login;
 
   static final routes = [

@@ -1,4 +1,4 @@
-import 'package:face_recognition_attendance/config/navigation/controller.dart';
+import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/home_screen.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/view/mytem_screen.dart';
 import 'package:face_recognition_attendance/features/profile_screen/view/profile_screen.dart';

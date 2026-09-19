@@ -301,6 +301,13 @@ class LoginScreen extends GetView<LoginController> {
                       ),
                     ),
                     const SizedBox(height: 24),
+
+                    Column(
+                      children: [
+                        Text('user : sonarseang@gmail.com'),
+                        Text('pw : 123456')
+                      ],
+                    )
                   ],
                 ),
               ],

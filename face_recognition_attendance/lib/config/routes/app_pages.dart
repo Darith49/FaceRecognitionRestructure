@@ -1,6 +1,8 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_binding.dart';
 import 'package:face_recognition_attendance/config/navigation/navigation_screen.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
+import 'package:face_recognition_attendance/features/attendance_screen/binding/attendance_binding.dart';
+import 'package:face_recognition_attendance/features/attendance_screen/view/attendance_screen.dart';
 import 'package:face_recognition_attendance/features/auth/binding/login_binding.dart';
 import 'package:face_recognition_attendance/features/auth/view/login_screen.dart';
 import 'package:face_recognition_attendance/features/clock_screen/binding/clock_binding.dart';
@@ -23,8 +25,8 @@ import 'package:face_recognition_attendance/features/request_information_screen/
 import 'package:face_recognition_attendance/features/request_information_screen/view/request_list_screen.dart';
 import 'package:face_recognition_attendance/features/request_screen/view/request_screen.dart';
 import 'package:face_recognition_attendance/features/suggestion_screen/binding/suggestion_binding.dart';
-import 'package:face_recognition_attendance/features/suggestion_screen/view/suggestion_screen.dart';
 import 'package:face_recognition_attendance/features/suggestion_screen/view/suggestion_detail_screen.dart';
+import 'package:face_recognition_attendance/features/suggestion_screen/view/suggestion_screen.dart';
 import 'package:face_recognition_attendance/features/suggestion_screen/view/suggestion_status_screen.dart';
 import 'package:get/get.dart';
 
@@ -44,7 +46,7 @@ class AppPages {
       binding: LoginBinding(),
     ),
 
-    // ---------- Task 4 : Clock, Request Information, Permission ----------
+    // ---------- Clock, Request Information, Permission ----------
     GetPage(
       name: AppRoutes.clock,
       page: () => const ClockScreen(),
@@ -96,6 +98,12 @@ class AppPages {
       name: AppRoutes.permissionSessions,
       page: () => const SessionListScreen(),
       binding: PermissionBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.attendance,
+      page: () => const AttendanceScreen(),
+      binding: AttendanceBinding(),
     ),
 
     // ---------- Leave ----------

@@ -20,11 +20,7 @@ class PermissionScreen extends GetView<PermissionController> {
             iconBackground: const Color(0xFFF4B07A),
             title: 'Attendance',
             subtitle: 'P / AP / W',
-            // TODO: there is no design for the Attendance page yet.
-            onTap: () => RequestSnack.show(
-              ScaffoldMessenger.of(context),
-              'The Attendance page is coming soon.',
-            ),
+            onTap: () => Get.toNamed(AppRoutes.attendance),
           ),
           const SizedBox(height: 12),
           RequestMenuCard(

@@ -23,6 +23,13 @@ const List<String> kSessionSchedules = [
   '14:45-16:15',
 ];
 
+/// The schedule list, plus [current] when it is not in the list
+/// (so a dropdown never gets a value that is missing from its items).
+List<String> scheduleOptionsFor(String current) =>
+    kSessionSchedules.contains(current)
+        ? kSessionSchedules
+        : [current, ...kSessionSchedules];
+
 /// One session the user added to the "Request List" but has not submitted yet.
 class PermissionSession {
   const PermissionSession({
@@ -69,4 +76,11 @@ class PermissionRequest {
 
   /// Example: 2026-09-07(07:45-09:15)
   String get timeLabel => '${DateText.ymd(date)}($schedule)';
+
+  /// True when the request date is before today. Old requests cannot be changed.
+  bool get hasPassed {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return DateTime(date.year, date.month, date.day).isBefore(today);
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -6,6 +7,7 @@ class RequestColors {
   RequestColors._();
 
   static const Color background = Color(0xFFDCDEEA);
+  static const Color softSurface = Color(0xFFEAEDF7);
   static const Color textPrimary = Color(0xFF1B2437);
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color primary = Color(0xFF3B78F0);
@@ -287,5 +289,166 @@ class RequestSnack {
           ),
         ),
       );
+  }
+}
+
+/// White button that opens the date picker.
+/// Shows the chosen date as yyyy-MM-dd, or [placeholder] when nothing is chosen.
+/// Only today and future dates (up to 1 year) can be picked.
+class RequestDateField extends StatelessWidget {
+  const RequestDateField({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.placeholder = 'Select Date',
+  });
+
+  final DateTime? value;
+  final ValueChanged<DateTime> onChanged;
+  final String placeholder;
+
+  Future<void> _pickDate(BuildContext context) async {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final lastDate = DateTime(today.year + 1, today.month, today.day);
+
+    // The picker must start on a day between today and the last date.
+    var initial = value == null ? today : DateUtils.dateOnly(value!);
+    if (initial.isBefore(today) || initial.isAfter(lastDate)) {
+      initial = today;
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: today,
+      lastDate: lastDate,
+    );
+
+    if (picked != null) onChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = value;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _pickDate(context),
+        child: SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: Center(
+            child: Text(
+              current == null ? placeholder : DateText.ymd(current),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: RequestColors.textPrimary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Rounded dropdown. [value] must be one of the [items] (or null to show [hint]).
+class RequestDropdownField<T> extends StatelessWidget {
+  const RequestDropdownField({
+    super.key,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    this.hint,
+    this.fillColor = Colors.white,
+    this.icon = Icons.arrow_drop_down,
+  });
+
+  final T? value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T> onChanged;
+  final String? hint;
+  final Color fillColor;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: fillColor,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          borderRadius: BorderRadius.circular(14),
+          icon: Icon(icon, color: RequestColors.textSecondary),
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: RequestColors.textPrimary,
+          ),
+          hint: hint == null
+              ? null
+              : Text(
+                  hint!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: RequestColors.textPrimary,
+                  ),
+                ),
+          items: items,
+          onChanged: (selected) {
+            if (selected != null) onChanged(selected);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Big white text box for the reason.
+class RequestTextArea extends StatelessWidget {
+  const RequestTextArea({
+    super.key,
+    required this.controller,
+    this.hint = 'Enter reasons for leave',
+    this.lines = 5,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final int lines;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      minLines: lines,
+      maxLines: lines,
+      style: const TextStyle(fontSize: 13, color: RequestColors.textPrimary),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(
+          fontSize: 13,
+          color: RequestColors.textSecondary,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.all(14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
   }
 }

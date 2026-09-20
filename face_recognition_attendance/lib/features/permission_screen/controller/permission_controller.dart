@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/features/auth/controller/auth_controller.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:face_recognition_attendance/features/permission_screen/model/permission_request.dart';
@@ -73,6 +74,16 @@ class PermissionController extends GetxController {
         status: RequestStatus.approved,
         authorizedAt: DateTime(2026, 9, 6, 7, 43, 11),
       ),
+      PermissionRequest(
+        id: 'sample-approved-2',
+        fullName: name,
+        employeeId: employeeId,
+        date: DateTime(2026, 9, 28),
+        schedule: '09:30-11:00',
+        reason: 'Family event',
+        status: RequestStatus.approved,
+        authorizedAt: DateTime(2026, 9, 18, 9, 15, 30),
+      ),
     ]);
   }
 
@@ -80,9 +91,24 @@ class PermissionController extends GetxController {
     return requests.where((request) => request.status == status).toList();
   }
 
-  /// Returns false when the same date + schedule is already in the list.
+  /// True when a submitted request already uses this date + schedule.
+  /// [excludeId] lets a request ignore itself while it is being edited.
+  bool _slotTaken(DateTime date, String schedule, {String? excludeId}) {
+    final day = DateText.ymd(date);
+    return requests.any(
+      (request) =>
+          request.id != excludeId &&
+          DateText.ymd(request.date) == day &&
+          request.schedule == schedule,
+    );
+  }
+
+  /// Returns false when the same date + schedule is already in the list
+  /// or already has a request.
   bool addSession(PermissionSession session) {
-    final alreadyAdded = draftSessions.any((item) => item.isSameSlot(session));
+    final alreadyAdded =
+        draftSessions.any((item) => item.isSameSlot(session)) ||
+        _slotTaken(session.date, session.schedule);
     if (alreadyAdded) return false;
 
     draftSessions.add(session);
@@ -120,6 +146,36 @@ class PermissionController extends GetxController {
 
     draftSessions.clear();
     return count;
+  }
+
+  /// Saves the changes made on the detail page.
+  /// An approved request that is changed goes back to Pending (needs approval again).
+  /// Returns null when saved, or a message that explains why it could not be saved.
+  String? updateRequest({
+    required String id,
+    required DateTime date,
+    required String schedule,
+    required String reason,
+  }) {
+    final index = requests.indexWhere((request) => request.id == id);
+    if (index == -1) return 'This request no longer exists.';
+
+    if (_slotTaken(date, schedule, excludeId: id)) {
+      return 'You already have a request for that date and schedule.';
+    }
+
+    final current = requests[index];
+    requests[index] = PermissionRequest(
+      id: current.id,
+      type: current.type,
+      fullName: current.fullName,
+      employeeId: current.employeeId,
+      date: date,
+      schedule: schedule,
+      reason: reason,
+      status: RequestStatus.pending,
+    );
+    return null;
   }
 
   void cancelRequest(String id) {

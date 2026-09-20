@@ -1,8 +1,8 @@
 abstract class AppRoutes {
   static const String login = "/login";
   static const String navigation = "/navigation";
-
-  // Task 4 : Clock, Request Information, Permission
+  static const String attendance = "/attendance";
+  // Clock, Request Information, Permission
   static const String clock = "/clock";
   static const String request = "/request";
   static const String requestInformation = "/request-information";
@@ -12,7 +12,7 @@ abstract class AppRoutes {
   static const String permission = "/permission";
   static const String requestPermission = "/request-permission";
   static const String permissionSessions = "/permission-sessions";
-
+  
   // Leave
   static const String leave = "/leave";
   static const String requestLeave = "/request-leave";

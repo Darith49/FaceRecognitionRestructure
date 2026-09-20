@@ -1,5 +1,4 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
-import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/permission_screen/controller/permission_controller.dart';
 import 'package:face_recognition_attendance/features/permission_screen/model/permission_request.dart';
@@ -38,20 +37,6 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
     super.dispose();
   }
 
-  Future<void> _pickDate() async {
-    final today = DateUtils.dateOnly(DateTime.now());
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _date ?? today,
-      firstDate: today,
-      lastDate: DateTime(today.year + 1, today.month, today.day),
-    );
-
-    if (picked != null && mounted) {
-      setState(() => _date = picked);
-    }
-  }
-
   void _add() {
     final messenger = ScaffoldMessenger.of(context);
     final date = _date;
@@ -72,7 +57,7 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
     if (!added) {
       RequestSnack.show(
         messenger,
-        'That date and schedule is already in your list.',
+        'You already have a request for that date and schedule.',
       );
       return;
     }
@@ -103,13 +88,28 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const RequestLabel('Pick Date'),
-                    _buildDateButton(),
+                    RequestDateField(
+                      value: _date,
+                      onChanged: (date) => setState(() => _date = date),
+                    ),
                     const SizedBox(height: 16),
                     const RequestLabel('Schedule'),
-                    _buildScheduleDropdown(),
+                    RequestDropdownField<String>(
+                      value: _schedule,
+                      items: kSessionSchedules
+                          .map(
+                            (s) => DropdownMenuItem<String>(
+                              value: s,
+                              child: Text(s),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (schedule) =>
+                          setState(() => _schedule = schedule),
+                    ),
                     const SizedBox(height: 16),
                     const RequestLabel('Reason'),
-                    _buildReasonField(),
+                    RequestTextArea(controller: _reasonController),
                   ],
                 ),
               ),
@@ -123,84 +123,6 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
               onPressed: _goToSessionList,
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDateButton() {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: _pickDate,
-        child: SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: Center(
-            child: Text(
-              _date == null ? 'Select Date' : DateText.ymd(_date!),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: RequestColors.textPrimary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScheduleDropdown() {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _schedule,
-          isExpanded: true,
-          borderRadius: BorderRadius.circular(14),
-          icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: RequestColors.textPrimary,
-          ),
-          items: kSessionSchedules
-              .map((s) => DropdownMenuItem<String>(value: s, child: Text(s)))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) setState(() => _schedule = value);
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReasonField() {
-    return TextField(
-      controller: _reasonController,
-      minLines: 5,
-      maxLines: 5,
-      style: const TextStyle(fontSize: 13, color: RequestColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: 'Enter reasons for leave',
-        hintStyle: const TextStyle(
-          fontSize: 13,
-          color: RequestColors.textSecondary,
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.all(14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
         ),
       ),
     );

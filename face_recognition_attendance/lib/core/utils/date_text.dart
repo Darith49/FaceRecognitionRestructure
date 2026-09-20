@@ -33,6 +33,9 @@ class DateText {
 
   static String _period(DateTime d) => d.hour < 12 ? 'AM' : 'PM';
 
+  /// September  (month is 1-12)
+  static String monthName(int month) => _months[month - 1];
+
   /// 2026-09-07
   static String ymd(DateTime d) => '${d.year}-${_two(d.month)}-${_two(d.day)}';
 

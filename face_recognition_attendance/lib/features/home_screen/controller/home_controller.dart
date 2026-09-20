@@ -69,6 +69,33 @@ class HomeController extends GetxController {
   String get checkOutText =>
       checkOutTime.value == null ? '-- : --' : _formatTime(checkOutTime.value!);
 
+  /// Total minutes worked since check-in (live, updates every second).
+  int get workedMinutes {
+    final start = checkInTime.value;
+    if (start == null) return 0;
+    final end = checkOutTime.value ?? now.value;
+    return end.difference(start).inMinutes;
+  }
+
+  /// Progress toward the daily goal as a 0.0 → 1.0 ratio, clamped.
+  double get goalProgress {
+    if (checkInTime.value == null) return 0.0;
+    final total = goalHours * 60;
+    return (workedMinutes / total).clamp(0.0, 1.0);
+  }
+
+  /// Human-readable remaining time, e.g. "7h 15m left" or "Goal reached!".
+  String get remainingGoalText {
+    if (checkInTime.value == null) return '${goalHours.toInt()}h';
+    final remaining = (goalHours * 60).toInt() - workedMinutes;
+    if (remaining <= 0) return 'Done!';
+    final h = remaining ~/ 60;
+    final m = remaining % 60;
+    if (h == 0) return '${m}m';
+    if (m == 0) return '${h}h';
+    return '${h}h ${m}m';
+  }
+
   /// Total hours worked as a string like "6h" or "4h 30m".
   String get totalHoursText {
     final start = checkInTime.value;

@@ -9,14 +9,12 @@ enum CheckState { notCheckedIn, checkedIn, checkedOut }
 class HomeController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();
 
-  /// Current time, updated every second so the clock on screen is live.
   final Rx<DateTime> now = DateTime.now().obs;
 
   final Rx<CheckState> state = CheckState.notCheckedIn.obs;
   final Rx<DateTime?> checkInTime = Rx<DateTime?>(null);
   final Rx<DateTime?> checkOutTime = Rx<DateTime?>(null);
 
-  /// Target working hours per day.
   final double goalHours = 8.0;
 
   Timer? _timer;
@@ -35,10 +33,8 @@ class HomeController extends GetxController {
     super.onClose();
   }
 
-  /// The currently logged-in user (may be null if not yet loaded).
   UserModel? get currentUser => _authController.currentuser.value;
 
-  /// Returns a greeting based on the time of day.
   String get greeting {
     final hour = now.value.hour;
     if (hour < 12) return 'Good Morning';
@@ -46,10 +42,8 @@ class HomeController extends GetxController {
     return 'Good Evening';
   }
 
-  /// The user's display name pulled from Firestore.
   String get userName => currentUser?.fullname ?? 'User';
 
-  /// Text on the big round button.
   String get buttonLabel {
     switch (state.value) {
       case CheckState.notCheckedIn:
@@ -61,15 +55,12 @@ class HomeController extends GetxController {
     }
   }
 
-  /// Formatted check-in time or placeholder.
   String get checkInText =>
       checkInTime.value == null ? '-- : --' : _formatTime(checkInTime.value!);
 
-  /// Formatted check-out time or placeholder.
   String get checkOutText =>
       checkOutTime.value == null ? '-- : --' : _formatTime(checkOutTime.value!);
 
-  /// Total minutes worked since check-in (live, updates every second).
   int get workedMinutes {
     final start = checkInTime.value;
     if (start == null) return 0;
@@ -77,14 +68,12 @@ class HomeController extends GetxController {
     return end.difference(start).inMinutes;
   }
 
-  /// Progress toward the daily goal as a 0.0 → 1.0 ratio, clamped.
   double get goalProgress {
     if (checkInTime.value == null) return 0.0;
     final total = goalHours * 60;
     return (workedMinutes / total).clamp(0.0, 1.0);
   }
 
-  /// Human-readable remaining time, e.g. "7h 15m left" or "Goal reached!".
   String get remainingGoalText {
     if (checkInTime.value == null) return '${goalHours.toInt()}h';
     final remaining = (goalHours * 60).toInt() - workedMinutes;
@@ -96,7 +85,6 @@ class HomeController extends GetxController {
     return '${h}h ${m}m';
   }
 
-  /// Total hours worked as a string like "6h" or "4h 30m".
   String get totalHoursText {
     final start = checkInTime.value;
     if (start == null) return '0h';
@@ -108,7 +96,6 @@ class HomeController extends GetxController {
     return rest == 0 ? '${hours}h' : '${hours}h ${rest}m';
   }
 
-  /// Handle the main check-in / check-out button tap.
   void onMainButtonPressed() {
     switch (state.value) {
       case CheckState.notCheckedIn:
@@ -124,7 +111,6 @@ class HomeController extends GetxController {
     }
   }
 
-  /// Format a DateTime as "08 : 00 AM".
   String _formatTime(DateTime d) {
     final hour12 = d.hour % 12 == 0 ? 12 : d.hour % 12;
     final period = d.hour < 12 ? 'AM' : 'PM';

@@ -7,10 +7,6 @@ import 'package:face_recognition_attendance/features/home_screen/controller/home
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-// ═════════════════════════════════════════════════════════════════════════════
-// HomeScreen — main entry with staggered entrance animations
-// ═════════════════════════════════════════════════════════════════════════════
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -21,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final HomeController controller = Get.put(HomeController());
 
-  // ── Entrance animations ──
   late final AnimationController _entranceController;
   late final Animation<double> _greetingSlide;
   late final Animation<double> _greetingFade;
@@ -39,7 +34,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 900),
     );
 
-    // Greeting: 0.0 → 0.45
     _greetingSlide = Tween<double>(begin: 30, end: 0).animate(
       CurvedAnimation(
         parent: _entranceController,
@@ -53,7 +47,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
 
-    // Card: 0.2 → 0.65
     _cardSlide = Tween<double>(begin: 40, end: 0).animate(
       CurvedAnimation(
         parent: _entranceController,
@@ -67,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
 
-    // Button: 0.4 → 0.85
     _buttonScale = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
@@ -100,7 +92,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           padding: const EdgeInsets.only(bottom: 120),
           child: Column(
             children: [
-              // ── Greeting Header ──
               AnimatedBuilder(
                 animation: _entranceController,
                 builder: (_, child) => Transform.translate(
@@ -115,7 +106,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
               const SizedBox(height: 20),
 
-              // ── Time & Attendance Card ──
               AnimatedBuilder(
                 animation: _entranceController,
                 builder: (_, child) => Transform.translate(
@@ -133,7 +123,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
               const SizedBox(height: 40),
 
-              // ── Check In Button ──
               AnimatedBuilder(
                 animation: _entranceController,
                 builder: (_, child) => Transform.scale(
@@ -153,10 +142,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// AnimatedBuilder — simple helper to avoid the "AnimatedBuilder" name clash
-// ═════════════════════════════════════════════════════════════════════════════
-
 class AnimatedBuilder extends AnimatedWidget {
   const AnimatedBuilder({
     super.key,
@@ -171,10 +156,6 @@ class AnimatedBuilder extends AnimatedWidget {
   @override
   Widget build(BuildContext context) => builder(context, child);
 }
-
-// ═════════════════════════════════════════════════════════════════════════════
-// Greeting Header
-// ═════════════════════════════════════════════════════════════════════════════
 
 class _GreetingHeader extends StatelessWidget {
   const _GreetingHeader({required this.controller});
@@ -196,7 +177,6 @@ class _GreetingHeader extends StatelessWidget {
       child: Obx(
         () => Row(
           children: [
-            // Avatar
             Container(
               width: 50,
               height: 50,
@@ -255,10 +235,6 @@ class _GreetingHeader extends StatelessWidget {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// Attendance Info Card
-// ═════════════════════════════════════════════════════════════════════════════
-
 class _AttendanceCard extends StatelessWidget {
   const _AttendanceCard({required this.controller});
 
@@ -274,11 +250,9 @@ class _AttendanceCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ── Top row: clock icon + time/date + goal ring ──
           Obx(
             () => Row(
               children: [
-                // Clock icon box
                 Container(
                   width: 48,
                   height: 48,
@@ -292,7 +266,6 @@ class _AttendanceCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Time + date with crossfade
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,7 +297,6 @@ class _AttendanceCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Animated goal progress ring
                 _GoalProgressRing(controller: controller),
               ],
             ),
@@ -334,7 +306,6 @@ class _AttendanceCard extends StatelessWidget {
           const Divider(height: 1),
           const SizedBox(height: 12),
 
-          // ── Stats row ──
           Obx(
             () => IntrinsicHeight(
               child: Row(
@@ -360,7 +331,6 @@ class _AttendanceCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ── Request button ──
           RequestButton(
             label: 'Request',
             onPressed: () => Get.toNamed(AppRoutes.request),
@@ -370,10 +340,6 @@ class _AttendanceCard extends StatelessWidget {
     );
   }
 }
-
-// ═════════════════════════════════════════════════════════════════════════════
-// Goal Progress Ring — animated circular indicator
-// ═════════════════════════════════════════════════════════════════════════════
 
 class _GoalProgressRing extends StatelessWidget {
   const _GoalProgressRing({required this.controller});
@@ -452,7 +418,6 @@ class _GoalRingPainter extends CustomPainter {
     final radius = (size.width - 6) / 2;
     const strokeWidth = 4.0;
 
-    // Background track
     final bgPaint = Paint()
       ..color = (reached ? const Color(0xFF1B9A3A) : RequestColors.primary)
           .withValues(alpha: 0.12)
@@ -462,7 +427,6 @@ class _GoalRingPainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, bgPaint);
 
-    // Foreground arc
     if (progress > 0) {
       final fgPaint = Paint()
         ..color = reached ? const Color(0xFF1B9A3A) : RequestColors.primary
@@ -472,7 +436,7 @@ class _GoalRingPainter extends CustomPainter {
 
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
-        -math.pi / 2, // start at top
+        -math.pi / 2,
         2 * math.pi * progress,
         false,
         fgPaint,
@@ -484,10 +448,6 @@ class _GoalRingPainter extends CustomPainter {
   bool shouldRepaint(_GoalRingPainter oldDelegate) =>
       oldDelegate.progress != progress || oldDelegate.reached != reached;
 }
-
-// ═════════════════════════════════════════════════════════════════════════════
-// Animated Stat Column — values crossfade when they change
-// ═════════════════════════════════════════════════════════════════════════════
 
 class _AnimatedStatColumn extends StatelessWidget {
   const _AnimatedStatColumn({required this.label, required this.value});
@@ -533,10 +493,6 @@ class _AnimatedStatColumn extends StatelessWidget {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// Check In Button — pulsing glow + tap scale + animated state transitions
-// ═════════════════════════════════════════════════════════════════════════════
-
 class _CheckInButton extends StatefulWidget {
   const _CheckInButton({required this.controller});
 
@@ -558,7 +514,6 @@ class _CheckInButtonState extends State<_CheckInButton>
   void initState() {
     super.initState();
 
-    // Pulsing glow
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
@@ -568,7 +523,6 @@ class _CheckInButtonState extends State<_CheckInButton>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // Tap scale
     _tapController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 120),
@@ -605,7 +559,6 @@ class _CheckInButtonState extends State<_CheckInButton>
       final state = widget.controller.state.value;
       final done = state == CheckState.checkedOut;
 
-      // Stop pulsing when done
       if (done && _pulseController.isAnimating) {
         _pulseController.stop();
       } else if (!done && !_pulseController.isAnimating) {

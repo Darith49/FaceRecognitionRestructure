@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:flutter/material.dart';
 
 // ---------------------------------------------------------------------------
@@ -7,13 +8,13 @@ import 'package:flutter/material.dart';
 class _TeamMember {
   final String name;
   final String role;
-  final List<Color> avatarGradient;
+  final Color avatarColor;
   final bool pinned;
 
   const _TeamMember(
     this.name,
     this.role,
-    this.avatarGradient, {
+    this.avatarColor, {
     this.pinned = false,
   });
 }
@@ -30,30 +31,20 @@ class MyteamScreen extends StatefulWidget {
 }
 
 class _MyteamScreenState extends State<MyteamScreen> {
-  static const _primary = Color(0xFF6C5DD3);
-  static const _primaryDark = Color(0xFF483CC4);
-
   final TextEditingController _searchController = TextEditingController();
-  String _query = "";
+  String _query = '';
 
-  final _manager = const _TeamMember("Larry Ellison", "Manager", [
-    Color(0xFF6C5DD3),
-    Color(0xFF836FFF),
-  ], pinned: true);
+  final _manager = const _TeamMember(
+    'Larry Ellison',
+    'Manager',
+    RequestColors.primary,
+    pinned: true,
+  );
 
   final List<_TeamMember> _members = const [
-    _TeamMember("Ava Thompson", "UX UI", [
-      Color(0xFF00C6AE),
-      Color(0xFF00D2C6),
-    ]),
-    _TeamMember("Ben Carter", "Mobile App", [
-      Color(0xFFFF9F43),
-      Color(0xFFFFC26F),
-    ]),
-    _TeamMember("Chloe Nguyen", "Backend", [
-      Color(0xFFFF6FA8),
-      Color(0xFFB84FFF),
-    ]),
+    _TeamMember('Ava Thompson', 'UX UI', RequestColors.approvedStatus),
+    _TeamMember('Ben Carter', 'Mobile App', RequestColors.gold),
+    _TeamMember('Chloe Nguyen', 'Backend', RequestColors.teal),
   ];
 
   @override
@@ -80,115 +71,40 @@ class _MyteamScreenState extends State<MyteamScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFEFF0FB), Color(0xFFF7F7FC), Color(0xFFF6F7FB)],
+    return RequestScaffold(
+      title: 'My Team',
+      showBackButton: false,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: _buildSearchBar(),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
-                child: _buildHeader(context),
-              ),
-              const SizedBox(height: 18),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: _buildSearchBar(),
-              ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
-                  children: [
-                    if (_managerVisible) ...[
-                      _buildMemberCard(_manager),
-                      const SizedBox(height: 20),
-                      _buildDivider(),
-                      const SizedBox(height: 20),
-                    ],
-                    ..._filteredMembers.map(
-                      (m) => Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
-                        child: _buildMemberCard(m),
-                      ),
-                    ),
-                    if (!_managerVisible && _filteredMembers.isEmpty)
-                      _buildEmptyState(),
-                  ],
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              children: [
+                if (_managerVisible) ...[
+                  _buildMemberCard(_manager),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 16),
+                ],
+                ..._filteredMembers.map(
+                  (m) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildMemberCard(m),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Row(
-      children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () => Navigator.of(context).maybePop(),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: _primary.withOpacity(0.12),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
+                if (!_managerVisible && _filteredMembers.isEmpty)
+                  _buildEmptyState(),
               ],
             ),
-            child: const Icon(
-              Icons.arrow_back_rounded,
-              size: 20,
-              color: _primaryDark,
-            ),
           ),
-        ),
-        const SizedBox(width: 14),
-        const Text(
-          "My Team",
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 24,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [_primary, Color(0xFF836FFF)],
-            ),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: _primary.withOpacity(0.35),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.person_add_alt_1_rounded,
-            size: 18,
-            color: Colors.white,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -196,33 +112,33 @@ class _MyteamScreenState extends State<MyteamScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: _primary.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(14),
       ),
       child: TextField(
         controller: _searchController,
         onChanged: (v) => setState(() => _query = v),
-        style: const TextStyle(fontSize: 14.5),
+        style: const TextStyle(fontSize: 14, color: RequestColors.textPrimary),
         decoration: InputDecoration(
-          hintText: "Search",
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14.5),
-          prefixIcon: Icon(Icons.search_rounded, color: _primary, size: 22),
+          hintText: 'Search',
+          hintStyle: const TextStyle(
+            color: RequestColors.textSecondary,
+            fontSize: 14,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: RequestColors.primary,
+            size: 22,
+          ),
           suffixIcon: _query.isNotEmpty
               ? IconButton(
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.close_rounded,
-                    color: Colors.grey.shade400,
+                    color: RequestColors.textSecondary,
                     size: 18,
                   ),
                   onPressed: () {
                     _searchController.clear();
-                    setState(() => _query = "");
+                    setState(() => _query = '');
                   },
                 )
               : null,
@@ -236,40 +152,12 @@ class _MyteamScreenState extends State<MyteamScreen> {
     );
   }
 
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 1,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.transparent,
-                  Colors.grey.shade300,
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildMemberCard(_TeamMember member) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: member.avatarGradient[0].withOpacity(0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
@@ -277,22 +165,11 @@ class _MyteamScreenState extends State<MyteamScreen> {
             clipBehavior: Clip.none,
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: member.avatarGradient,
-                  ),
+                  color: member.avatarColor,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: member.avatarGradient[0].withOpacity(0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -300,30 +177,24 @@ class _MyteamScreenState extends State<MyteamScreen> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
-                    fontSize: 18,
+                    fontSize: 17,
                   ),
                 ),
               ),
               if (member.pinned)
                 Positioned(
-                  top: -6,
-                  right: -6,
+                  top: -4,
+                  right: -4,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 6,
-                        ),
-                      ],
                     ),
                     child: const Icon(
                       Icons.push_pin_rounded,
-                      size: 13,
-                      color: Color(0xFFFF5C7C),
+                      size: 12,
+                      color: RequestColors.danger,
                     ),
                   ),
                 ),
@@ -338,45 +209,32 @@ class _MyteamScreenState extends State<MyteamScreen> {
                   member.name,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    letterSpacing: -0.2,
+                    fontSize: 14,
+                    color: RequestColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   member.role,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade500,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: RequestColors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          InkWell(
-            borderRadius: BorderRadius.circular(24),
-            onTap: () {},
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [_primary, Color(0xFF836FFF)],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: _primary.withOpacity(0.35),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.call_rounded,
-                size: 18,
-                color: Colors.white,
+          Material(
+            color: RequestColors.primary,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () {},
+              child: const SizedBox(
+                width: 40,
+                height: 40,
+                child: Icon(Icons.call_rounded, size: 18, color: Colors.white),
               ),
             ),
           ),
@@ -390,11 +248,15 @@ class _MyteamScreenState extends State<MyteamScreen> {
       padding: const EdgeInsets.only(top: 60),
       child: Column(
         children: [
-          Icon(Icons.search_off_rounded, size: 40, color: Colors.grey.shade300),
+          const Icon(
+            Icons.search_off_rounded,
+            size: 40,
+            color: RequestColors.textSecondary,
+          ),
           const SizedBox(height: 12),
-          Text(
-            "No team members found",
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          const Text(
+            'No team members found',
+            style: TextStyle(color: RequestColors.textSecondary, fontSize: 14),
           ),
         ],
       ),

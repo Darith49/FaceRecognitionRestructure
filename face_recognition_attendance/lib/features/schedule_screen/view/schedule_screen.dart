@@ -1,4 +1,22 @@
+import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
+
+// ---------------------------------------------------------------------------
+// Local design tokens (only used by this screen)
+// ---------------------------------------------------------------------------
+
+const Color _primaryDark = Color(0xFF2456C7);
+
+const List<BoxShadow> _softShadow = [
+  BoxShadow(color: Color(0x0F1B2437), blurRadius: 14, offset: Offset(0, 4)),
+];
+
+BoxDecoration _cardDecoration({double radius = 20}) => BoxDecoration(
+  color: Colors.white,
+  borderRadius: BorderRadius.circular(radius),
+  boxShadow: _softShadow,
+);
 
 // ---------------------------------------------------------------------------
 // Data models
@@ -6,25 +24,32 @@ import 'package:flutter/material.dart';
 
 enum DayStatus { worked, absent, dayOff, overtime, none }
 
-class _DayCell {
-  final int? day;
-  final DayStatus status;
-  final bool selected;
+class _Shift {
+  /// 24h clock hours, e.g. 6 = 06:00 AM and 17 = 05:00 PM.
+  final int startHour;
+  final int endHour;
 
-  const _DayCell(
-    this.day, {
-    this.status = DayStatus.none,
-    this.selected = false,
-  });
+  const _Shift(this.startHour, this.endHour);
+
+  int get hours => endHour - startHour;
+
+  String get range => '${_formatHour(startHour)} – ${_formatHour(endHour)}';
 }
 
 class _ScheduleDay {
-  final String label;
-  final List<String> times;
-  final List<Color> gradient;
-  final IconData icon;
+  final String short;
+  final String full;
+  final List<_Shift> shifts;
 
-  const _ScheduleDay(this.label, this.times, this.gradient, this.icon);
+  const _ScheduleDay(this.short, this.full, this.shifts);
+
+  int get totalHours => shifts.fold(0, (sum, s) => sum + s.hours);
+}
+
+String _formatHour(int hour) {
+  final period = hour >= 12 ? 'PM' : 'AM';
+  final hour12 = hour % 12 == 0 ? 12 : hour % 12;
+  return '${hour12.toString().padLeft(2, '0')}:00 $period';
 }
 
 // ---------------------------------------------------------------------------
@@ -39,487 +64,489 @@ class ScheduleScreen extends StatefulWidget {
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  int _tabIndex = 0;
-  final _tabs = const ["Workday", "Holiday", "Leave"];
+  static const int _daysGoal = 22;
+  static const int _daysWorked = 18;
+  static const int _daysAbsent = 2;
+  static const int _absenceLimit = 8;
+  static const int _onTimeRate = 92;
 
-  // Cooler palette: indigo -> violet, with vivid accent colors per status.
-  static const _primary = Color(0xFF6C5DD3);
-  static const _primaryDark = Color(0xFF483CC4);
-  static const _accent = Color(0xFF00D2C6);
-
-  final List<List<_DayCell>> _weeks = const [
-    [
-      _DayCell(1, status: DayStatus.worked),
-      _DayCell(2, status: DayStatus.worked),
-      _DayCell(3, status: DayStatus.absent),
-      _DayCell(4, status: DayStatus.worked),
-      _DayCell(5, status: DayStatus.worked),
-      _DayCell(6, status: DayStatus.worked),
-      _DayCell(7, status: DayStatus.dayOff),
-    ],
-    [
-      _DayCell(8, status: DayStatus.worked),
-      _DayCell(9, status: DayStatus.worked, selected: true),
-      _DayCell(10, status: DayStatus.worked),
-      _DayCell(11, status: DayStatus.worked),
-      _DayCell(12, status: DayStatus.worked),
-      _DayCell(13, status: DayStatus.worked),
-      _DayCell(14, status: DayStatus.dayOff),
-    ],
-    [
-      _DayCell(15, status: DayStatus.worked),
-      _DayCell(16, status: DayStatus.worked),
-      _DayCell(17, status: DayStatus.worked),
-      _DayCell(18, status: DayStatus.worked),
-      _DayCell(19, status: DayStatus.worked),
-      _DayCell(20, status: DayStatus.worked),
-      _DayCell(21, status: DayStatus.dayOff),
-    ],
-    [
-      _DayCell(22, status: DayStatus.worked),
-      _DayCell(23, status: DayStatus.worked),
-      _DayCell(24, status: DayStatus.worked),
-      _DayCell(25, status: DayStatus.dayOff),
-      _DayCell(26, status: DayStatus.worked),
-      _DayCell(27, status: DayStatus.worked),
-      _DayCell(28, status: DayStatus.overtime),
-    ],
-    [
-      _DayCell(29, status: DayStatus.worked),
-      _DayCell(30, status: DayStatus.worked),
-      _DayCell(null),
-      _DayCell(null),
-      _DayCell(null),
-      _DayCell(null),
-      _DayCell(null),
-    ],
+  static const List<String> _monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
+
+  static const List<String> _weekdayLabels = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
+
+  int _tabIndex = 0;
+  DateTime _focusedDay = DateTime.now();
+  DateTime _selectedDay = DateTime.now();
+  PageController? _pageController;
+  final _tabs = const ['Workday', 'Holiday', 'Leave'];
 
   final List<_ScheduleDay> _schedule = const [
-    _ScheduleDay(
-      "Mon",
-      ["06:00AM – 12:00PM", "01:00PM – 05:00PM"],
-      [Color(0xFF6C5DD3), Color(0xFF836FFF)],
-      Icons.wb_sunny_rounded,
-    ),
-    _ScheduleDay(
-      "Tue",
-      ["06:00AM – 12:00PM", "01:00PM – 05:00PM"],
-      [Color(0xFF00C6AE), Color(0xFF00D2C6)],
-      Icons.bolt_rounded,
-    ),
-    _ScheduleDay(
-      "Wed",
-      ["06:00AM – 12:00PM", "01:00PM – 05:00PM"],
-      [Color(0xFFFF6FA8), Color(0xFFB84FFF)],
-      Icons.local_fire_department_rounded,
-    ),
+    _ScheduleDay('Mon', 'Monday', [_Shift(6, 12), _Shift(13, 17)]),
+    _ScheduleDay('Tue', 'Tuesday', [_Shift(6, 12), _Shift(13, 17)]),
+    _ScheduleDay('Wed', 'Wednesday', [_Shift(6, 12), _Shift(13, 17)]),
   ];
 
-  Color _statusColor(DayStatus s) {
-    switch (s) {
-      case DayStatus.worked:
-        return const Color(0xFF3DDC97);
-      case DayStatus.absent:
-        return const Color(0xFFFF9F43);
-      case DayStatus.dayOff:
-        return const Color(0xFFFF5C7C);
-      case DayStatus.overtime:
-        return const Color(0xFFB48CFF);
-      case DayStatus.none:
-        return Colors.transparent;
+  // ------------------------------- helpers ---------------------------------
+
+  Color _statusColor(DayStatus s) => switch (s) {
+    DayStatus.worked => RequestColors.approvedStatus,
+    DayStatus.absent => RequestColors.danger,
+    DayStatus.dayOff => RequestColors.teal,
+    DayStatus.overtime => RequestColors.gold,
+    DayStatus.none => RequestColors.primary,
+  };
+
+  String _statusLabel(DayStatus s) => switch (s) {
+    DayStatus.worked => 'Worked',
+    DayStatus.absent => 'Absent',
+    DayStatus.dayOff => 'Day off',
+    DayStatus.overtime => 'Overtime',
+    DayStatus.none => 'No record',
+  };
+
+  IconData _statusIcon(DayStatus s) => switch (s) {
+    DayStatus.worked => Icons.check_circle_rounded,
+    DayStatus.absent => Icons.cancel_rounded,
+    DayStatus.dayOff => Icons.weekend_rounded,
+    DayStatus.overtime => Icons.more_time_rounded,
+    DayStatus.none => Icons.event_rounded,
+  };
+
+  /// SAMPLE DATA ONLY: replace with the real attendance records (Firestore).
+  /// Future days have no record yet; Sundays are days off.
+  DayStatus _statusFor(DateTime day) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime(day.year, day.month, day.day);
+
+    if (date.isAfter(today)) return DayStatus.none;
+    if (date.weekday == DateTime.sunday) return DayStatus.dayOff;
+    if (date.day == 3) return DayStatus.absent;
+    if (date.day == 12) return DayStatus.overtime;
+    return DayStatus.worked;
+  }
+
+  void _changeMonth({required bool next}) {
+    const duration = Duration(milliseconds: 300);
+    final controller = _pageController;
+    if (controller == null) return;
+    if (next) {
+      controller.nextPage(duration: duration, curve: Curves.easeOut);
+    } else {
+      controller.previousPage(duration: duration, curve: Curves.easeOut);
     }
   }
 
+  // -------------------------------- build ----------------------------------
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFEFF0FB), Color(0xFFF7F7FC), Color(0xFFF6F7FB)],
+    return RequestScaffold(
+      title: 'Schedule',
+      showBackButton: false,
+      body: ListView(
+        // Extra space at the bottom so the floating bar does not cover the last card.
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+        children: [
+          _buildSummaryCard(),
+          const SizedBox(height: 24),
+          _SectionTitle(
+            '${_monthNames[DateTime.now().month - 1]} Performance',
           ),
+          _buildStatsGrid(),
+          const SizedBox(height: 24),
+          _buildCalendarCard(),
+          const SizedBox(height: 24),
+          const _SectionTitle('Work Schedule'),
+          _buildTabBar(),
+          const SizedBox(height: 14),
+          ..._buildTabContent(),
+        ],
+      ),
+    );
+  }
+
+  // ------------------------------ summary card -----------------------------
+
+  Widget _buildSummaryCard() {
+    final percent = (_daysWorked / _daysGoal * 100).round();
+    final remaining = _daysGoal - _daysWorked;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [RequestColors.primary, _primaryDark],
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 22),
-                _buildHeroBanner(),
-                const SizedBox(height: 22),
-                const Text(
-                  "September Performance",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 19,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _buildStatsGrid(),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      size: 15,
-                      color: Colors.grey.shade500,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Absence Limit : 8",
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildCalendarCard(),
-                const SizedBox(height: 22),
-                _buildTabBar(),
-                const SizedBox(height: 16),
-                ..._schedule.map(
-                  (d) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildScheduleTile(d),
-                  ),
-                ),
-              ],
-            ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: RequestColors.primary.withValues(alpha: 0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            Positioned(top: -36, right: -24, child: _bubble(130, 0.10)),
+            Positioned(bottom: -48, right: 70, child: _bubble(100, 0.07)),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "You're on track",
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text.rich(
+                              TextSpan(
+                                children: [
+                                  const TextSpan(
+                                    text: '$_daysWorked',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 34,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: ' / $_daysGoal days worked',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.85,
+                                      ),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.18),
+                        ),
+                        child: const Icon(
+                          Icons.emoji_events_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _ProgressBar(
+                    value: _daysWorked / _daysGoal,
+                    color: Colors.white,
+                    trackColor: Colors.white.withValues(alpha: 0.25),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '$percent% complete',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        '$remaining days to go',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Row(
+  Widget _bubble(double size, double alpha) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withValues(alpha: alpha),
+      ),
+    );
+  }
+
+  // ------------------------------- stats grid ------------------------------
+
+  Widget _buildStatsGrid() {
+    return Column(
       children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () => Navigator.of(context).maybePop(),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: _primary.withOpacity(0.12),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _statCard(
+                  label: 'Days Goal',
+                  value: '$_daysGoal',
+                  icon: Icons.flag_rounded,
+                  color: RequestColors.primary,
                 ),
-              ],
-            ),
-            child: const Icon(
-              Icons.arrow_back_rounded,
-              size: 20,
-              color: _primaryDark,
-            ),
-          ),
-        ),
-        const SizedBox(width: 14),
-        const Text(
-          "Schedule",
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 24,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [_primary, Color(0xFF836FFF)],
-            ),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: _primary.withOpacity(0.35),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _statCard(
+                  label: 'Days Worked',
+                  value: '$_daysWorked',
+                  icon: Icons.check_circle_rounded,
+                  color: RequestColors.approvedStatus,
+                ),
               ),
             ],
           ),
-          child: const Icon(
-            Icons.notifications_rounded,
-            size: 18,
-            color: Colors.white,
+        ),
+        const SizedBox(height: 12),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _statCard(
+                  label: 'Days Absent',
+                  value: '$_daysAbsent',
+                  icon: Icons.event_busy_rounded,
+                  color: RequestColors.danger,
+                  badge: 'Limit $_absenceLimit',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _statCard(
+                  label: 'On-Time Rate',
+                  value: '$_onTimeRate%',
+                  icon: Icons.timer_rounded,
+                  color: RequestColors.gold,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHeroBanner() {
+  Widget _statCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    String? badge,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_primary, Color(0xFF836FFF), Color(0xFF00D2C6)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: _primary.withOpacity(0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Row(
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(radius: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "You're on track 🔥",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  "18 / 22 days worked",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: LinearProgressIndicator(
-                    value: 18 / 22,
-                    minHeight: 8,
-                    backgroundColor: Colors.white.withOpacity(0.25),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.emoji_events_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsGrid() {
-    final stats = [
-      (
-        "Days Goal",
-        "22",
-        Icons.flag_rounded,
-        const [Color(0xFF6C5DD3), Color(0xFF836FFF)],
-      ),
-      (
-        "Day Worked",
-        "18",
-        Icons.check_circle_rounded,
-        const [Color(0xFF00C6AE), Color(0xFF00D2C6)],
-      ),
-      (
-        "Days Absence",
-        "2",
-        Icons.event_busy_rounded,
-        const [Color(0xFFFF9F43), Color(0xFFFFC26F)],
-      ),
-      (
-        "On-Time Rate",
-        "92%",
-        Icons.timer_rounded,
-        const [Color(0xFFFF6FA8), Color(0xFFB84FFF)],
-      ),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: stats.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.55,
-      ),
-      itemBuilder: (context, i) {
-        final (label, value, icon, colors) = stats[i];
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: colors[0].withOpacity(0.10),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: colors),
-                  borderRadius: BorderRadius.circular(10),
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(icon, size: 16, color: Colors.white),
+                child: Icon(icon, size: 18, color: color),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                      letterSpacing: -0.4,
-                    ),
+              const Spacer(),
+              if (badge != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    label,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    badge,
                     style: TextStyle(
-                      fontSize: 12.5,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: color,
                     ),
                   ),
-                ],
-              ),
+                ),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCalendarCard() {
-    const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: _primary.withOpacity(0.08),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+          const SizedBox(height: 14),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: RequestColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: RequestColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  // ------------------------------ calendar card ----------------------------
+
+  Widget _buildCalendarCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Calendar View",
+                  const Text(
+                    'Calendar View',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      fontSize: 17,
-                      letterSpacing: -0.3,
+                      fontSize: 16,
+                      color: RequestColors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    "September",
-                    style: TextStyle(color: Colors.black45, fontSize: 13),
+                    '${_monthNames[_focusedDay.month - 1]} ${_focusedDay.year}',
+                    style: const TextStyle(
+                      color: RequestColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
               Row(
                 children: [
-                  _navArrow(Icons.chevron_left_rounded),
+                  _navArrow(
+                    Icons.chevron_left_rounded,
+                    () => _changeMonth(next: false),
+                  ),
                   const SizedBox(width: 8),
-                  _navArrow(Icons.chevron_right_rounded),
+                  _navArrow(
+                    Icons.chevron_right_rounded,
+                    () => _changeMonth(next: true),
+                  ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: weekdayLabels
-                .map(
-                  (d) => Expanded(
-                    child: Center(
-                      child: Text(
-                        d,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black38,
-                        ),
-                      ),
-                    ),
+          const SizedBox(height: 12),
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2035, 12, 31),
+            focusedDay: _focusedDay,
+            selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+            startingDayOfWeek: StartingDayOfWeek.monday,
+            headerVisible: false,
+            // Swipe left / right to change month (vertical scroll stays with the page).
+            availableGestures: AvailableGestures.horizontalSwipe,
+            rowHeight: 46,
+            daysOfWeekHeight: 28,
+            calendarStyle: const CalendarStyle(outsideDaysVisible: false),
+            calendarBuilders: CalendarBuilders(
+              prioritizedBuilder: _buildDayCell,
+              dowBuilder: (context, day) => Center(
+                child: Text(
+                  _weekdayLabels[day.weekday - 1],
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: RequestColors.textSecondary,
                   ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 8),
-          ..._weeks.map(
-            (week) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Row(
-                children: week
-                    .map((cell) => Expanded(child: _buildDayCell(cell)))
-                    .toList(),
+                ),
               ),
             ),
+            onCalendarCreated: (controller) => _pageController = controller,
+            onPageChanged: (focusedDay) =>
+                setState(() => _focusedDay = focusedDay),
+            onDaySelected: (selectedDay, focusedDay) => setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay;
+            }),
           ),
+          const SizedBox(height: 8),
+          _buildSelectedDayInfo(),
           const SizedBox(height: 14),
           Wrap(
             spacing: 14,
             runSpacing: 8,
             children: [
-              _legendDot(_statusColor(DayStatus.worked), "Worked"),
-              _legendDot(_statusColor(DayStatus.absent), "Absent"),
-              _legendDot(_statusColor(DayStatus.dayOff), "Day off"),
-              _legendDot(_statusColor(DayStatus.overtime), "Over time"),
+              _legendDot(_statusColor(DayStatus.worked), 'Worked'),
+              _legendDot(_statusColor(DayStatus.absent), 'Absent'),
+              _legendDot(_statusColor(DayStatus.dayOff), 'Day off'),
+              _legendDot(_statusColor(DayStatus.overtime), 'Overtime'),
             ],
           ),
         ],
@@ -527,67 +554,108 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _navArrow(IconData icon) {
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F1FF),
-        borderRadius: BorderRadius.circular(9),
+  Widget _navArrow(IconData icon, VoidCallback onTap) {
+    return Material(
+      color: RequestColors.background.withValues(alpha: 0.6),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: SizedBox(
+          width: 32,
+          height: 32,
+          child: Icon(icon, size: 20, color: RequestColors.textPrimary),
+        ),
       ),
-      child: Icon(icon, size: 18, color: _primaryDark),
     );
   }
 
-  Widget _buildDayCell(_DayCell cell) {
-    if (cell.day == null) {
-      return const AspectRatio(aspectRatio: 1, child: SizedBox());
-    }
+  /// Drawn by table_calendar for every day of the month (taps are handled by
+  /// the calendar itself and end up in `onDaySelected`).
+  Widget _buildDayCell(BuildContext context, DateTime day, DateTime focused) {
+    final status = _statusFor(day);
+    final selected = isSameDay(day, _selectedDay);
+    final isToday = isSameDay(day, DateTime.now());
+    final hasStatus = status != DayStatus.none;
+    final color = _statusColor(status);
 
-    final bool hasStatus = cell.status != DayStatus.none;
-    final color = _statusColor(cell.status);
+    final Color background = selected
+        ? color
+        : (hasStatus ? color.withValues(alpha: 0.12) : Colors.transparent);
+    final Color foreground = selected
+        ? Colors.white
+        : (hasStatus ? color : RequestColors.textPrimary);
 
-    return AspectRatio(
-      aspectRatio: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(2.5),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            gradient: hasStatus
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [color, color.withOpacity(0.75)],
-                  )
-                : null,
-            color: hasStatus ? null : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: cell.selected
-                ? Border.all(color: _primary, width: 2.4)
-                : null,
-            boxShadow: hasStatus
-                ? [
-                    BoxShadow(
-                      color: color.withOpacity(0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : null,
+    return Padding(
+      padding: const EdgeInsets.all(3),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(12),
+          border: isToday && !selected
+              ? Border.all(color: RequestColors.primary, width: 1.5)
+              : null,
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          '${day.day}',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+            color: foreground,
           ),
-          child: Text(
-            "${cell.day}",
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectedDayInfo() {
+    final status = _statusFor(_selectedDay);
+    final color = _statusColor(status);
+    final weekday = _weekdayLabels[_selectedDay.weekday - 1];
+    final month = _monthNames[_selectedDay.month - 1];
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(_statusIcon(status), size: 20, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '$weekday, $month ${_selectedDay.day}',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: RequestColors.textPrimary,
+              ),
+            ),
+          ),
+          Text(
+            _statusLabel(status),
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: cell.selected && !hasStatus
-                  ? _primary
-                  : (hasStatus ? Colors.white : Colors.black87),
+              color: color,
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -599,17 +667,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         Container(
           width: 9,
           height: 9,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [color, color.withOpacity(0.7)]),
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade600,
+            color: RequestColors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -617,168 +682,311 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
+  // --------------------------------- tabs ----------------------------------
+
   Widget _buildTabBar() {
     return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: _primary.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: List.generate(_tabs.length, (i) {
-          final selected = i == _tabIndex;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _tabIndex = i),
-              child: AnimatedContainer(
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: _cardDecoration(radius: 16),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabWidth = constraints.maxWidth / _tabs.length;
+          return Stack(
+            children: [
+              AnimatedPositioned(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  gradient: selected
-                      ? const LinearGradient(
-                          colors: [_primary, Color(0xFF836FFF)],
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(13),
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                            color: _primary.withOpacity(0.35),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 250),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: selected ? Colors.white : Colors.grey.shade500,
+                left: tabWidth * _tabIndex,
+                top: 0,
+                bottom: 0,
+                width: tabWidth,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: RequestColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: RequestColors.primary.withValues(alpha: 0.30),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  child: Text(_tabs[i], textAlign: TextAlign.center),
                 ),
               ),
-            ),
+              Row(
+                children: List.generate(_tabs.length, (i) {
+                  final selected = i == _tabIndex;
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => setState(() => _tabIndex = i),
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: selected
+                                ? Colors.white
+                                : RequestColors.textSecondary,
+                          ),
+                          child: Text(_tabs[i]),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
           );
-        }),
+        },
+      ),
+    );
+  }
+
+  List<Widget> _buildTabContent() {
+    if (_tabIndex == 0) {
+      return _schedule
+          .map(
+            (d) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildScheduleTile(d),
+            ),
+          )
+          .toList();
+    }
+    return [_buildEmptyTab()];
+  }
+
+  Widget _buildEmptyTab() {
+    final isHoliday = _tabIndex == 1;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      decoration: _cardDecoration(),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: RequestColors.primary.withValues(alpha: 0.10),
+            ),
+            child: Icon(
+              isHoliday
+                  ? Icons.celebration_rounded
+                  : Icons.beach_access_rounded,
+              color: RequestColors.primary,
+              size: 26,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Nothing here yet',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: RequestColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            isHoliday
+                ? 'Public holidays will appear here once they are added.'
+                : 'Your leave days will appear here once they are approved.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: RequestColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildScheduleTile(_ScheduleDay day) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: day.gradient[0].withOpacity(0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: 72,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: day.gradient,
-                ),
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(20),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(day.icon, color: Colors.white, size: 20),
-                  const SizedBox(height: 6),
-                  Text(
-                    day.label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(radius: 18),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: RequestColors.textPrimary,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              day.short,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.schedule_rounded,
-                          size: 14,
-                          color: day.gradient[0],
+                    Expanded(
+                      child: Text(
+                        day.full,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          color: RequestColors.textPrimary,
                         ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          "Shifts",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    ...day.times.map(
-                      (t) => Padding(
-                        padding: const EdgeInsets.only(top: 3),
-                        child: Text(
-                          t,
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: RequestColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${day.totalHours} hrs',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: RequestColors.primary,
                         ),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 4),
+                for (final shift in day.shifts) _buildShiftRow(shift),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShiftRow(_Shift shift) {
+    final color = shift.startHour < 12
+        ? RequestColors.gold
+        : RequestColors.primary;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              shift.range,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: RequestColors.textPrimary,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(right: 14),
-              child: Center(
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.grey.shade300,
-                ),
+          ),
+          Text(
+            '${shift.hours}h',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: RequestColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Small private widgets
+// ---------------------------------------------------------------------------
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 12),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          color: RequestColors.textPrimary,
+        ),
+      ),
+    );
+  }
+}
+
+/// Simple rounded progress bar (drawn by hand so it looks the same on every
+/// Flutter version).
+class _ProgressBar extends StatelessWidget {
+  const _ProgressBar({
+    required this.value,
+    required this.color,
+    required this.trackColor,
+    this.height = 8,
+  });
+
+  final double value;
+  final Color color;
+  final Color trackColor;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        return Stack(
+          children: [
+            Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                color: trackColor,
+                borderRadius: BorderRadius.circular(height),
+              ),
+            ),
+            Container(
+              width: width * value.clamp(0.0, 1.0),
+              height: height,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(height),
               ),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

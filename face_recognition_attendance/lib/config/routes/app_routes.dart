@@ -12,4 +12,19 @@ abstract class AppRoutes {
   static const String permission = "/permission";
   static const String requestPermission = "/request-permission";
   static const String permissionSessions = "/permission-sessions";
+
+  // Leave
+  static const String leave = "/leave";
+  static const String requestLeave = "/request-leave";
+  static const String leaveDetail = "/leave-detail";
+
+  // Overtime
+  static const String overtime = "/overtime";
+  static const String requestOvertime = "/request-overtime";
+  static const String overtimeDetail = "/overtime-detail";
+
+  // Suggestion
+  static const String suggestion = "/suggestion";
+  static const String suggestionStatus = "/suggestion-status";
+  static const String suggestionDetail = "/suggestion-detail";
 }

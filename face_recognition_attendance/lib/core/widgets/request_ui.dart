@@ -28,12 +28,16 @@ class RequestScaffold extends StatelessWidget {
     required this.body,
     this.showBackButton = true,
     this.centerTitle = false,
+    this.floatingActionButton,
+    this.actions,
   });
 
   final String title;
   final Widget body;
   final bool showBackButton;
   final bool centerTitle;
+  final Widget? floatingActionButton;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +69,10 @@ class RequestScaffold extends StatelessWidget {
             color: RequestColors.textPrimary,
           ),
         ),
+        actions: actions,
       ),
       body: body,
+      floatingActionButton: floatingActionButton,
     );
   }
 }
@@ -222,22 +228,33 @@ class RequestButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.filled = true,
+    this.color,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool filled;
 
+  /// Overrides the background color (text becomes white). Used for
+  /// non-standard buttons like the red "Delete" button on Suggestion.
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
+    final backgroundColor =
+        color ?? (filled ? RequestColors.primary : Colors.white);
+    final foregroundColor = color != null
+        ? Colors.white
+        : (filled ? Colors.white : RequestColors.textPrimary);
+
     return SizedBox(
       width: double.infinity,
       height: 46,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: filled ? RequestColors.primary : Colors.white,
-          foregroundColor: filled ? Colors.white : RequestColors.textPrimary,
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),

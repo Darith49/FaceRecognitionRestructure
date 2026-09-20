@@ -39,6 +39,9 @@ class DateText {
   /// Monday
   static String weekday(DateTime d) => _weekdays[d.weekday - 1];
 
+  /// September 2026
+  static String monthYear(DateTime d) => '${_months[d.month - 1]} ${d.year}';
+
   /// Monday 2026-09-07
   static String weekdayYmd(DateTime d) => '${weekday(d)} ${ymd(d)}';
 
@@ -49,6 +52,14 @@ class DateText {
   /// 08 : 52 PM
   static String clock(DateTime d) =>
       '${_two(_hour12(d))} : ${_two(d.minute)} ${_period(d)}';
+
+  /// 05:00 PM
+  static String time(DateTime d) =>
+      '${_two(_hour12(d))}:${_two(d.minute)} ${_period(d)}';
+
+  /// Fri Sep 11 2026
+  static String monthShortDay(DateTime d) =>
+      '${_weekdays[d.weekday - 1].substring(0, 3)} ${_months[d.month - 1].substring(0, 3)} ${_two(d.day)} ${d.year}';
 
   /// 6/8/2026 7 : 43 : 11 AM
   static String stamp(DateTime d) =>

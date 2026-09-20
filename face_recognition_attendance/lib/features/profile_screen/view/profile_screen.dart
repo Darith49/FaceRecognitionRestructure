@@ -33,7 +33,7 @@ class ProfileScreen extends StatelessWidget {
           ),
 
           PermissionView(
-            targetPermission: AppPermission.accessCeoPanel,
+            targetPermission: AppPermission.accessManagerPanel,
             child: ElevatedButton(
               onPressed: () {
                 Get.snackbar('Manager Action', 'Manager Button');
@@ -42,7 +42,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           PermissionView(
-            targetPermission: AppPermission.accessCeoPanel,
+            targetPermission: AppPermission.accessLeaderPanel,
             child: ElevatedButton(
               onPressed: () {
                 Get.snackbar('Leader Action', 'Leader  Button');
@@ -51,7 +51,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           PermissionView(
-            targetPermission: AppPermission.accessCeoPanel,
+            targetPermission: AppPermission.accessEmployeePanel,
             child: ElevatedButton(
               onPressed: () {
                 Get.snackbar('Employee Action', 'Employee Button');

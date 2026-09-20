@@ -305,11 +305,50 @@ class LoginScreen extends GetView<LoginController> {
                     ),
                     const SizedBox(height: 24),
 
-                    Column(
-                      children: [
-                        Text('user : sonarseang@gmail.com'),
-                        Text('pw : 123456'),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildAccountRow(
+                            'CEO',
+                            'sonarseang@gmail.com',
+                            '123456',
+                          ),
+                          const Divider(height: 12),
+                          _buildAccountRow(
+                            'Admin',
+                            'admin@gmail.com',
+                            '123456',
+                          ),
+                          const Divider(height: 12),
+                          _buildAccountRow(
+                            'Manager',
+                            'manager@gmail.com',
+                            '123456',
+                          ),
+                          const Divider(height: 12),
+                          _buildAccountRow(
+                            'Leader',
+                            'leader@gmail.com',
+                            '123456',
+                          ),
+                          const Divider(height: 12),
+                          _buildAccountRow(
+                            'Employee',
+                            'employee@gmail.com',
+                            '123456',
+                          ),
+
+                          
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -320,4 +359,33 @@ class LoginScreen extends GetView<LoginController> {
       ),
     );
   }
+
+  Widget _buildAccountRow(String role, String email, String password) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      SizedBox(
+        width: 75,
+        child: Text(
+          role,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          email,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
+        ),
+      ),
+      Text(
+        password,
+        style: TextStyle(
+          fontSize: 12,
+          fontFamily: 'monospace',
+          color: Colors.grey.shade600,
+        ),
+      ),
+    ],
+  );
+}
 }

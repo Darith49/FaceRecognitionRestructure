@@ -15,7 +15,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  final HomeController controller = Get.put(HomeController());
+  final HomeController controller = Get.isRegistered<HomeController>()
+      ? Get.find<HomeController>()
+      : Get.put(HomeController(), permanent: true);
 
   late final AnimationController _entranceController;
   late final Animation<double> _greetingSlide;

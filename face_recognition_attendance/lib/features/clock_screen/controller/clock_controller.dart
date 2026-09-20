@@ -1,71 +1,25 @@
-import 'dart:async';
-
+import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:get/get.dart';
 
-enum ClockState { notCheckedIn, checkedIn, checkedOut }
+typedef ClockState = CheckState;
 
 class ClockController extends GetxController {
-  /// Current time, updated every second so the clock on screen is live.
-  final Rx<DateTime> now = DateTime.now().obs;
+  HomeController get _home => Get.isRegistered<HomeController>()
+      ? Get.find<HomeController>()
+      : Get.put(HomeController(), permanent: true);
 
-  final Rx<ClockState> state = ClockState.notCheckedIn.obs;
-  final Rx<DateTime?> checkInTime = Rx<DateTime?>(null);
-  final Rx<DateTime?> checkOutTime = Rx<DateTime?>(null);
+  Rx<DateTime> get now => _home.now;
+  Rx<CheckState> get state => _home.state;
+  Rx<DateTime?> get checkInTime => _home.checkInTime;
+  Rx<DateTime?> get checkOutTime => _home.checkOutTime;
 
-  Timer? _timer;
+  double get goalHours => _home.goalHours;
+  double get goalProgress => _home.goalProgress;
+  String get remainingGoalText => _home.remainingGoalText;
+  String get buttonLabel => _home.buttonLabel;
+  String get totalHoursText => _home.totalHoursText;
+  String get checkInText => _home.checkInText;
+  String get checkOutText => _home.checkOutText;
 
-  @override
-  void onInit() {
-    super.onInit();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      now.value = DateTime.now();
-    });
-  }
-
-  @override
-  void onClose() {
-    _timer?.cancel();
-    super.onClose();
-  }
-
-  /// Text on the big round button.
-  String get buttonLabel {
-    switch (state.value) {
-      case ClockState.notCheckedIn:
-        return 'Check In';
-      case ClockState.checkedIn:
-        return 'Check Out';
-      case ClockState.checkedOut:
-        return 'Done';
-    }
-  }
-
-  /// Example: "6h" or "4h 30m". While the user is checked in it keeps counting.
-  String get totalHoursText {
-    final start = checkInTime.value;
-    if (start == null) return '0h';
-
-    final end = checkOutTime.value ?? now.value;
-    final minutes = end.difference(start).inMinutes;
-    final hours = minutes ~/ 60;
-    final rest = minutes % 60;
-    return rest == 0 ? '${hours}h' : '${hours}h ${rest}m';
-  }
-
-  void onMainButtonPressed() {
-    switch (state.value) {
-      case ClockState.notCheckedIn:
-        // TODO: run face recognition here, then save the check-in to Firestore.
-        checkInTime.value = DateTime.now();
-        state.value = ClockState.checkedIn;
-        break;
-      case ClockState.checkedIn:
-        // TODO: save the check-out to Firestore.
-        checkOutTime.value = DateTime.now();
-        state.value = ClockState.checkedOut;
-        break;
-      case ClockState.checkedOut:
-        break;
-    }
-  }
+  void onMainButtonPressed() => _home.onMainButtonPressed();
 }

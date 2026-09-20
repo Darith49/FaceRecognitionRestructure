@@ -267,10 +267,23 @@ class _CheckButton extends StatelessWidget {
 
   final ClockController controller;
 
+  Color _buttonColor(ClockState state) {
+    switch (state) {
+      case ClockState.notCheckedIn:
+        return RequestColors.primary;
+      case ClockState.checkedIn:
+        return RequestColors.danger;
+      case ClockState.checkedOut:
+        return RequestColors.approvedStatus;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final done = controller.state.value == ClockState.checkedOut;
+      final state = controller.state.value;
+      final done = state == ClockState.checkedOut;
+      final buttonColor = _buttonColor(state);
 
       return GestureDetector(
         onTap: done ? null : controller.onMainButtonPressed,
@@ -283,19 +296,18 @@ class _CheckButton extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.55),
           ),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
+            duration: const Duration(milliseconds: 150),
             curve: Curves.easeInOut,
             width: 132,
             height: 132,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: done ? const Color(0xFF9AA3B5) : RequestColors.primary,
+              color: buttonColor,
               border: Border.all(color: Colors.white, width: 5),
               boxShadow: [
                 BoxShadow(
-                  color: (done ? const Color(0xFF9AA3B5) : RequestColors.primary)
-                      .withValues(alpha: done ? 0.0 : 0.25),
+                  color: buttonColor.withValues(alpha: done ? 0.0 : 0.25),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),

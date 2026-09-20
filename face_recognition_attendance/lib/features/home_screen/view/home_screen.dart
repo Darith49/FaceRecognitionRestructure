@@ -555,11 +555,23 @@ class _CheckInButtonState extends State<_CheckInButton>
     _tapController.reverse();
   }
 
+  Color _buttonColor(CheckState state) {
+    switch (state) {
+      case CheckState.notCheckedIn:
+        return RequestColors.primary;
+      case CheckState.checkedIn:
+        return RequestColors.danger;
+      case CheckState.checkedOut:
+        return RequestColors.approvedStatus;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final state = widget.controller.state.value;
       final done = state == CheckState.checkedOut;
+      final buttonColor = _buttonColor(state);
 
       if (done && _pulseController.isAnimating) {
         _pulseController.stop();
@@ -587,30 +599,26 @@ class _CheckInButtonState extends State<_CheckInButton>
                   color: Colors.white.withValues(alpha: 0.55),
                 ),
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
+                  duration: const Duration(milliseconds: 150),
                   curve: Curves.easeInOut,
                   width: 132,
                   height: 132,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color:
-                        done ? const Color(0xFF9AA3B5) : RequestColors.primary,
+                    color: buttonColor,
                     border: Border.all(color: Colors.white, width: 5),
                     boxShadow: [
                       BoxShadow(
-                        color: (done
-                                ? const Color(0xFF9AA3B5)
-                                : RequestColors.primary)
-                            .withValues(
-                                alpha: done ? 0.0 : 0.15 + pulseValue * 0.25),
+                        color: buttonColor.withValues(
+                            alpha: done ? 0.0 : 0.15 + pulseValue * 0.25),
                         blurRadius: 20 + pulseValue * 16,
                         spreadRadius: 1 + pulseValue * 4,
                       ),
                     ],
                   ),
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 150),
                     transitionBuilder: (child, anim) => ScaleTransition(
                       scale: anim,
                       child: FadeTransition(opacity: anim, child: child),

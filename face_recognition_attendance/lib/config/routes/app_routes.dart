@@ -1,5 +1,6 @@
 abstract class AppRoutes {
   static const String login = "/login";
+  static const String forgotpassword = "/forgotpassword";
   static const String navigation = "/navigation";
   static const String attendance = "/attendance";
   // Clock, Request Information, Permission

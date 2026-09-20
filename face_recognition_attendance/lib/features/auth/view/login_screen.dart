@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -202,12 +203,13 @@ class LoginScreen extends GetView<LoginController> {
                           onTap: () {
                             // Forgot password action
                           },
-                          child: const Text(
-                            'Forgot password',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                          child: TextButton(
+                            onPressed: () {
+                              Get.toNamed(AppRoutes.forgotpassword);
+                            },
+                            child: Text(
+                              'Forgot passowrd',
+                              style: TextStyle(color: Color(0xFF111827)),
                             ),
                           ),
                         ),
@@ -221,9 +223,9 @@ class LoginScreen extends GetView<LoginController> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: controller.authController.isLoading.value
+                          onPressed: controller.isLoading.value
                               ? null
-                              : () => controller.authController.login(
+                              : () => controller.login(
                                   email: controller.emailController.text.trim(),
                                   password: controller.passwordController.text
                                       .trim(),
@@ -247,7 +249,7 @@ class LoginScreen extends GetView<LoginController> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: controller.authController.isLoading.value
+                          child: controller.isLoading.value
                               ? const SizedBox(
                                   width: 24,
                                   height: 24,
@@ -270,39 +272,61 @@ class LoginScreen extends GetView<LoginController> {
                     const SizedBox(height: 16),
 
                     //Sign in with google
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          // Google sign in action
-                        },
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF111827),
-                          side: const BorderSide(
-                            color: Color(0xFFE5E7EB),
-                            width: 1,
+                    Obx(() {
+                      final isAnyLoading =
+                          controller.isLoading.value ||
+                          controller.isGoogleLoading.value;
+                      final isGoogleLoading = controller.isGoogleLoading.value;
+
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: OutlinedButton(
+                          onPressed: isAnyLoading
+                              ? null
+                              : () => controller.loginWithGoogle(),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF111827),
+                            side: const BorderSide(
+                              color: Color(0xFFE5E7EB),
+                              width: 1,
+                            ),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                          child: isGoogleLoading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Color.fromARGB(255, 32, 83, 192),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      "assets/login/Google.png",
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Sign in with Google',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
-                        icon: Image.asset(
-                          "assets/login/Google.png",
-                          width: 24,
-                          height: 24,
-                        ),
-                        label: const Text(
-                          'Sign in with Google',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                      );
+                    }),
                     const SizedBox(height: 24),
 
                     Container(
@@ -345,8 +369,6 @@ class LoginScreen extends GetView<LoginController> {
                             'employee@gmail.com',
                             '123456',
                           ),
-
-                          
                         ],
                       ),
                     ),
@@ -361,31 +383,31 @@ class LoginScreen extends GetView<LoginController> {
   }
 
   Widget _buildAccountRow(String role, String email, String password) {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      SizedBox(
-        width: 75,
-        child: Text(
-          role,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 75,
+          child: Text(
+            role,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
         ),
-      ),
-      Expanded(
-        child: Text(
-          email,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
+        Expanded(
+          child: Text(
+            email,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
+          ),
         ),
-      ),
-      Text(
-        password,
-        style: TextStyle(
-          fontSize: 12,
-          fontFamily: 'monospace',
-          color: Colors.grey.shade600,
+        Text(
+          password,
+          style: TextStyle(
+            fontSize: 12,
+            fontFamily: 'monospace',
+            color: Colors.grey.shade600,
+          ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 }

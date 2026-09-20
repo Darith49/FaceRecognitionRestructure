@@ -1,10 +1,10 @@
 import 'package:face_recognition_attendance/core/permissions/app_permissions.dart';
 import 'package:face_recognition_attendance/core/permissions/permission_service.dart';
-import 'package:face_recognition_attendance/features/auth/controller/auth_controller.dart';
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/state_manager.dart';
 
-class PermissionView extends GetView<AuthController> {
+class PermissionView extends GetView<LoginController> {
   final AppPermission targetPermission;
   final Widget child;
   final Widget fallback;

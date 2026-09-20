@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:face_recognition_attendance/features/auth/controller/auth_controller.dart';
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:get/get.dart';
 
 enum CheckState { notCheckedIn, checkedIn, checkedOut }
 
 class HomeController extends GetxController {
-  final AuthController _authController = Get.find<AuthController>();
+  final LoginController _authController = Get.find<LoginController>();
 
   final Rx<DateTime> now = DateTime.now().obs;
 

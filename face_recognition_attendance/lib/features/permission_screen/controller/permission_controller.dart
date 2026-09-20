@@ -1,5 +1,5 @@
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
-import 'package:face_recognition_attendance/features/auth/controller/auth_controller.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:face_recognition_attendance/features/permission_screen/model/permission_request.dart';
 import 'package:get/get.dart';
@@ -27,15 +27,15 @@ class PermissionController extends GetxController {
     _loadSampleRequests();
   }
 
-  UserModel? get _signedInUser => Get.isRegistered<AuthController>()
-      ? Get.find<AuthController>().currentuser.value
+  UserModel? get _signedInUser => Get.isRegistered<LoginController>()
+      ? Get.find<LoginController>().currentuser.value
       : null;
 
   /// If another user logs in on the same phone, do not show the old user's requests.
   void _watchSignedInUser() {
-    if (!Get.isRegistered<AuthController>()) return;
+    if (!Get.isRegistered<LoginController>()) return;
 
-    final auth = Get.find<AuthController>();
+    final auth = Get.find<LoginController>();
     _ownerUid = auth.currentuser.value?.uid;
 
     ever(auth.currentuser, (UserModel? user) {

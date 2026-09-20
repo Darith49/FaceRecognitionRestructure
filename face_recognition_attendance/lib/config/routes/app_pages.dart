@@ -3,7 +3,9 @@ import 'package:face_recognition_attendance/config/navigation/navigation_screen.
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/features/attendance_screen/binding/attendance_binding.dart';
 import 'package:face_recognition_attendance/features/attendance_screen/view/attendance_screen.dart';
+import 'package:face_recognition_attendance/features/auth/binding/forgotpassowrd_binding.dart';
 import 'package:face_recognition_attendance/features/auth/binding/login_binding.dart';
+import 'package:face_recognition_attendance/features/auth/view/forgotpassword_screen.dart';
 import 'package:face_recognition_attendance/features/auth/view/login_screen.dart';
 import 'package:face_recognition_attendance/features/clock_screen/binding/clock_binding.dart';
 import 'package:face_recognition_attendance/features/clock_screen/view/clock_screen.dart';
@@ -47,6 +49,12 @@ class AppPages {
       name: AppRoutes.login,
       page: () => LoginScreen(),
       binding: LoginBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.forgotpassword,
+      page: () => ForgotpasswordScreen(),
+      binding: ForgotpassowrdBinding(),
     ),
 
     // ---------- Clock, Request Information, Permission ----------

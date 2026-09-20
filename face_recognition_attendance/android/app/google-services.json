@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1039047136384-m4t97r23qj2r9nl0hoe6ak4e3i688ps7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.face_recognition_attendance",
+            "certificate_hash": "949fd90c3a28e8820ec5fed377e5479ec4183ed1"
+          }
+        },
+        {
           "client_id": "1039047136384-rp8p3sngkl0123prob5mag1sijtefqlv.apps.googleusercontent.com",
           "client_type": 3
         }

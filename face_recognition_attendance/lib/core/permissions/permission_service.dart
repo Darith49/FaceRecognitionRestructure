@@ -1,13 +1,13 @@
 import 'package:face_recognition_attendance/core/permissions/app_permissions.dart';
 import 'package:face_recognition_attendance/core/permissions/role_permission.dart';
-import 'package:face_recognition_attendance/features/auth/controller/auth_controller.dart';
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:get/get.dart';
 
 class PermissionService extends GetxService {
   static PermissionService get to => Get.find<PermissionService>();
 
-  AuthController get _authController => Get.find<AuthController>();
+  LoginController get _authController => Get.find<LoginController>();
 
   UserRole? get currentRole => _authController.currentuser.value?.role;
 

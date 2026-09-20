@@ -22,7 +22,7 @@ class RequestScreen extends StatelessWidget {
           _RequestLinks(
             links: [
               // TODO(Hong): open the real pages when they are ready.
-              _RequestLink('My Schedule', () => _comingSoon(context)),
+              _RequestLink('My Schedule', () => Get.toNamed(AppRoutes.schedule)),
               _RequestLink('Leave', () => Get.toNamed(AppRoutes.leave)),
               _RequestLink('Overtime', () => Get.toNamed(AppRoutes.overtime)),
               _RequestLink(

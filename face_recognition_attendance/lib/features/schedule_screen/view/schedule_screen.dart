@@ -1,5 +1,7 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:face_recognition_attendance/features/schedule_screen/controller/schedule_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 // ---------------------------------------------------------------------------
@@ -19,56 +21,15 @@ BoxDecoration _cardDecoration({double radius = 20}) => BoxDecoration(
 );
 
 // ---------------------------------------------------------------------------
-// Data models
-// ---------------------------------------------------------------------------
-
-enum DayStatus { worked, absent, dayOff, overtime, none }
-
-class _Shift {
-  /// 24h clock hours, e.g. 6 = 06:00 AM and 17 = 05:00 PM.
-  final int startHour;
-  final int endHour;
-
-  const _Shift(this.startHour, this.endHour);
-
-  int get hours => endHour - startHour;
-
-  String get range => '${_formatHour(startHour)} – ${_formatHour(endHour)}';
-}
-
-class _ScheduleDay {
-  final String short;
-  final String full;
-  final List<_Shift> shifts;
-
-  const _ScheduleDay(this.short, this.full, this.shifts);
-
-  int get totalHours => shifts.fold(0, (sum, s) => sum + s.hours);
-}
-
-String _formatHour(int hour) {
-  final period = hour >= 12 ? 'PM' : 'AM';
-  final hour12 = hour % 12 == 0 ? 12 : hour % 12;
-  return '${hour12.toString().padLeft(2, '0')}:00 $period';
-}
-
-// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
-class ScheduleScreen extends StatefulWidget {
-  const ScheduleScreen({super.key});
+class ScheduleScreen extends GetView<ScheduleController> {
+  const ScheduleScreen({super.key, this.showBackButton = false});
 
-  @override
-  State<ScheduleScreen> createState() => _ScheduleScreenState();
-}
-
-class _ScheduleScreenState extends State<ScheduleScreen> {
-  static const int _daysGoal = 22;
-  static const int _daysWorked = 18;
-  static const int _daysAbsent = 2;
-  static const int _absenceLimit = 8;
-  static const int _onTimeRate = 92;
+  /// false = the "Schedule" tab of the bottom bar (no back arrow).
+  /// true  = opened on top of another page with AppRoutes.schedule.
+  final bool showBackButton;
 
   static const List<String> _monthNames = [
     'January',
@@ -93,18 +54,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     'Fri',
     'Sat',
     'Sun',
-  ];
-
-  int _tabIndex = 0;
-  DateTime _focusedDay = DateTime.now();
-  DateTime _selectedDay = DateTime.now();
-  PageController? _pageController;
-  final _tabs = const ['Workday', 'Holiday', 'Leave'];
-
-  final List<_ScheduleDay> _schedule = const [
-    _ScheduleDay('Mon', 'Monday', [_Shift(6, 12), _Shift(13, 17)]),
-    _ScheduleDay('Tue', 'Tuesday', [_Shift(6, 12), _Shift(13, 17)]),
-    _ScheduleDay('Wed', 'Wednesday', [_Shift(6, 12), _Shift(13, 17)]),
   ];
 
   // ------------------------------- helpers ---------------------------------
@@ -133,41 +82,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     DayStatus.none => Icons.event_rounded,
   };
 
-  /// SAMPLE DATA ONLY: replace with the real attendance records (Firestore).
-  /// Future days have no record yet; Sundays are days off.
-  DayStatus _statusFor(DateTime day) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final date = DateTime(day.year, day.month, day.day);
-
-    if (date.isAfter(today)) return DayStatus.none;
-    if (date.weekday == DateTime.sunday) return DayStatus.dayOff;
-    if (date.day == 3) return DayStatus.absent;
-    if (date.day == 12) return DayStatus.overtime;
-    return DayStatus.worked;
-  }
-
-  void _changeMonth({required bool next}) {
-    const duration = Duration(milliseconds: 300);
-    final controller = _pageController;
-    if (controller == null) return;
-    if (next) {
-      controller.nextPage(duration: duration, curve: Curves.easeOut);
-    } else {
-      controller.previousPage(duration: duration, curve: Curves.easeOut);
-    }
-  }
-
   // -------------------------------- build ----------------------------------
 
   @override
   Widget build(BuildContext context) {
     return RequestScaffold(
       title: 'Schedule',
-      showBackButton: false,
+      showBackButton: showBackButton,
       body: ListView(
-        // Extra space at the bottom so the floating bar does not cover the last card.
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+        // Extra space at the bottom in the tab, so the floating bar does not cover the cards.
+        padding: EdgeInsets.fromLTRB(16, 16, 16, showBackButton ? 24.0 : 120.0),
         children: [
           _buildSummaryCard(),
           const SizedBox(height: 24),
@@ -181,7 +105,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           const _SectionTitle('Work Schedule'),
           _buildTabBar(),
           const SizedBox(height: 14),
-          ..._buildTabContent(),
+          _buildTabContent(),
         ],
       ),
     );
@@ -190,8 +114,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   // ------------------------------ summary card -----------------------------
 
   Widget _buildSummaryCard() {
-    final percent = (_daysWorked / _daysGoal * 100).round();
-    final remaining = _daysGoal - _daysWorked;
+    final worked = controller.daysWorked;
+    final goal = controller.daysGoal;
 
     return Container(
       decoration: BoxDecoration(
@@ -238,16 +162,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             Text.rich(
                               TextSpan(
                                 children: [
-                                  const TextSpan(
-                                    text: '$_daysWorked',
-                                    style: TextStyle(
+                                  TextSpan(
+                                    text: '$worked',
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w800,
                                       fontSize: 34,
                                     ),
                                   ),
                                   TextSpan(
-                                    text: ' / $_daysGoal days worked',
+                                    text: ' / $goal days worked',
                                     style: TextStyle(
                                       color: Colors.white.withValues(
                                         alpha: 0.85,
@@ -280,7 +204,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ),
                   const SizedBox(height: 16),
                   _ProgressBar(
-                    value: _daysWorked / _daysGoal,
+                    value: worked / goal,
                     color: Colors.white,
                     trackColor: Colors.white.withValues(alpha: 0.25),
                   ),
@@ -289,7 +213,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '$percent% complete',
+                        '${controller.percentWorked}% complete',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.85),
                           fontSize: 12,
@@ -297,7 +221,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         ),
                       ),
                       Text(
-                        '$remaining days to go',
+                        '${controller.daysRemaining} days to go',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.85),
                           fontSize: 12,
@@ -338,7 +262,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               Expanded(
                 child: _statCard(
                   label: 'Days Goal',
-                  value: '$_daysGoal',
+                  value: '${controller.daysGoal}',
                   icon: Icons.flag_rounded,
                   color: RequestColors.primary,
                 ),
@@ -347,7 +271,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               Expanded(
                 child: _statCard(
                   label: 'Days Worked',
-                  value: '$_daysWorked',
+                  value: '${controller.daysWorked}',
                   icon: Icons.check_circle_rounded,
                   color: RequestColors.approvedStatus,
                 ),
@@ -363,17 +287,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               Expanded(
                 child: _statCard(
                   label: 'Days Absent',
-                  value: '$_daysAbsent',
+                  value: '${controller.daysAbsent}',
                   icon: Icons.event_busy_rounded,
                   color: RequestColors.danger,
-                  badge: 'Limit $_absenceLimit',
+                  badge: 'Limit ${controller.absenceLimit}',
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _statCard(
                   label: 'On-Time Rate',
-                  value: '$_onTimeRate%',
+                  value: '${controller.onTimeRate}%',
                   icon: Icons.timer_rounded,
                   color: RequestColors.gold,
                 ),
@@ -478,64 +402,67 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    '${_monthNames[_focusedDay.month - 1]} ${_focusedDay.year}',
-                    style: const TextStyle(
-                      color: RequestColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
+                  Obx(() {
+                    final focused = controller.focusedDay.value;
+                    return Text(
+                      '${_monthNames[focused.month - 1]} ${focused.year}',
+                      style: const TextStyle(
+                        color: RequestColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    );
+                  }),
                 ],
               ),
               Row(
                 children: [
                   _navArrow(
                     Icons.chevron_left_rounded,
-                    () => _changeMonth(next: false),
+                    controller.previousMonth,
                   ),
                   const SizedBox(width: 8),
-                  _navArrow(
-                    Icons.chevron_right_rounded,
-                    () => _changeMonth(next: true),
-                  ),
+                  _navArrow(Icons.chevron_right_rounded, controller.nextMonth),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 12),
-          TableCalendar(
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2035, 12, 31),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
-            startingDayOfWeek: StartingDayOfWeek.monday,
-            headerVisible: false,
-            // Swipe left / right to change month (vertical scroll stays with the page).
-            availableGestures: AvailableGestures.horizontalSwipe,
-            rowHeight: 46,
-            daysOfWeekHeight: 28,
-            calendarStyle: const CalendarStyle(outsideDaysVisible: false),
-            calendarBuilders: CalendarBuilders(
-              prioritizedBuilder: _buildDayCell,
-              dowBuilder: (context, day) => Center(
-                child: Text(
-                  _weekdayLabels[day.weekday - 1],
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: RequestColors.textSecondary,
+          // Read the Rx values at the top of Obx, so Obx knows to rebuild.
+          Obx(() {
+            final focused = controller.focusedDay.value;
+            final selected = controller.selectedDay.value;
+
+            return TableCalendar(
+              firstDay: DateTime.utc(2020, 1, 1),
+              lastDay: DateTime.utc(2035, 12, 31),
+              focusedDay: focused,
+              selectedDayPredicate: (day) => isSameDay(day, selected),
+              startingDayOfWeek: StartingDayOfWeek.monday,
+              headerVisible: false,
+              // Swipe left / right to change month (vertical scroll stays with the page).
+              availableGestures: AvailableGestures.horizontalSwipe,
+              rowHeight: 46,
+              daysOfWeekHeight: 28,
+              calendarStyle: const CalendarStyle(outsideDaysVisible: false),
+              calendarBuilders: CalendarBuilders(
+                prioritizedBuilder: (context, day, focusedDay) =>
+                    _buildDayCell(day, selected),
+                dowBuilder: (context, day) => Center(
+                  child: Text(
+                    _weekdayLabels[day.weekday - 1],
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: RequestColors.textSecondary,
+                    ),
                   ),
                 ),
               ),
-            ),
-            onCalendarCreated: (controller) => _pageController = controller,
-            onPageChanged: (focusedDay) =>
-                setState(() => _focusedDay = focusedDay),
-            onDaySelected: (selectedDay, focusedDay) => setState(() {
-              _selectedDay = selectedDay;
-              _focusedDay = focusedDay;
-            }),
-          ),
+              onCalendarCreated: controller.onCalendarCreated,
+              onPageChanged: controller.onPageChanged,
+              onDaySelected: controller.onDaySelected,
+            );
+          }),
           const SizedBox(height: 8),
           _buildSelectedDayInfo(),
           const SizedBox(height: 14),
@@ -571,10 +498,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   /// Drawn by table_calendar for every day of the month (taps are handled by
-  /// the calendar itself and end up in `onDaySelected`).
-  Widget _buildDayCell(BuildContext context, DateTime day, DateTime focused) {
-    final status = _statusFor(day);
-    final selected = isSameDay(day, _selectedDay);
+  /// the calendar itself and end up in `controller.onDaySelected`).
+  Widget _buildDayCell(DateTime day, DateTime selectedDay) {
+    final status = controller.statusFor(day);
+    final selected = isSameDay(day, selectedDay);
     final isToday = isSameDay(day, DateTime.now());
     final hasStatus = status != DayStatus.none;
     final color = _statusColor(status);
@@ -621,43 +548,46 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   Widget _buildSelectedDayInfo() {
-    final status = _statusFor(_selectedDay);
-    final color = _statusColor(status);
-    final weekday = _weekdayLabels[_selectedDay.weekday - 1];
-    final month = _monthNames[_selectedDay.month - 1];
+    return Obx(() {
+      final selectedDay = controller.selectedDay.value;
+      final status = controller.statusFor(selectedDay);
+      final color = _statusColor(status);
+      final weekday = _weekdayLabels[selectedDay.weekday - 1];
+      final month = _monthNames[selectedDay.month - 1];
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(_statusIcon(status), size: 20, color: color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              '$weekday, $month ${_selectedDay.day}',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: RequestColors.textPrimary,
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Icon(_statusIcon(status), size: 20, color: color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '$weekday, $month ${selectedDay.day}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: RequestColors.textPrimary,
+                ),
               ),
             ),
-          ),
-          Text(
-            _statusLabel(status),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: color,
+            Text(
+              _statusLabel(status),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   Widget _legendDot(Color color, String label) {
@@ -685,84 +615,96 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   // --------------------------------- tabs ----------------------------------
 
   Widget _buildTabBar() {
+    final tabs = controller.tabs;
+
     return Container(
       height: 48,
       padding: const EdgeInsets.all(4),
       decoration: _cardDecoration(radius: 16),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final tabWidth = constraints.maxWidth / _tabs.length;
-          return Stack(
-            children: [
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-                left: tabWidth * _tabIndex,
-                top: 0,
-                bottom: 0,
-                width: tabWidth,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: RequestColors.primary,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: RequestColors.primary.withValues(alpha: 0.30),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+          final tabWidth = constraints.maxWidth / tabs.length;
+
+          return Obx(() {
+            final current = controller.tabIndex.value;
+
+            return Stack(
+              children: [
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  left: tabWidth * current,
+                  top: 0,
+                  bottom: 0,
+                  width: tabWidth,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: RequestColors.primary,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: RequestColors.primary.withValues(alpha: 0.30),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Row(
-                children: List.generate(_tabs.length, (i) {
-                  final selected = i == _tabIndex;
-                  return Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => setState(() => _tabIndex = i),
-                      child: Center(
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 200),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: selected
-                                ? Colors.white
-                                : RequestColors.textSecondary,
+                Row(
+                  children: List.generate(tabs.length, (i) {
+                    final selected = i == current;
+                    return Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => controller.changeTab(i),
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: selected
+                                  ? Colors.white
+                                  : RequestColors.textSecondary,
+                            ),
+                            child: Text(tabs[i]),
                           ),
-                          child: Text(_tabs[i]),
                         ),
                       ),
-                    ),
-                  );
-                }),
-              ),
-            ],
-          );
+                    );
+                  }),
+                ),
+              ],
+            );
+          });
         },
       ),
     );
   }
 
-  List<Widget> _buildTabContent() {
-    if (_tabIndex == 0) {
-      return _schedule
-          .map(
-            (d) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildScheduleTile(d),
-            ),
-          )
-          .toList();
-    }
-    return [_buildEmptyTab()];
+  Widget _buildTabContent() {
+    return Obx(() {
+      final current = controller.tabIndex.value;
+
+      if (current == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: controller.schedule
+              .map(
+                (d) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildScheduleTile(d),
+                ),
+              )
+              .toList(),
+        );
+      }
+      return _buildEmptyTab(isHoliday: current == 1);
+    });
   }
 
-  Widget _buildEmptyTab() {
-    final isHoliday = _tabIndex == 1;
-
+  Widget _buildEmptyTab({required bool isHoliday}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
       decoration: _cardDecoration(),
@@ -809,7 +751,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _buildScheduleTile(_ScheduleDay day) {
+  Widget _buildScheduleTile(ScheduleDay day) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: _cardDecoration(radius: 18),
@@ -880,7 +822,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _buildShiftRow(_Shift shift) {
+  Widget _buildShiftRow(ScheduleShift shift) {
     final color = shift.startHour < 12
         ? RequestColors.gold
         : RequestColors.primary;
@@ -976,7 +918,7 @@ class _ProgressBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(height),
               ),
             ),
-            Container(
+            Container( 
               width: width * value.clamp(0.0, 1.0),
               height: height,
               decoration: BoxDecoration(

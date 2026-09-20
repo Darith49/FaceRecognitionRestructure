@@ -27,4 +27,7 @@ abstract class AppRoutes {
   static const String suggestion = "/suggestion";
   static const String suggestionStatus = "/suggestion-status";
   static const String suggestionDetail = "/suggestion-detail";
+
+  // Schedule
+  static const String schedule = "/schedule";
 }

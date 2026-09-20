@@ -24,10 +24,13 @@ import 'package:face_recognition_attendance/features/request_information_screen/
 import 'package:face_recognition_attendance/features/request_information_screen/view/request_information_screen.dart';
 import 'package:face_recognition_attendance/features/request_information_screen/view/request_list_screen.dart';
 import 'package:face_recognition_attendance/features/request_screen/view/request_screen.dart';
+import 'package:face_recognition_attendance/features/schedule_screen/binding/schedule_binding.dart';
+import 'package:face_recognition_attendance/features/schedule_screen/view/schedule_screen.dart';
 import 'package:face_recognition_attendance/features/suggestion_screen/binding/suggestion_binding.dart';
 import 'package:face_recognition_attendance/features/suggestion_screen/view/suggestion_detail_screen.dart';
 import 'package:face_recognition_attendance/features/suggestion_screen/view/suggestion_screen.dart';
 import 'package:face_recognition_attendance/features/suggestion_screen/view/suggestion_status_screen.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 
 class AppPages {
@@ -161,6 +164,13 @@ class AppPages {
       name: AppRoutes.suggestionDetail,
       page: () => const SuggestionDetailScreen(),
       binding: SuggestionBinding(),
+    ),
+
+    // ----------- Schedule -----------
+    GetPage(
+      name: AppRoutes.schedule,
+      page: () => const ScheduleScreen(showBackButton: true),
+      binding: ScheduleBinding(),
     ),
   ];
 }

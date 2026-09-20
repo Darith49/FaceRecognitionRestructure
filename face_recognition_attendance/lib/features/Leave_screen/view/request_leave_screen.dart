@@ -1,7 +1,7 @@
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
-import 'package:face_recognition_attendance/features/leave_screen/controller/leave_controller.dart';
-import 'package:face_recognition_attendance/features/leave_screen/model/leave_request.dart';
+import 'package:face_recognition_attendance/features/Leave_screen/controller/leave_controller.dart';
+import 'package:face_recognition_attendance/features/Leave_screen/model/leave_request.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

@@ -27,6 +27,11 @@ BoxDecoration _cardDecoration({double radius = 20}) => BoxDecoration(
 class ScheduleScreen extends GetView<ScheduleController> {
   const ScheduleScreen({super.key, this.showBackButton = false});
 
+  @override
+  ScheduleController get controller => Get.isRegistered<ScheduleController>()
+      ? Get.find<ScheduleController>()
+      : Get.put(ScheduleController());
+
   /// false = the "Schedule" tab of the bottom bar (no back arrow).
   /// true  = opened on top of another page with AppRoutes.schedule.
   final bool showBackButton;

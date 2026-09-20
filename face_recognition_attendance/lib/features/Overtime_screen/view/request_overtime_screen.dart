@@ -1,7 +1,7 @@
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
-import 'package:face_recognition_attendance/features/overtime_screen/controller/overtime_controller.dart';
-import 'package:face_recognition_attendance/features/overtime_screen/model/overtime_request.dart';
+import 'package:face_recognition_attendance/features/Overtime_screen/controller/overtime_controller.dart';
+import 'package:face_recognition_attendance/features/Overtime_screen/model/overtime_request.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

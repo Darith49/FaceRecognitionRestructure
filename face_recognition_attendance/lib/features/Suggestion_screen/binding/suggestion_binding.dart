@@ -1,4 +1,4 @@
-import 'package:face_recognition_attendance/features/suggestion_screen/controller/suggestion_controller.dart';
+import 'package:face_recognition_attendance/features/Suggestion_screen/controller/suggestion_controller.dart';
 import 'package:get/get.dart';
 
 /// Both Suggestion pages (form + status list) share ONE controller,

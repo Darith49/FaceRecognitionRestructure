@@ -1,6 +1,6 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
-import 'package:face_recognition_attendance/features/suggestion_screen/controller/suggestion_controller.dart';
+import 'package:face_recognition_attendance/features/Suggestion_screen/controller/suggestion_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

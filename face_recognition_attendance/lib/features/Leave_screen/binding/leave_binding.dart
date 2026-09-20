@@ -1,4 +1,4 @@
-import 'package:face_recognition_attendance/features/leave_screen/controller/leave_controller.dart';
+import 'package:face_recognition_attendance/features/Leave_screen/controller/leave_controller.dart';
 import 'package:get/get.dart';
 
 /// Both Leave pages (list + request form) share ONE controller,

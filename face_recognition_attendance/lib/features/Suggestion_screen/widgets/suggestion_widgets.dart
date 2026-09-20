@@ -1,5 +1,5 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
-import 'package:face_recognition_attendance/features/suggestion_screen/model/suggestion.dart';
+import 'package:face_recognition_attendance/features/Suggestion_screen/model/suggestion.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

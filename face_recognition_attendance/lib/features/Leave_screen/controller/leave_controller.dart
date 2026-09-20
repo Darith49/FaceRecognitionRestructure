@@ -1,6 +1,6 @@
-import 'package:face_recognition_attendance/features/auth/controller/auth_controller.dart';
+import 'package:face_recognition_attendance/features/Leave_screen/model/leave_request.dart';
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
-import 'package:face_recognition_attendance/features/leave_screen/model/leave_request.dart';
 import 'package:get/get.dart';
 
 /// Keeps the leave requests for the Leave feature.
@@ -17,15 +17,15 @@ class LeaveController extends GetxController {
     _watchSignedInUser();
   }
 
-  UserModel? get _signedInUser => Get.isRegistered<AuthController>()
-      ? Get.find<AuthController>().currentuser.value
+  UserModel? get _signedInUser => Get.isRegistered<LoginController>()
+      ? Get.find<LoginController>().currentuser.value
       : null;
 
   /// If another user logs in on the same phone, do not show the old user's requests.
   void _watchSignedInUser() {
-    if (!Get.isRegistered<AuthController>()) return;
+    if (!Get.isRegistered<LoginController>()) return;
 
-    final auth = Get.find<AuthController>();
+    final auth = Get.find<LoginController>();
     _ownerUid = auth.currentuser.value?.uid;
 
     ever(auth.currentuser, (UserModel? user) {

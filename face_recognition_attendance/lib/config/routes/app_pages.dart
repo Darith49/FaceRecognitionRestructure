@@ -32,6 +32,8 @@ import 'package:face_recognition_attendance/features/request_information_screen/
 import 'package:face_recognition_attendance/features/request_screen/view/request_screen.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/binding/schedule_binding.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/view/schedule_screen.dart';
+import 'package:face_recognition_attendance/features/settings/binding/settings_binding.dart';
+import 'package:face_recognition_attendance/features/settings/screens/settings_screen.dart';
 import 'package:get/get.dart';
 
 class AppPages {
@@ -178,6 +180,13 @@ class AppPages {
       name: AppRoutes.schedule,
       page: () => const ScheduleScreen(showBackButton: true),
       binding: ScheduleBinding(),
+    ),
+
+    // ----------- Settings -----------
+    GetPage(
+      name: AppRoutes.settings,
+      page: () => const SettingsScreen(),
+      binding: SettingsBinding(),
     ),
   ];
 }

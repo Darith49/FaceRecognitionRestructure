@@ -31,4 +31,7 @@ abstract class AppRoutes {
 
   // Schedule
   static const String schedule = "/schedule";
+
+  // Settings
+  static const String settings = "/settings";
 }

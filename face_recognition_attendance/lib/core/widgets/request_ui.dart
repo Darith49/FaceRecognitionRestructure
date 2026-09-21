@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -43,10 +44,13 @@ class RequestScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: RequestColors.background,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : RequestColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -55,20 +59,20 @@ class RequestScaffold extends StatelessWidget {
         titleSpacing: showBackButton ? 0.0 : 16.0,
         leading: showBackButton
             ? IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 18,
-                  color: RequestColors.textPrimary,
+                  color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                 ),
                 onPressed: () => Get.back(),
               )
             : null,
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: RequestColors.textPrimary,
+            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
           ),
         ),
         actions: actions,
@@ -99,8 +103,10 @@ class RequestMenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Material(
-      color: Colors.white,
+      color: isDark ? AppColors.darkSurface : Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -126,26 +132,26 @@ class RequestMenuCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: RequestColors.textPrimary,
+                        color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: RequestColors.textSecondary,
+                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: RequestColors.textPrimary,
+                color: isDark ? AppColors.darkTextSecondary : RequestColors.textPrimary,
               ),
             ],
           ),
@@ -163,14 +169,15 @@ class RequestLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: RequestColors.textPrimary,
+          color: isDark ? AppColors.darkText : RequestColors.textPrimary,
         ),
       ),
     );
@@ -183,19 +190,22 @@ class RequestField extends StatelessWidget {
     super.key,
     required this.label,
     required this.value,
-    this.valueColor = RequestColors.textPrimary,
+    this.valueColor,
     this.valueWeight = FontWeight.w500,
     this.multiline = false,
   });
 
   final String label;
   final String value;
-  final Color valueColor;
+  final Color? valueColor;
   final FontWeight valueWeight;
   final bool multiline;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = valueColor ?? (isDark ? AppColors.darkText : RequestColors.textPrimary);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -206,7 +216,7 @@ class RequestField extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           alignment: multiline ? Alignment.topLeft : Alignment.centerLeft,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? AppColors.darkSurface : Colors.white,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Text(
@@ -214,7 +224,7 @@ class RequestField extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: valueWeight,
-              color: valueColor,
+              color: textColor,
             ),
           ),
         ),
@@ -243,11 +253,16 @@ class RequestButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        color ?? (filled ? RequestColors.primary : Colors.white);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultBg = filled
+        ? AppColors.primary
+        : (isDark ? AppColors.darkSurface : Colors.white);
+    final backgroundColor = color ?? defaultBg;
     final foregroundColor = color != null
         ? Colors.white
-        : (filled ? Colors.white : RequestColors.textPrimary);
+        : (filled
+            ? Colors.white
+            : (isDark ? AppColors.darkText : RequestColors.textPrimary));
 
     return SizedBox(
       width: double.infinity,
@@ -329,10 +344,11 @@ class RequestDateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final current = value;
 
     return Material(
-      color: Colors.white,
+      color: isDark ? AppColors.darkSurface : Colors.white,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -343,10 +359,10 @@ class RequestDateField extends StatelessWidget {
           child: Center(
             child: Text(
               current == null ? placeholder : DateText.ymd(current),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: RequestColors.textPrimary,
+                color: isDark ? AppColors.darkText : RequestColors.textPrimary,
               ),
             ),
           ),
@@ -377,11 +393,14 @@ class RequestDropdownField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final resolvedFill = isDark ? AppColors.darkSurface : fillColor;
+
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: fillColor,
+        color: resolvedFill,
         borderRadius: BorderRadius.circular(14),
       ),
       child: DropdownButtonHideUnderline(
@@ -389,20 +408,20 @@ class RequestDropdownField<T> extends StatelessWidget {
           value: value,
           isExpanded: true,
           borderRadius: BorderRadius.circular(14),
-          icon: Icon(icon, color: RequestColors.textSecondary),
-          style: const TextStyle(
+          icon: Icon(icon, color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: RequestColors.textPrimary,
+            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
           ),
           hint: hint == null
               ? null
               : Text(
                   hint!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: RequestColors.textPrimary,
+                    color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                   ),
                 ),
           items: items,
@@ -430,19 +449,24 @@ class RequestTextArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return TextField(
       controller: controller,
       minLines: lines,
       maxLines: lines,
-      style: const TextStyle(fontSize: 13, color: RequestColors.textPrimary),
+      style: TextStyle(
+        fontSize: 13,
+        color: isDark ? AppColors.darkText : RequestColors.textPrimary,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           fontSize: 13,
-          color: RequestColors.textSecondary,
+          color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: isDark ? AppColors.darkSurface : Colors.white,
         contentPadding: const EdgeInsets.all(14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

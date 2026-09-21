@@ -13,7 +13,7 @@ class RequestScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RequestScaffold(
-      title: 'Request',
+      title: 'request_title'.tr,
       showBackButton: showBackButton,
       body: ListView(
         // Extra space at the bottom in the tab, so the floating bar does not cover the cards.

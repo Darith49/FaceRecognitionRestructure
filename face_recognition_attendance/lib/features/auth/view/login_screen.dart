@@ -1,4 +1,5 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
+import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,8 +10,11 @@ class LoginScreen extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -19,7 +23,7 @@ class LoginScreen extends GetView<LoginController> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                //Logo
+                // Logo
                 SizedBox(
                   width: 60,
                   height: 60,
@@ -31,7 +35,7 @@ class LoginScreen extends GetView<LoginController> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
+                            color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
@@ -43,7 +47,7 @@ class LoginScreen extends GetView<LoginController> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 32, 83, 192),
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
@@ -54,22 +58,22 @@ class LoginScreen extends GetView<LoginController> {
 
                 const SizedBox(height: 32),
 
-                //Title
-                const Text(
-                  'Welcome back',
-                  style: TextStyle(
-                    fontSize: 28,
+                // Title
+                Text(
+                  'auth_welcome_back'.tr,
+                  style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF111827),
                     letterSpacing: -0.5,
                   ),
                 ),
 
                 const SizedBox(height: 8),
 
-                const Text(
-                  'Please enter your details.',
-                  style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
+                Text(
+                  'auth_enter_details'.tr,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  ),
                 ),
 
                 SizedBox(height: size.height * 0.05),
@@ -79,8 +83,9 @@ class LoginScreen extends GetView<LoginController> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
+                        color: isDark ? AppColors.darkSurface : const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(12),
+                        border: isDark ? Border.all(color: AppColors.darkBorder) : null,
                       ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -89,24 +94,21 @@ class LoginScreen extends GetView<LoginController> {
                       child: TextField(
                         controller: controller.emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF111827),
-                        ),
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
+                        style: theme.textTheme.bodyLarge,
+                        decoration: InputDecoration(
+                          labelText: 'auth_email'.tr,
                           labelStyle: TextStyle(
-                            color: Color(0xFF9CA3AF),
+                            color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
                             fontSize: 14,
                           ),
                           hintText: 'example@gmail.com',
                           hintStyle: TextStyle(
-                            color: Color(0xFF111827),
+                            color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
                             fontSize: 16,
                           ),
                           border: InputBorder.none,
                           floatingLabelBehavior: FloatingLabelBehavior.always,
-                          contentPadding: EdgeInsets.only(bottom: 8),
+                          contentPadding: const EdgeInsets.only(bottom: 8),
                         ),
                       ),
                     ),
@@ -116,8 +118,9 @@ class LoginScreen extends GetView<LoginController> {
                     Obx(
                       () => Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
+                          color: isDark ? AppColors.darkSurface : const Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(12),
+                          border: isDark ? Border.all(color: AppColors.darkBorder) : null,
                         ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -126,19 +129,16 @@ class LoginScreen extends GetView<LoginController> {
                         child: TextField(
                           controller: controller.passwordController,
                           obscureText: controller.isPasswordHidden.value,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF111827),
-                          ),
+                          style: theme.textTheme.bodyLarge,
                           decoration: InputDecoration(
-                            labelText: 'Password',
-                            labelStyle: const TextStyle(
-                              color: Color(0xFF9CA3AF),
+                            labelText: 'auth_password'.tr,
+                            labelStyle: TextStyle(
+                              color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
                               fontSize: 14,
                             ),
                             hintText: '••••••••',
-                            hintStyle: const TextStyle(
-                              color: Color(0xFF111827),
+                            hintStyle: TextStyle(
+                              color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
                               fontSize: 16,
                             ),
                             border: InputBorder.none,
@@ -153,7 +153,7 @@ class LoginScreen extends GetView<LoginController> {
                                 controller.isPasswordHidden.value
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
-                                color: const Color(0xFF9CA3AF),
+                                color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
                                 size: 20,
                               ),
                             ),
@@ -181,35 +181,30 @@ class LoginScreen extends GetView<LoginController> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  activeColor: const Color(0xFF111827),
-                                  side: const BorderSide(
-                                    color: Color(0xFFD1D5DB),
+                                  activeColor: AppColors.primary,
+                                  side: BorderSide(
+                                    color: isDark ? AppColors.darkBorder : const Color(0xFFD1D5DB),
                                   ),
                                 ),
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Text(
-                              'Remember me',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF374151),
+                            Text(
+                              'auth_remember_me'.tr,
+                              style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            // Forgot password action
+                        TextButton(
+                          onPressed: () {
+                            Get.toNamed(AppRoutes.forgotpassword);
                           },
-                          child: TextButton(
-                            onPressed: () {
-                              Get.toNamed(AppRoutes.forgotpassword);
-                            },
-                            child: Text(
-                              'Forgot passowrd',
-                              style: TextStyle(color: Color(0xFF111827)),
+                          child: Text(
+                            'auth_forgot_password'.tr,
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
                             ),
                           ),
                         ),
@@ -231,19 +226,9 @@ class LoginScreen extends GetView<LoginController> {
                                       .trim(),
                                 ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(
-                              255,
-                              32,
-                              83,
-                              192,
-                            ),
+                            backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor: const Color.fromARGB(
-                              255,
-                              32,
-                              83,
-                              192,
-                            ).withOpacity(0.6),
+                            disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -258,9 +243,9 @@ class LoginScreen extends GetView<LoginController> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text(
-                                  'Sign in',
-                                  style: TextStyle(
+                              : Text(
+                                  'auth_sign_in'.tr,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -271,7 +256,7 @@ class LoginScreen extends GetView<LoginController> {
 
                     const SizedBox(height: 16),
 
-                    //Sign in with google
+                    // Sign in with Google
                     Obx(() {
                       final isAnyLoading =
                           controller.isLoading.value ||
@@ -286,10 +271,10 @@ class LoginScreen extends GetView<LoginController> {
                               ? null
                               : () => controller.loginWithGoogle(),
                           style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF111827),
-                            side: const BorderSide(
-                              color: Color(0xFFE5E7EB),
+                            backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+                            foregroundColor: isDark ? AppColors.darkText : AppColors.lightText,
+                            side: BorderSide(
+                              color: isDark ? AppColors.darkBorder : const Color(0xFFE5E7EB),
                               width: 1,
                             ),
                             elevation: 0,
@@ -303,7 +288,7 @@ class LoginScreen extends GetView<LoginController> {
                                   height: 24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    color: Color.fromARGB(255, 32, 83, 192),
+                                    color: AppColors.primary,
                                   ),
                                 )
                               : Row(
@@ -315,11 +300,12 @@ class LoginScreen extends GetView<LoginController> {
                                       height: 24,
                                     ),
                                     const SizedBox(width: 12),
-                                    const Text(
-                                      'Sign in with Google',
+                                    Text(
+                                      'auth_google_sign_in'.tr,
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
+                                        color: isDark ? AppColors.darkText : AppColors.lightText,
                                       ),
                                     ),
                                   ],
@@ -329,12 +315,15 @@ class LoginScreen extends GetView<LoginController> {
                     }),
                     const SizedBox(height: 24),
 
+                    // Test Accounts Preview Box
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: isDark ? AppColors.darkSurface : Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(
+                          color: isDark ? AppColors.darkBorder : Colors.grey.shade300,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,30 +333,35 @@ class LoginScreen extends GetView<LoginController> {
                             'CEO',
                             'sonarseang@gmail.com',
                             '123456',
+                            context,
                           ),
                           const Divider(height: 12),
                           _buildAccountRow(
                             'Admin',
                             'admin@gmail.com',
                             '123456',
+                            context,
                           ),
                           const Divider(height: 12),
                           _buildAccountRow(
                             'Manager',
                             'manager@gmail.com',
                             '123456',
+                            context,
                           ),
                           const Divider(height: 12),
                           _buildAccountRow(
                             'Leader',
                             'leader@gmail.com',
                             '123456',
+                            context,
                           ),
                           const Divider(height: 12),
                           _buildAccountRow(
                             'Employee',
                             'employee@gmail.com',
                             '123456',
+                            context,
                           ),
                         ],
                       ),
@@ -382,7 +376,10 @@ class LoginScreen extends GetView<LoginController> {
     );
   }
 
-  Widget _buildAccountRow(String role, String email, String password) {
+  Widget _buildAccountRow(String role, String email, String password, BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -390,13 +387,20 @@ class LoginScreen extends GetView<LoginController> {
           width: 75,
           child: Text(
             role,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              color: isDark ? AppColors.darkText : AppColors.lightText,
+            ),
           ),
         ),
         Expanded(
           child: Text(
             email,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? AppColors.darkTextSecondary : Colors.grey.shade800,
+            ),
           ),
         ),
         Text(
@@ -404,7 +408,7 @@ class LoginScreen extends GetView<LoginController> {
           style: TextStyle(
             fontSize: 12,
             fontFamily: 'monospace',
-            color: Colors.grey.shade600,
+            color: isDark ? AppColors.darkTextSecondary : Colors.grey.shade600,
           ),
         ),
       ],

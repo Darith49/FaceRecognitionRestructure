@@ -17,7 +17,7 @@ class AttendanceScreen extends GetView<AttendanceController> {
   @override
   Widget build(BuildContext context) {
     return RequestScaffold(
-      title: 'Attendance',
+      title: 'attendance_title'.tr,
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

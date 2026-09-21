@@ -1,4 +1,3 @@
-import 'package:face_recognition_attendance/config/navigation/navigation_screen.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/service/firebase_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
@@ -160,15 +159,25 @@ class LoginController extends GetxController {
 
   String _friendlyError(Object e) {
     final msg = e.toString();
-    if (msg.contains('email-already-in-use'))
+    if (msg.contains('invalid-credential') ||
+        msg.contains('auth credential is incorrect')) {
+      return 'Incorrect email or password. Please try again.';
+    }
+    if (msg.contains('email-already-in-use')) {
       return 'That email is already registered.';
-    if (msg.contains('weak-password'))
+    }
+    if (msg.contains('weak-password')) {
       return 'Password must be at least 6 characters.';
-    if (msg.contains('user-not-found'))
+    }
+    if (msg.contains('user-not-found')) {
       return 'No account found with that email.';
-    if (msg.contains('wrong-password')) return 'Incorrect password.';
-    if (msg.contains('invalid-email'))
+    }
+    if (msg.contains('wrong-password')) {
+      return 'Incorrect password.';
+    }
+    if (msg.contains('invalid-email')) {
       return 'That email address looks invalid.';
+    }
     return msg;
   }
 

@@ -22,17 +22,51 @@ class RequestColors {
   static const Color teal = Color(0xFF3E5C76);
 }
 
-/// Standard shadows for Apple-style cards.
+/// Standard shadows for Apple-style cards with subtle ambient elevation.
 const List<BoxShadow> appleSoftShadow = [
-  BoxShadow(color: Color(0x08000000), blurRadius: 16, offset: Offset(0, 2)),
-  BoxShadow(color: Color(0x05000000), blurRadius: 4, offset: Offset(0, 1)),
+  BoxShadow(color: Color(0x0A000000), blurRadius: 20, offset: Offset(0, 4)),
+  BoxShadow(color: Color(0x05000000), blurRadius: 6, offset: Offset(0, 1)),
 ];
 
-/// Apple-style card decoration.
-BoxDecoration appleCardDecoration({double radius = 16}) => BoxDecoration(
-  color: Colors.white,
+/// Apple-style Liquid Glass card decoration with specular rim.
+BoxDecoration appleCardDecoration({
+  double radius = 16,
+  Color? color,
+  Border? border,
+}) => BoxDecoration(
+  color: color ?? Colors.white,
   borderRadius: BorderRadius.circular(radius),
+  border: border ?? Border.all(
+    color: Colors.white.withValues(alpha: 0.75),
+    width: 1.0,
+  ),
   boxShadow: appleSoftShadow,
+);
+
+/// Translucent Liquid Glass surface decoration.
+BoxDecoration liquidGlassDecoration({
+  double radius = 16,
+  Color? color,
+  Border? border,
+}) => BoxDecoration(
+  color: color ?? Colors.white.withValues(alpha: 0.78),
+  borderRadius: BorderRadius.circular(radius),
+  border: border ?? Border.all(
+    color: Colors.white.withValues(alpha: 0.85),
+    width: 1.2,
+  ),
+  boxShadow: const [
+    BoxShadow(
+      color: Color(0x08000000),
+      blurRadius: 24,
+      offset: Offset(0, 8),
+    ),
+    BoxShadow(
+      color: Color(0x04000000),
+      blurRadius: 6,
+      offset: Offset(0, 1),
+    ),
+  ],
 );
 
 /// Page frame used by every screen in this feature:

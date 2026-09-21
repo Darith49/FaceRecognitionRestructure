@@ -1,11 +1,11 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
-import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/permissions/app_permissions.dart';
 import 'package:face_recognition_attendance/core/permissions/widgets/permission_view.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -65,9 +65,9 @@ class ProfileScreen extends StatelessWidget {
               // Profile Card
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
+                child: GlassCard(
+                  useOwnLayer: true,
                   padding: const EdgeInsets.all(18),
-                  decoration: appleCardDecoration(radius: 20),
                   child: Obx(() {
                     final user = loginController?.currentuser.value;
                     return Row(
@@ -355,9 +355,9 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+    return GlassCard(
+      useOwnLayer: true,
+      padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -447,6 +447,10 @@ class _RolePanelCard extends StatelessWidget {
               colors: gradient,
             ),
             borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.35),
+              width: 1.0,
+            ),
             boxShadow: [
               BoxShadow(
                 color: gradient.first.withValues(alpha: 0.25),
@@ -545,9 +549,9 @@ class _RoleListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+    return GlassCard(
+      useOwnLayer: true,
+      padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

@@ -5,9 +5,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Liquid Glass Engine (pre-warms fragment shaders)
+  await LiquidGlassWidgets.initialize();
 
   // Initialize GetStorage
   await GetStorage.init();
@@ -18,5 +22,17 @@ Future<void> main() async {
   // Init Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(const MyApp());
+  runApp(
+    LiquidGlassWidgets.wrap(
+      adaptiveQuality: true,
+      respectSystemAccessibility: true,
+      brightnessResolver: Theme.maybeBrightnessOf,
+      theme: GlassThemeData.simple(
+        blur: 14,
+        thickness: 25,
+        quality: GlassQuality.standard,
+      ),
+      child: const MyApp(),
+    ),
+  );
 }

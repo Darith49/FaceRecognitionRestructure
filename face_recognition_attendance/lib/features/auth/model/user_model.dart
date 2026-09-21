@@ -80,12 +80,12 @@ class UserModel {
       phoneNumber: map['phoneNumber'],
       profileUrl: map['profileUrl'],
 
-      role: stringToUserRole(map['role']) ?? UserRole.employee,
+      role: stringToUserRole(map['role']),
 
       branchId: map['branchId'] ?? '',
       departmentId: map['departmentId'] ?? '',
 
-      status: stringToUserStatus(map['status']) ?? UserStatus.active,
+      status: stringToUserStatus(map['status']),
 
       createdBy: map['createdBy'] ?? '',
 

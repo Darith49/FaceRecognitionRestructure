@@ -7,14 +7,16 @@ import 'package:face_recognition_attendance/features/request_screen/view/request
 import 'package:face_recognition_attendance/features/schedule_screen/view/schedule_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 class NavigationScreen extends GetView<NavigationController> {
   const NavigationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GlassScaffold(
       backgroundColor: AppColors.canvasParchment,
+      extendBody: true,
       body: Obx(
         () => IndexedStack(
           index: controller.currentIndex.value,
@@ -27,110 +29,43 @@ class NavigationScreen extends GetView<NavigationController> {
           ],
         ),
       ),
-      bottomNavigationBar: Obx(
-        () => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              top: BorderSide(
-                color: Color(0xFFE5E5EA),
-                width: 0.5,
-              ),
+      bottomBar: Obx(
+        () => GlassTabBar.bottom(
+          selectedIndex: controller.currentIndex.value,
+          onTabSelected: (index) => controller.changePage(index),
+          tabs: [
+            GlassTab(
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home_rounded),
+              label: 'nav_home'.tr,
             ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _NavTab(
-                    icon: Icons.home_rounded,
-                    outlinedIcon: Icons.home_outlined,
-                    label: 'nav_home'.tr,
-                    isSelected: controller.currentIndex.value == 0,
-                    onTap: () => controller.changePage(0),
-                  ),
-                  _NavTab(
-                    icon: Icons.calendar_month_rounded,
-                    outlinedIcon: Icons.calendar_month_outlined,
-                    label: 'nav_schedule'.tr,
-                    isSelected: controller.currentIndex.value == 1,
-                    onTap: () => controller.changePage(1),
-                  ),
-                  _NavTab(
-                    icon: Icons.people_alt_rounded,
-                    outlinedIcon: Icons.people_alt_outlined,
-                    label: 'nav_myteam'.tr,
-                    isSelected: controller.currentIndex.value == 2,
-                    onTap: () => controller.changePage(2),
-                  ),
-                  _NavTab(
-                    icon: Icons.assignment_rounded,
-                    outlinedIcon: Icons.assignment_outlined,
-                    label: 'nav_request'.tr,
-                    isSelected: controller.currentIndex.value == 3,
-                    onTap: () => controller.changePage(3),
-                  ),
-                  _NavTab(
-                    icon: Icons.person_rounded,
-                    outlinedIcon: Icons.person_outline_rounded,
-                    label: 'nav_profile'.tr,
-                    isSelected: controller.currentIndex.value == 4,
-                    onTap: () => controller.changePage(4),
-                  ),
-                ],
-              ),
+            GlassTab(
+              icon: const Icon(Icons.calendar_month_outlined),
+              activeIcon: const Icon(Icons.calendar_month_rounded),
+              label: 'nav_schedule'.tr,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavTab extends StatelessWidget {
-  const _NavTab({
-    required this.icon,
-    required this.outlinedIcon,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final IconData outlinedIcon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isSelected ? AppColors.primary : const Color(0xFF8E8E93);
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? icon : outlinedIcon,
-              size: 24,
-              color: color,
+            GlassTab(
+              icon: const Icon(Icons.people_alt_outlined),
+              activeIcon: const Icon(Icons.people_alt_rounded),
+              label: 'nav_myteam'.tr,
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: color,
-              ),
+            GlassTab(
+              icon: const Icon(Icons.assignment_outlined),
+              activeIcon: const Icon(Icons.assignment_rounded),
+              label: 'nav_request'.tr,
+            ),
+            GlassTab(
+              icon: const Icon(Icons.person_outline_rounded),
+              activeIcon: const Icon(Icons.person_rounded),
+              label: 'nav_profile'.tr,
             ),
           ],
+          selectedIconColor: AppColors.primary,
+          selectedLabelColor: AppColors.primary,
+          unselectedIconColor: const Color(0xFF8E8E93),
+          unselectedLabelColor: const Color(0xFF8E8E93),
+          indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+          barHeight: 64,
         ),
       ),
     );

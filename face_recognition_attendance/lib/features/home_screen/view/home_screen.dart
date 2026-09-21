@@ -7,6 +7,7 @@ import 'package:face_recognition_attendance/features/auth/controller/login_contr
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -340,9 +341,9 @@ class _AttendanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassCard(
+      useOwnLayer: true,
       padding: const EdgeInsets.all(18),
-      decoration: appleCardDecoration(radius: 20),
       child: Column(
         children: [
           Obx(
@@ -563,9 +564,13 @@ class _WifiStatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E5EA)),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.8),
+          width: 1.0,
+        ),
+        boxShadow: appleSoftShadow,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -45,6 +45,7 @@ dependencies:
   table_calendar: ^3.2.1
   google_sign_in: ^6.2.2
   get_storage: ^2.1.1
+  liquid_glass_widgets: ^1.7.1
 
 dev_dependencies:
   flutter_test:

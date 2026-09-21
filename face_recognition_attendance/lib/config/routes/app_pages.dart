@@ -37,6 +37,7 @@ import 'package:face_recognition_attendance/features/settings/screens/settings_s
 import 'package:get/get.dart';
 
 class AppPages {
+  // ignore: non_constant_identifier_names
   static final INITIAL = AppRoutes.login;
 
   static final routes = [

@@ -8,6 +8,7 @@ import 'package:face_recognition_attendance/features/Overtime_screen/model/overt
 import 'package:face_recognition_attendance/features/Overtime_screen/service/overtime_report_pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 /// Redesigned Apple-Style Overtime Screen featuring:
 /// 1. Month Allowance Card (September 2026, Quota Progress Bar, Hours Used/Remaining)
@@ -343,9 +344,8 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
       final progress = (usedVal / maxVal).clamp(0.0, 1.0);
       final remaining = (maxVal - usedVal).clamp(0.0, maxVal);
 
-      return Container(
+      return GlassCard(
         padding: const EdgeInsets.all(18),
-        decoration: appleCardDecoration(radius: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

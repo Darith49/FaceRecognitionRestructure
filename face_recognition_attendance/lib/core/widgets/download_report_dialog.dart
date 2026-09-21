@@ -4,6 +4,7 @@ import 'package:face_recognition_attendance/core/utils/report_period.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 enum _PeriodOption { thisMonth, lastMonth, custom }
 
@@ -90,21 +91,26 @@ class _DownloadReportDialogState extends State<_DownloadReportDialog> {
     final lastMonthDate = DateTime(now.year, now.month - 1);
 
     return Dialog(
-      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
+      child: GlassCard(
+        useOwnLayer: true,
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Top PDF Icon Badge
+            // Top PDF Icon Badge with Liquid Glass specular border
             Container(
-              width: 52,
-              height: 52,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
-                color: RequestColors.primary.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(16),
+                color: RequestColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.75),
+                  width: 1.0,
+                ),
               ),
               child: const Icon(
                 Icons.picture_as_pdf_rounded,
@@ -194,11 +200,11 @@ class _DownloadReportDialogState extends State<_DownloadReportDialog> {
                       onPressed: () => Get.back(),
                       style: TextButton.styleFrom(
                         backgroundColor: isDark
-                            ? AppColors.darkBorder
-                            : const Color(0xFFF2F2F7),
+                            ? AppColors.darkBorder.withValues(alpha: 0.6)
+                            : Colors.black.withValues(alpha: 0.05),
                         foregroundColor: RequestColors.textPrimary,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(999),
                         ),
                       ),
                       child: const Text(
@@ -225,7 +231,7 @@ class _DownloadReportDialogState extends State<_DownloadReportDialog> {
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(999),
                         ),
                         textStyle: const TextStyle(
                           fontSize: 15,
@@ -269,31 +275,39 @@ class _AppleOptionTile extends StatelessWidget {
 
     return Material(
       color: selected
-          ? RequestColors.primary.withValues(alpha: 0.06)
-          : (isDark ? AppColors.darkSurface : RequestColors.softSurface),
-      borderRadius: BorderRadius.circular(14),
+          ? RequestColors.primary.withValues(alpha: 0.08)
+          : (isDark
+              ? AppColors.darkSurface.withValues(alpha: 0.60)
+              : Colors.white.withValues(alpha: 0.70)),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: selected
                   ? RequestColors.primary
-                  : (isDark ? AppColors.darkBorder : AppColors.hairline),
+                  : (isDark
+                      ? AppColors.darkBorder
+                      : Colors.white.withValues(alpha: 0.85)),
               width: selected ? 1.5 : 1.0,
             ),
           ),
           child: Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    width: 0.8,
+                  ),
                 ),
                 child: Icon(icon, size: 18, color: iconColor),
               ),

@@ -2,6 +2,7 @@ import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 class RequestScreen extends StatelessWidget {
   const RequestScreen({super.key, this.showBackButton = false});
@@ -83,8 +84,9 @@ class RequestScreen extends StatelessWidget {
               const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  decoration: appleCardDecoration(),
+                child: GlassCard(
+                  useOwnLayer: true,
+                  padding: EdgeInsets.zero,
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [
@@ -132,9 +134,9 @@ class RequestScreen extends StatelessWidget {
               // Permission & Authorization
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Material(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                child: GlassCard(
+                  useOwnLayer: true,
+                  padding: EdgeInsets.zero,
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () => Get.toNamed(AppRoutes.permission),
@@ -234,8 +236,9 @@ class RequestScreen extends StatelessWidget {
               const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  decoration: appleCardDecoration(),
+                child: GlassCard(
+                  useOwnLayer: true,
+                  padding: EdgeInsets.zero,
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [

@@ -6,6 +6,7 @@ import 'package:face_recognition_attendance/features/Leave_screen/controller/lea
 import 'package:face_recognition_attendance/features/Leave_screen/model/leave_request.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 /// Redesigned Apple-Style Leave Screen featuring:
 /// 1. Annual Allowance Overview (Total, Taken, Pending, Left)
@@ -334,41 +335,57 @@ class _LeaveScreenState extends State<LeaveScreen> {
           final pendingVal = pendingCount > 0 ? pendingCount.toDouble() : 2.0;
           final leftVal = (24.0 - takenVal - pendingVal).clamp(0.0, 24.0);
           final leftDisplay = leftVal.toStringAsFixed(leftVal.truncateToDouble() == leftVal ? 0 : 1);
+          final isDark = Theme.of(context).brightness == Brightness.dark;
 
-          return Row(
-            children: [
-              Expanded(
-                child: _AllowanceCard(
-                  value: '24',
-                  label: 'Total',
-                  valueColor: RequestColors.textPrimary,
+          return GlassCard(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _AllowanceCard(
+                    value: '24',
+                    label: 'Total',
+                    valueColor: isDark ? AppColors.darkText : RequestColors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _AllowanceCard(
-                  value: takenDisplay,
-                  label: 'Taken',
-                  valueColor: RequestColors.textPrimary,
+                Container(
+                  width: 1,
+                  height: 32,
+                  color: isDark ? AppColors.darkBorder : Colors.black.withValues(alpha: 0.06),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _AllowanceCard(
-                  value: pendingDisplay,
-                  label: 'Pending',
-                  valueColor: RequestColors.gold,
+                Expanded(
+                  child: _AllowanceCard(
+                    value: takenDisplay,
+                    label: 'Taken',
+                    valueColor: isDark ? AppColors.darkText : RequestColors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _AllowanceCard(
-                  value: leftDisplay,
-                  label: 'Left',
-                  valueColor: RequestColors.primary,
+                Container(
+                  width: 1,
+                  height: 32,
+                  color: isDark ? AppColors.darkBorder : Colors.black.withValues(alpha: 0.06),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: _AllowanceCard(
+                    value: pendingDisplay,
+                    label: 'Pending',
+                    valueColor: RequestColors.gold,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 32,
+                  color: isDark ? AppColors.darkBorder : Colors.black.withValues(alpha: 0.06),
+                ),
+                Expanded(
+                  child: _AllowanceCard(
+                    value: leftDisplay,
+                    label: 'Left',
+                    valueColor: RequestColors.primary,
+                  ),
+                ),
+              ],
+            ),
           );
         }),
       ],
@@ -907,11 +924,10 @@ class _AllowanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 74,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: appleCardDecoration(radius: 14),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(

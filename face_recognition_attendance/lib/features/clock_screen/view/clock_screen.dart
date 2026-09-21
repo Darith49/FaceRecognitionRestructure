@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
+import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
@@ -161,17 +162,20 @@ class _ClockScreenState extends State<ClockScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.calendar_today_rounded,
                     size: 14,
                     color: RequestColors.textSecondary,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    'Next schedule: Tomorrow, 09:00 AM (Normal Shift)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: RequestColors.textSecondary,
+                  Obx(
+                    () => Text(
+                      controller.nextScheduleText,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: RequestColors.textSecondary,
+                      ),
                     ),
                   ),
                 ],
@@ -397,33 +401,134 @@ class _ClockAttendanceCard extends StatelessWidget {
           const Divider(height: 1, color: Color(0xFFF0F0F0)),
           const SizedBox(height: 14),
 
+          // ─── 2 Attendance Sessions ──────────────────────────────────────────
           Obx(
-            () => IntrinsicHeight(
-              child: Row(
-                children: [
-                  _ClockStatColumn(
-                    label: 'CHECK IN',
-                    value: controller.checkInText,
-                    subLabel: 'Scheduled 09:00',
+            () => Column(
+              children: [
+                // Session 1 Tile (Morning)
+                _ClockSessionTile(
+                  sessionNumber: 1,
+                  sessionName: 'MORNING',
+                  icon: Icons.wb_sunny_rounded,
+                  iconColor: const Color(0xFFF59E0B),
+                  checkInTime: controller.session1CheckInText,
+                  checkOutTime: controller.session1CheckOutText,
+                  scheduledIn: HomeController.session1SchedIn,
+                  scheduledOut: HomeController.session1SchedOut,
+                  statusText: controller.session1StatusText,
+                  isActive: controller.isSession1Active,
+                  isDone: controller.isSession1Done,
+                ),
+
+                const SizedBox(height: 10),
+
+                // Session 2 Tile (Afternoon)
+                _ClockSessionTile(
+                  sessionNumber: 2,
+                  sessionName: 'AFTERNOON',
+                  icon: Icons.wb_twilight_rounded,
+                  iconColor: const Color(0xFF6366F1),
+                  checkInTime: controller.session2CheckInText,
+                  checkOutTime: controller.session2CheckOutText,
+                  scheduledIn: HomeController.session2SchedIn,
+                  scheduledOut: HomeController.session2SchedOut,
+                  statusText: controller.session2StatusText,
+                  isActive: controller.isSession2Active,
+                  isDone: controller.isSession2Done,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Total Hours Summary Banner with Progress Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: controller.goalProgress >= 1.0
+                        ? RequestColors.approvedStatus.withValues(alpha: 0.08)
+                        : const Color(0xFFF5F5F7),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  Container(width: 1, color: const Color(0xFFF0F0F0)),
-                  _ClockStatColumn(
-                    label: 'CHECK OUT',
-                    value: controller.checkOutText,
-                    subLabel: 'Standard 18:00',
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.timer_outlined,
+                                size: 16,
+                                color: controller.goalProgress >= 1.0
+                                    ? RequestColors.approvedStatus
+                                    : RequestColors.textSecondary,
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'TOTAL HOURS WORKED',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: RequestColors.textSecondary,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            controller.totalHoursText,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: controller.goalProgress >= 1.0
+                                  ? RequestColors.approvedStatus
+                                  : RequestColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: controller.goalProgress,
+                          minHeight: 6,
+                          backgroundColor: const Color(0xFFE5E5EA),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            controller.goalProgress >= 1.0
+                                ? RequestColors.approvedStatus
+                                : RequestColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${(controller.goalProgress * 100).toInt()}% of 8.0h goal',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: RequestColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            controller.remainingGoalText == 'Done!'
+                                ? 'Goal Reached!'
+                                : '${controller.remainingGoalText} remaining',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: controller.goalProgress >= 1.0
+                                  ? RequestColors.approvedStatus
+                                  : RequestColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  Container(width: 1, color: const Color(0xFFF0F0F0)),
-                  _ClockStatColumn(
-                    label: 'TOTAL HRS',
-                    value: controller.totalHoursText,
-                    subLabel:
-                        '${(controller.goalProgress * 100).toInt()}% reached',
-                    subLabelColor: controller.goalProgress >= 1.0
-                        ? RequestColors.approvedStatus
-                        : RequestColors.gold,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
@@ -495,23 +600,163 @@ class _ClockGoalBadge extends StatelessWidget {
   }
 }
 
-class _ClockStatColumn extends StatelessWidget {
-  const _ClockStatColumn({
+class _ClockSessionTile extends StatelessWidget {
+  const _ClockSessionTile({
+    required this.sessionNumber,
+    required this.sessionName,
+    required this.icon,
+    required this.iconColor,
+    required this.checkInTime,
+    required this.checkOutTime,
+    required this.scheduledIn,
+    required this.scheduledOut,
+    required this.statusText,
+    required this.isActive,
+    required this.isDone,
+  });
+
+  final int sessionNumber;
+  final String sessionName;
+  final IconData icon;
+  final Color iconColor;
+  final String checkInTime;
+  final String checkOutTime;
+  final String scheduledIn;
+  final String scheduledOut;
+  final String statusText;
+  final bool isActive;
+  final bool isDone;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Color badgeBg;
+    Color badgeText;
+    if (isDone) {
+      badgeBg = RequestColors.approvedStatus.withValues(alpha: 0.12);
+      badgeText = RequestColors.approvedStatus;
+    } else if (isActive && checkInTime != '-- : --') {
+      badgeBg = RequestColors.primary.withValues(alpha: 0.12);
+      badgeText = RequestColors.primary;
+    } else {
+      badgeBg = isDark ? AppColors.darkBorder : const Color(0xFFF0F0F2);
+      badgeText = RequestColors.textSecondary;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isActive
+              ? RequestColors.primary.withValues(alpha: 0.35)
+              : (isDark ? AppColors.darkBorder : const Color(0xFFEBECEF)),
+          width: isActive ? 1.4 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: iconColor.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: 13, color: iconColor),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'SESSION $sessionNumber • $sessionName',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isActive
+                          ? RequestColors.primary
+                          : (isDark ? AppColors.darkText : RequestColors.textPrimary),
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  statusText,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: badgeText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _ClockSessionStatItem(
+                  label: 'CHECK IN',
+                  value: checkInTime,
+                  subLabel: 'Scheduled $scheduledIn',
+                  isFilled: checkInTime != '-- : --',
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 34,
+                color: isDark ? AppColors.darkBorder : const Color(0xFFE5E7EB),
+              ),
+              Expanded(
+                child: _ClockSessionStatItem(
+                  label: 'CHECK OUT',
+                  value: checkOutTime,
+                  subLabel: 'Scheduled $scheduledOut',
+                  isFilled: checkOutTime != '-- : --',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClockSessionStatItem extends StatelessWidget {
+  const _ClockSessionStatItem({
     required this.label,
     required this.value,
-    this.subLabel,
-    this.subLabelColor,
+    required this.subLabel,
+    required this.isFilled,
   });
 
   final String label;
   final String value;
-  final String? subLabel;
-  final Color? subLabelColor;
+  final String subLabel;
+  final bool isFilled;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
@@ -522,29 +767,26 @@ class _ClockStatColumn extends StatelessWidget {
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 6),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 350),
-            child: Text(
-              value,
-              key: ValueKey(value),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: RequestColors.textPrimary,
-              ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: isFilled
+                  ? (isDark ? AppColors.darkText : RequestColors.textPrimary)
+                  : const Color(0xFF8E8E93),
+              letterSpacing: -0.2,
             ),
           ),
-          if (subLabel != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subLabel!,
-              style: TextStyle(
-                fontSize: 11,
-                color: subLabelColor ?? RequestColors.textSecondary,
-              ),
+          const SizedBox(height: 2),
+          Text(
+            subLabel,
+            style: const TextStyle(
+              fontSize: 11,
+              color: RequestColors.textSecondary,
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -640,10 +882,15 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
 
   Color _buttonColor(CheckState state) {
     switch (state) {
+      case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
+      case CheckState.session2NotCheckedIn:
         return RequestColors.primary;
+      case CheckState.session1CheckedIn:
       case CheckState.checkedIn:
+      case CheckState.session2CheckedIn:
         return RequestColors.danger;
+      case CheckState.completed:
       case CheckState.checkedOut:
         return RequestColors.approvedStatus;
     }
@@ -651,31 +898,29 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
 
   IconData _buttonIcon(CheckState state) {
     switch (state) {
+      case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
+      case CheckState.session2NotCheckedIn:
         return Icons.wifi_tethering_rounded;
+      case CheckState.session1CheckedIn:
       case CheckState.checkedIn:
+      case CheckState.session2CheckedIn:
         return Icons.logout_rounded;
+      case CheckState.completed:
       case CheckState.checkedOut:
         return Icons.check_rounded;
     }
   }
 
   String _buttonSubtext(CheckState state) {
-    switch (state) {
-      case CheckState.notCheckedIn:
-        return 'Face or Tap ID';
-      case CheckState.checkedIn:
-        return 'Tap to finish shift';
-      case CheckState.checkedOut:
-        return 'Shift Recorded';
-    }
+    return widget.controller.buttonSubtext;
   }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final state = widget.controller.state.value;
-      final done = state == CheckState.checkedOut;
+      final done = state == CheckState.completed || state == CheckState.checkedOut;
       final buttonColor = _buttonColor(state);
 
       if (done && _pulseController.isAnimating) {

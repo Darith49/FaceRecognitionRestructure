@@ -1,5 +1,6 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/service/firebase_service.dart';
+import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ class LoginController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
 
   final Rx<UserModel?> currentuser = Rx<UserModel?>(null);
+  final RxBool hasFaceRegistered = false.obs;
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -27,12 +29,25 @@ class LoginController extends GetxController {
     _checkCurrentUser();
   }
 
+  Future<void> checkFaceStatus() async {
+    try {
+      final api = ApiService();
+      final res = await api.get('/face/status/');
+      if (res is Map && res.containsKey('registered')) {
+        hasFaceRegistered.value = res['registered'] == true;
+      }
+    } catch (_) {
+      // Graceful fallback
+    }
+  }
+
   Future<void> _checkCurrentUser() async {
     final firebaseUser = _firebaseService.getCurrentUser();
     if (firebaseUser != null) {
       final user = await _firebaseService.getUserByUid(firebaseUser.uid);
       if (user != null) {
         currentuser.value = user;
+        await checkFaceStatus();
       }
     }
   }
@@ -49,6 +64,7 @@ class LoginController extends GetxController {
 
       if (user != null) {
         currentuser.value = user; // 1. Save user state
+        await checkFaceStatus();
         _navigationBasedOnRole(user.role);
         return true;
       } else {
@@ -123,6 +139,7 @@ class LoginController extends GetxController {
         return;
       }
       currentuser.value = user;
+      await checkFaceStatus();
 
       _navigationBasedOnRole(user.role);
     } catch (e) {
@@ -150,7 +167,8 @@ class LoginController extends GetxController {
   Future<void> logOut() async {
     await _firebaseService.logout();
     currentuser.value = null;
-    Get.offNamed(AppRoutes.login);
+    hasFaceRegistered.value = false;
+    Get.offAllNamed(AppRoutes.login);
   }
 
   void _navigationBasedOnRole(UserRole role) {

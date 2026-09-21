@@ -1,0 +1,615 @@
+import 'package:face_recognition_attendance/config/routes/app_routes.dart';
+import 'package:face_recognition_attendance/core/permissions/app_permissions.dart';
+import 'package:face_recognition_attendance/core/permissions/permission_service.dart';
+import 'package:face_recognition_attendance/core/permissions/widgets/permission_view.dart';
+import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
+import 'package:face_recognition_attendance/features/branch/controller/branch_controller.dart';
+import 'package:face_recognition_attendance/features/department/controller/department_controller.dart';
+import 'package:face_recognition_attendance/features/employee/controller/employee_controller.dart';
+import 'package:face_recognition_attendance/features/employee/model/employee_model.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+class EmployeeListScreen extends StatefulWidget {
+  const EmployeeListScreen({super.key});
+
+  @override
+  State<EmployeeListScreen> createState() => _EmployeeListScreenState();
+}
+
+class _EmployeeListScreenState extends State<EmployeeListScreen> {
+  int? _selectedBranchFilter;
+
+  final EmployeeController _controller = Get.isRegistered<EmployeeController>()
+      ? Get.find<EmployeeController>()
+      : Get.put(EmployeeController());
+
+  final BranchController _branchController = Get.isRegistered<BranchController>()
+      ? Get.find<BranchController>()
+      : Get.put(BranchController());
+
+  @override
+  Widget build(BuildContext context) {
+    return RequestScaffold(
+      title: 'Employee Directory',
+      showBackButton: true,
+      body: Obx(() {
+        if (_controller.isLoading.value && _controller.employees.isEmpty) {
+          return const Center(child: CircularProgressIndicator(color: RequestColors.primary));
+        }
+
+        final branches = _branchController.branches;
+        final allEmployees = _controller.employees;
+
+        final filteredEmployees = _selectedBranchFilter == null
+            ? allEmployees
+            : allEmployees.where((e) => e.branchId == _selectedBranchFilter).toList();
+
+        final Map<String, List<EmployeeModel>> groupedEmployees = {};
+        for (final emp in filteredEmployees) {
+          final branchName = emp.branchName.isNotEmpty ? emp.branchName : 'Unassigned Branch';
+          groupedEmployees.putIfAbsent(branchName, () => []).add(emp);
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            await Future.wait([
+              _controller.fetchEmployees(),
+              _branchController.fetchBranches(),
+            ]);
+          },
+          color: RequestColors.primary,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Top Action: Invite Employee
+              PermissionView(
+                targetPermission: AppPermission.createEmployee,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final created = await Get.toNamed(AppRoutes.createEmployee);
+                      if (created == true) {
+                        _controller.fetchEmployees();
+                      }
+                    },
+                    icon: const Icon(Icons.person_add_alt_rounded),
+                    label: const Text('Invite New Employee'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: RequestColors.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ),
+
+              // ─── Branch Filter Chips ───
+              if (branches.isNotEmpty) ...[
+                SizedBox(
+                  height: 38,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text('All (${allEmployees.length})'),
+                          selected: _selectedBranchFilter == null,
+                          onSelected: (_) => setState(() => _selectedBranchFilter = null),
+                          selectedColor: RequestColors.primary.withValues(alpha: 0.15),
+                          labelStyle: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _selectedBranchFilter == null ? RequestColors.primary : RequestColors.textSecondary,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: _selectedBranchFilter == null ? RequestColors.primary : Colors.grey.shade300,
+                            ),
+                          ),
+                        ),
+                      ),
+                      ...branches.map((b) {
+                        final count = allEmployees.where((e) => e.branchId == b.id).length;
+                        final isSelected = _selectedBranchFilter == b.id;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text('${b.name} ($count)'),
+                            selected: isSelected,
+                            onSelected: (_) => setState(() => _selectedBranchFilter = isSelected ? null : b.id),
+                            selectedColor: RequestColors.primary.withValues(alpha: 0.15),
+                            labelStyle: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? RequestColors.primary : RequestColors.textSecondary,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: isSelected ? RequestColors.primary : Colors.grey.shade300,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              if (filteredEmployees.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 60),
+                    child: Column(
+                      children: [
+                        Icon(Icons.people_outline_rounded, size: 54, color: Colors.grey.shade400),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'No employees found',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _selectedBranchFilter != null
+                              ? 'No staff assigned to this branch yet.'
+                              : 'Invite employees to get started with attendance tracking.',
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                ...groupedEmployees.entries.map((entry) {
+                  final branchName = entry.key;
+                  final employeesInBranch = entry.value;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ─── Branch Section Header ───
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        margin: const EdgeInsets.only(top: 10, bottom: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F766E).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF0F766E).withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.business_rounded, size: 16, color: Color(0xFF0F766E)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                branchName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Color(0xFF0F766E),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F766E).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${employeesInBranch.length} Staff',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F766E),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // ─── Employee Cards in this Branch ───
+                      ...employeesInBranch.map((e) => _buildEmployeeCard(context, e)),
+                    ],
+                  );
+                }),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildEmployeeCard(BuildContext context, EmployeeModel e) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: RequestColors.primary.withValues(alpha: 0.1),
+              child: Text(
+                e.fullname.isNotEmpty ? e.fullname[0].toUpperCase() : '?',
+                style: const TextStyle(
+                  color: RequestColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          e.fullname,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: RequestColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      _buildRoleBadge(e.role.name),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    e.email,
+                    style: const TextStyle(fontSize: 13, color: RequestColors.textSecondary),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      if (e.departmentName.isNotEmpty) ...[
+                        Icon(Icons.apartment_rounded, size: 13, color: Colors.grey.shade600),
+                        const SizedBox(width: 3),
+                        Text(
+                          e.departmentName,
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      if (e.employeeId.isNotEmpty) ...[
+                        Icon(Icons.badge_outlined, size: 13, color: Colors.grey.shade600),
+                        const SizedBox(width: 3),
+                        Text(
+                          e.employeeId,
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.mark_email_read_outlined, size: 20, color: Colors.indigo),
+                  tooltip: 'Resend Invitation',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _controller.resendInvitation(e),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 20, color: RequestColors.primary),
+                  tooltip: 'Edit User',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _showEditEmployeeBottomSheet(context, e),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditEmployeeBottomSheet(BuildContext context, EmployeeModel employee) {
+    final formKey = GlobalKey<FormState>();
+    final fullnameController = TextEditingController(text: employee.fullname);
+    final emailController = TextEditingController(text: employee.email);
+    final empIdController = TextEditingController(text: employee.employeeId);
+
+    UserRole selectedRole = employee.role;
+    int? selectedBranchId = employee.branchId;
+    int? selectedDeptId = employee.departmentId;
+
+    final departmentController = Get.isRegistered<DepartmentController>()
+        ? Get.find<DepartmentController>()
+        : Get.put(DepartmentController());
+
+    final isSubmitting = false.obs;
+    final isResending = false.obs;
+
+    final allowedRoles = PermissionService.to.getCreateableRoles();
+    final roleChoices = allowedRoles.contains(employee.role)
+        ? allowedRoles
+        : [employee.role, ...allowedRoles];
+
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          child: StatefulBuilder(
+            builder: (context, setSheetState) {
+              return Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Edit User',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: RequestColors.textPrimary),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () => Get.back(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Full Name', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: RequestColors.textPrimary)),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: fullnameController,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: RequestColors.softSurface,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        prefixIcon: const Icon(Icons.person_outline_rounded, color: RequestColors.primary),
+                      ),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter full name' : null,
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Email Address (Gmail)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: RequestColors.textPrimary)),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: RequestColors.softSurface,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        prefixIcon: const Icon(Icons.mail_outline_rounded, color: RequestColors.primary),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Please enter email';
+                        if (!GetUtils.isEmail(v.trim())) return 'Please enter a valid email';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Company Role', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: RequestColors.textPrimary)),
+                    const SizedBox(height: 6),
+                    RequestDropdownField<UserRole>(
+                      value: selectedRole,
+                      fillColor: RequestColors.softSurface,
+                      icon: Icons.keyboard_arrow_down_rounded,
+                      items: roleChoices
+                          .map((r) => DropdownMenuItem<UserRole>(
+                                value: r,
+                                child: Text(r.name.toUpperCase()),
+                              ))
+                          .toList(),
+                      onChanged: (role) {
+                        setSheetState(() => selectedRole = role);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Assigned Branch', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: RequestColors.textPrimary)),
+                    const SizedBox(height: 6),
+                    Obx(() {
+                      final branches = _branchController.branches;
+                      return RequestDropdownField<int>(
+                        value: selectedBranchId,
+                        hint: 'Select Branch',
+                        fillColor: RequestColors.softSurface,
+                        icon: Icons.keyboard_arrow_down_rounded,
+                        items: branches
+                            .map((b) => DropdownMenuItem<int>(
+                                  value: b.id,
+                                  child: Text(b.name),
+                                ))
+                            .toList(),
+                        onChanged: (id) {
+                          setSheetState(() {
+                            selectedBranchId = id;
+                            selectedDeptId = null;
+                          });
+                        },
+                      );
+                    }),
+                    const SizedBox(height: 14),
+                    const Text('Assigned Department (Optional)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: RequestColors.textPrimary)),
+                    const SizedBox(height: 6),
+                    Obx(() {
+                      final depts = selectedBranchId != null
+                          ? departmentController.departments.where((d) => d.branchId == selectedBranchId).toList()
+                          : departmentController.departments;
+
+                      return RequestDropdownField<int>(
+                        value: selectedDeptId,
+                        hint: 'Select Department',
+                        fillColor: RequestColors.softSurface,
+                        icon: Icons.keyboard_arrow_down_rounded,
+                        items: depts
+                            .map((d) => DropdownMenuItem<int>(
+                                  value: d.id,
+                                  child: Text(d.name),
+                                ))
+                            .toList(),
+                        onChanged: (id) => setSheetState(() => selectedDeptId = id),
+                      );
+                    }),
+                    const SizedBox(height: 14),
+                    const Text('Employee ID (Optional)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: RequestColors.textPrimary)),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: empIdController,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: RequestColors.softSurface,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        prefixIcon: const Icon(Icons.badge_outlined, color: RequestColors.primary),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Obx(() => OutlinedButton.icon(
+                          onPressed: isResending.value
+                              ? null
+                              : () async {
+                                  isResending.value = true;
+                                  try {
+                                    await _controller.resendInvitation(employee);
+                                  } finally {
+                                    isResending.value = false;
+                                  }
+                                },
+                          icon: isResending.value
+                              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                              : const Icon(Icons.mark_email_read_outlined, size: 18),
+                          label: Text(isResending.value ? 'Resending...' : 'Resend Invitation Email'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.indigo,
+                            minimumSize: const Size.fromHeight(44),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        )),
+                    const SizedBox(height: 12),
+                    Obx(() {
+                      final isBusy = isSubmitting.value || _controller.isLoading.value;
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: isBusy
+                              ? null
+                              : () async {
+                                  if (isSubmitting.value || _controller.isLoading.value) return;
+                                  if (!formKey.currentState!.validate()) return;
+                                  isSubmitting.value = true;
+                                  try {
+                                    final fullname = fullnameController.text.trim();
+                                    final email = emailController.text.trim();
+                                    final empId = empIdController.text.trim();
+
+                                    final success = await _controller.updateEmployee(
+                                      id: employee.id,
+                                      fullname: fullname,
+                                      email: email,
+                                      role: selectedRole,
+                                      branchId: selectedBranchId,
+                                      departmentId: selectedDeptId,
+                                      employeeId: empId,
+                                    );
+
+                                    if (success) {
+                                      Get.back();
+                                      Get.snackbar(
+                                        'Success',
+                                        'User "$fullname" updated successfully.',
+                                        snackPosition: SnackPosition.BOTTOM,
+                                        backgroundColor: Colors.green.shade600,
+                                        colorText: Colors.white,
+                                        icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+                                        margin: const EdgeInsets.all(16),
+                                        borderRadius: 12,
+                                        duration: const Duration(seconds: 3),
+                                      );
+                                    }
+                                  } finally {
+                                    isSubmitting.value = false;
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: RequestColors.primary,
+                            disabledBackgroundColor: RequestColors.primary.withValues(alpha: 0.65),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: isBusy
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildRoleBadge(String roleName) {
+    Color bg = Colors.grey.shade100;
+    Color fg = Colors.grey.shade800;
+
+    switch (roleName.toLowerCase()) {
+      case 'ceo':
+        bg = Colors.purple.shade50;
+        fg = Colors.purple.shade700;
+        break;
+      case 'manager':
+        bg = Colors.blue.shade50;
+        fg = Colors.blue.shade700;
+        break;
+      case 'leader':
+        bg = Colors.teal.shade50;
+        fg = Colors.teal.shade700;
+        break;
+      case 'employee':
+        bg = Colors.green.shade50;
+        fg = Colors.green.shade700;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      child: Text(
+        roleName.toUpperCase(),
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: fg),
+      ),
+    );
+  }
+}

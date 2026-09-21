@@ -66,5 +66,23 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Camera and Microphone Access -->
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is required for facial recognition attendance scanning and employee face enrollment.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access is required for video capture support.</string>
+
+	<!-- Location Access for Geofence -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access is required to verify your presence within the company branch geofence during attendance check-in.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Location access is required to verify your presence within the company branch geofence during attendance check-in.</string>
+
+	<!-- Local Network & HTTP Access for Development -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

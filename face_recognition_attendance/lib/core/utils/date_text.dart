@@ -27,6 +27,33 @@ class DateText {
     'December',
   ];
 
+  /// Cambodia timezone is Indochina Time (ICT, UTC+7), with no daylight saving time.
+  static const Duration cambodiaOffset = Duration(hours: 7);
+
+  /// Converts any [DateTime] into a Cambodia wall-clock [DateTime] (UTC+7).
+  static DateTime toCambodia(DateTime d) {
+    final utc = d.toUtc().add(cambodiaOffset);
+    return DateTime(
+      utc.year,
+      utc.month,
+      utc.day,
+      utc.hour,
+      utc.minute,
+      utc.second,
+      utc.millisecond,
+      utc.microsecond,
+    );
+  }
+
+  /// Parses an ISO-8601 string or date string directly into Cambodia wall-clock [DateTime].
+  static DateTime parseCambodia(String isoString) {
+    final parsed = DateTime.parse(isoString);
+    return toCambodia(parsed);
+  }
+
+  /// Returns current wall-clock date and time in Cambodia (UTC+7).
+  static DateTime nowCambodia() => toCambodia(DateTime.now());
+
   static String _two(int value) => value.toString().padLeft(2, '0');
 
   static int _hour12(DateTime d) => d.hour % 12 == 0 ? 12 : d.hour % 12;

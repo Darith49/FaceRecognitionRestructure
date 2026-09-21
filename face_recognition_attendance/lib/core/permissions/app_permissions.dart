@@ -1,8 +1,22 @@
-//All Feature in App
+// All permissions in App
 enum AppPermission {
-  //Example
+  // Panel Access
   accessCeoPanel,
   accessManagerPanel,
   accessLeaderPanel,
   accessEmployeePanel,
+
+  // Organization Management
+  createBranch,
+  editBranch,
+  deleteBranch,
+  createDepartment,
+  editDepartment,
+  deleteDepartment,
+  createEmployee,
+
+  // Attendance & Face Scanning
+  attendanceCheckIn,
+  attendanceCheckOut,
+  registerFace,
 }

@@ -1,5 +1,4 @@
 import math
-from datetime import date
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
@@ -87,7 +86,7 @@ class AttendanceService:
                 )
 
             # 7. Check for duplicate active check-in today
-            today = date.today()
+            today = timezone.localdate()
             existing = Attendance.objects.filter(
                 employee=employee,
                 date=today,
@@ -104,6 +103,7 @@ class AttendanceService:
                 check_in_latitude=latitude,
                 check_in_longitude=longitude,
                 status='checked_in',
+                date=today,
             )
 
             return {
@@ -135,7 +135,7 @@ class AttendanceService:
         branch = employee.branch
 
         # Find active check-in for today
-        today = date.today()
+        today = timezone.localdate()
         record = Attendance.objects.filter(
             employee=employee,
             date=today,

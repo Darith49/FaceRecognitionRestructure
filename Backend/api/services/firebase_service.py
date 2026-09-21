@@ -98,3 +98,20 @@ def sync_firestore_user_profile(uid: str, profile_data: dict):
         logger.info("Synced user %s to Firestore", uid)
     except Exception as e:
         logger.warning("Firestore sync warning for %s: %s (non-fatal, Django DB remains source of truth)", uid, e)
+
+
+def update_firebase_user(uid: str, email: str = None, fullname: str = None):
+    """Updates the user's email and/or display name in Firebase Auth."""
+    import firebase_admin.auth as auth
+    kwargs = {}
+    if email:
+        kwargs['email'] = email
+    if fullname:
+        kwargs['display_name'] = fullname
+    if kwargs:
+        try:
+            auth.update_user(uid, **kwargs)
+            logger.info("Updated Firebase Auth user %s with %s", uid, kwargs)
+        except Exception as e:
+            logger.warning("Failed to update Firebase Auth user %s: %s", uid, e)
+

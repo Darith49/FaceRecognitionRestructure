@@ -50,6 +50,8 @@ class ClockController extends GetxController {
   String get nextScheduleText => _home.nextScheduleText;
   String get userName => _home.userName;
   String get greeting => _home.greeting;
+  bool get hasFaceRegistered => _home.hasFaceRegistered;
+  bool get isCeo => _home.isCeo;
 
   void onMainButtonPressed() => _home.onMainButtonPressed();
   void resetAttendance() => _home.resetAttendance();

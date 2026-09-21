@@ -14,6 +14,7 @@ class ProfileScreen extends StatelessWidget {
     final loginController = Get.isRegistered<LoginController>()
         ? Get.find<LoginController>()
         : null;
+    loginController?.checkFaceStatus();
 
     return Scaffold(
       backgroundColor: RequestColors.background,
@@ -154,27 +155,36 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: RequestColors.approvedStatus,
-                                      shape: BoxShape.circle,
+                              Obx(() {
+                                final isRegistered = loginController?.hasFaceRegistered.value ?? false;
+                                return Row(
+                                  children: [
+                                    Container(
+                                      width: 7,
+                                      height: 7,
+                                      decoration: BoxDecoration(
+                                        color: isRegistered
+                                            ? RequestColors.approvedStatus
+                                            : const Color(0xFFF59E0B),
+                                        shape: BoxShape.circle,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    'Face ID Registered',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: RequestColors.approvedStatus,
-                                      fontWeight: FontWeight.w500,
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      isRegistered
+                                          ? 'Face ID Registered'
+                                          : 'Face ID Not Registered',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isRegistered
+                                            ? RequestColors.approvedStatus
+                                            : const Color(0xFFD97706),
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                );
+                              }),
                             ],
                           ),
                         ),
@@ -182,6 +192,32 @@ class ProfileScreen extends StatelessWidget {
                     );
                   }),
                 ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // FACE BIOMETRICS Section
+              _SectionLabel('FACE BIOMETRICS'),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Obx(() {
+                  final isRegistered = loginController?.hasFaceRegistered.value ?? false;
+                  return _SettingsTile(
+                    icon: Icons.face_retouching_natural_rounded,
+                    iconColor: const Color(0xFF7C3AED),
+                    title: isRegistered ? 'Update Registered Face' : 'Register Face',
+                    subtitle: isRegistered
+                        ? 'Face biometrics enrolled • Tap to re-scan'
+                        : 'Face biometrics required • Tap to enroll now',
+                    onTap: () async {
+                      final res = await Get.toNamed(AppRoutes.faceCapture, arguments: {'action': 'register'});
+                      if (res != null) {
+                        await loginController?.checkFaceStatus();
+                      }
+                    },
+                  );
+                }),
               ),
 
               const SizedBox(height: 24),
@@ -296,9 +332,75 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 28),
+
+              // ACCOUNT Section
+              _SectionLabel('ACCOUNT'),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _LogoutTile(
+                  onTap: () => _confirmLogout(context, loginController),
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context, LoginController? loginController) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: RequestColors.danger, size: 22),
+            SizedBox(width: 10),
+            Text(
+              'Log Out',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: RequestColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to log out of your account?',
+          style: TextStyle(fontSize: 14, color: RequestColors.textSecondary),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: RequestColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              loginController?.logOut();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: RequestColors.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            ),
+            child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
   }
@@ -308,6 +410,71 @@ class ProfileScreen extends StatelessWidget {
     if (parts.isEmpty || parts.first.isEmpty) return '?';
     if (parts.length == 1) return parts.first[0].toUpperCase();
     return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+}
+
+// ─── Logout Tile ─────────────────────────────────────────────────────────────
+
+class _LogoutTile extends StatelessWidget {
+  const _LogoutTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: RequestColors.danger.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(Icons.logout_rounded, size: 20, color: RequestColors.danger),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Log Out',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: RequestColors.danger,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Sign out of your session on this device',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: RequestColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 22,
+                color: RequestColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

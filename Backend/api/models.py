@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Branch(models.Model):
@@ -133,7 +134,7 @@ class Attendance(models.Model):
     check_out_latitude = models.FloatField(null=True, blank=True)
     check_out_longitude = models.FloatField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='checked_in')
-    date = models.DateField(auto_now_add=True, db_index=True)
+    date = models.DateField(default=timezone.localdate, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -881,6 +881,9 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
   }
 
   Color _buttonColor(CheckState state) {
+    if (!widget.controller.isCeo && !widget.controller.hasFaceRegistered) {
+      return const Color(0xFF7C3AED);
+    }
     switch (state) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
@@ -897,6 +900,9 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
   }
 
   IconData _buttonIcon(CheckState state) {
+    if (!widget.controller.isCeo && !widget.controller.hasFaceRegistered) {
+      return Icons.face_retouching_natural_rounded;
+    }
     switch (state) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
@@ -910,10 +916,6 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
       case CheckState.checkedOut:
         return Icons.check_rounded;
     }
-  }
-
-  String _buttonSubtext(CheckState state) {
-    return widget.controller.buttonSubtext;
   }
 
   @override
@@ -1000,36 +1002,35 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
                           ),
                         ],
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _buttonIcon(state),
-                            size: 32,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(height: 8),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Text(
-                              widget.controller.buttonLabel,
-                              key: ValueKey(widget.controller.buttonLabel),
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _buttonIcon(state),
+                              size: 34,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(height: 10),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: Text(
+                                widget.controller.buttonLabel,
+                                key: ValueKey(widget.controller.buttonLabel),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.3,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _buttonSubtext(state),
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.85),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],

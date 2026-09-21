@@ -32,6 +32,13 @@ import 'package:face_recognition_attendance/features/request_information_screen/
 import 'package:face_recognition_attendance/features/request_screen/view/request_screen.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/binding/schedule_binding.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/view/schedule_screen.dart';
+import 'package:face_recognition_attendance/features/branch/view/branch_list_screen.dart';
+import 'package:face_recognition_attendance/features/branch/view/create_branch_screen.dart';
+import 'package:face_recognition_attendance/features/department/view/create_department_screen.dart';
+import 'package:face_recognition_attendance/features/department/view/department_list_screen.dart';
+import 'package:face_recognition_attendance/features/employee/view/create_employee_screen.dart';
+import 'package:face_recognition_attendance/features/employee/view/employee_list_screen.dart';
+import 'package:face_recognition_attendance/features/face/view/face_capture_screen.dart';
 import 'package:face_recognition_attendance/features/settings/binding/settings_binding.dart';
 import 'package:face_recognition_attendance/features/settings/screens/settings_screen.dart';
 import 'package:get/get.dart';
@@ -188,6 +195,42 @@ class AppPages {
       name: AppRoutes.settings,
       page: () => const SettingsScreen(),
       binding: SettingsBinding(),
+    ),
+
+    // ----------- Branch Management -----------
+    GetPage(
+      name: AppRoutes.branchList,
+      page: () => const BranchListScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.createBranch,
+      page: () => const CreateBranchScreen(),
+    ),
+
+    // ----------- Department Management -----------
+    GetPage(
+      name: AppRoutes.departmentList,
+      page: () => const DepartmentListScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.createDepartment,
+      page: () => const CreateDepartmentScreen(),
+    ),
+
+    // ----------- Employee Directory -----------
+    GetPage(
+      name: AppRoutes.employeeList,
+      page: () => const EmployeeListScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.createEmployee,
+      page: () => const CreateEmployeeScreen(),
+    ),
+
+    // ----------- Face Registration & Capture -----------
+    GetPage(
+      name: AppRoutes.faceCapture,
+      page: () => const FaceCaptureScreen(),
     ),
   ];
 }

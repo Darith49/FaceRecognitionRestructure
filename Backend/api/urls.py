@@ -14,6 +14,7 @@ urlpatterns = [
     path('employees/', views.employee_list_create, name='employee_list_create'),
     path('employees/me/', views.employee_me, name='employee_me'),
     path('employees/<int:pk>/', views.employee_detail, name='employee_detail'),
+    path('employees/<int:pk>/resend-invitation/', views.resend_employee_invitation, name='employee_resend_invitation'),
 
     # Face Endpoints
     path('face/register/', views.register_face, name='register_face'),

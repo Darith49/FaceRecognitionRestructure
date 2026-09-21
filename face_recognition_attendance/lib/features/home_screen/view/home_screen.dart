@@ -110,57 +110,75 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
               const SizedBox(height: 16),
 
-              AnimatedBuilder(
-                animation: _entranceController,
-                builder: (_, child) => Transform.translate(
-                  offset: Offset(0, _cardSlide.value),
-                  child: Opacity(
-                    opacity: _cardFade.value,
-                    child: child,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _AttendanceCard(controller: controller),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              AnimatedBuilder(
-                animation: _entranceController,
-                builder: (_, child) => Transform.scale(
-                  scale: _buttonScale.value,
-                  child: Opacity(
-                    opacity: _buttonFade.value,
-                    child: child,
-                  ),
-                ),
-                child: _CheckInButton(controller: controller),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Wi-Fi Status Pill
-              _WifiStatusPill(),
-
-              const SizedBox(height: 16),
-
-              // Next schedule
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Obx(
-                  () => Text(
-                    controller.nextScheduleText,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: RequestColors.textSecondary,
+              Obx(() {
+                if (controller.isCeo) {
+                  return AnimatedBuilder(
+                    animation: _entranceController,
+                    builder: (_, child) => Transform.translate(
+                      offset: Offset(0, _cardSlide.value),
+                      child: Opacity(
+                        opacity: _cardFade.value,
+                        child: child,
+                      ),
                     ),
-                  ),
-                ),
-              ),
+                    child: _CeoActionPanel(controller: controller),
+                  );
+                }
+
+                return Column(
+                  children: [
+                    AnimatedBuilder(
+                      animation: _entranceController,
+                      builder: (_, child) => Transform.translate(
+                        offset: Offset(0, _cardSlide.value),
+                        child: Opacity(
+                          opacity: _cardFade.value,
+                          child: child,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _AttendanceCard(controller: controller),
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    AnimatedBuilder(
+                      animation: _entranceController,
+                      builder: (_, child) => Transform.scale(
+                        scale: _buttonScale.value,
+                        child: Opacity(
+                          opacity: _buttonFade.value,
+                          child: child,
+                        ),
+                      ),
+                      child: _CheckInButton(controller: controller),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Wi-Fi Status Pill
+                    _WifiStatusPill(),
+
+                    const SizedBox(height: 16),
+
+                    // Next schedule
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        controller.nextScheduleText,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: RequestColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }),
             ],
           ),
         ),
@@ -875,6 +893,9 @@ class _CheckInButtonState extends State<_CheckInButton>
   }
 
   Color _buttonColor(CheckState state) {
+    if (!widget.controller.isCeo && !widget.controller.hasFaceRegistered) {
+      return const Color(0xFF7C3AED);
+    }
     switch (state) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
@@ -891,6 +912,9 @@ class _CheckInButtonState extends State<_CheckInButton>
   }
 
   IconData _buttonIcon(CheckState state) {
+    if (!widget.controller.isCeo && !widget.controller.hasFaceRegistered) {
+      return Icons.face_retouching_natural_rounded;
+    }
     switch (state) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
@@ -906,9 +930,6 @@ class _CheckInButtonState extends State<_CheckInButton>
     }
   }
 
-  String _buttonSubtext(CheckState state) {
-    return widget.controller.buttonSubtext;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -992,36 +1013,35 @@ class _CheckInButtonState extends State<_CheckInButton>
                           ),
                         ],
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _buttonIcon(state),
-                            size: 32,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(height: 8),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Text(
-                              widget.controller.buttonLabel,
-                              key: ValueKey(widget.controller.buttonLabel),
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _buttonIcon(state),
+                              size: 34,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(height: 10),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: Text(
+                                widget.controller.buttonLabel,
+                                key: ValueKey(widget.controller.buttonLabel),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.3,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _buttonSubtext(state),
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.85),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -1075,4 +1095,647 @@ class _DashedCirclePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DashedCirclePainter old) => old.color != color;
+}
+
+// ─── CEO Action Panel & Live Overview ────────────────────────────────────────
+
+class _CeoActionPanel extends StatelessWidget {
+  final HomeController controller;
+
+  const _CeoActionPanel({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ─── 1. Quick Stats Summary (3 Metric Cards) ───
+          Row(
+            children: [
+              Expanded(
+                child: Obx(() => _CeoStatCard(
+                      icon: Icons.business_rounded,
+                      color: const Color(0xFF0F766E),
+                      label: 'Branches',
+                      count: controller.branchController.branches.length,
+                      onTap: () => Get.toNamed(AppRoutes.branchList),
+                    )),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Obx(() => _CeoStatCard(
+                      icon: Icons.apartment_rounded,
+                      color: const Color(0xFF1D4ED8),
+                      label: 'Departments',
+                      count: controller.departmentController.departments.length,
+                      onTap: () => Get.toNamed(AppRoutes.departmentList),
+                    )),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Obx(() => _CeoStatCard(
+                      icon: Icons.people_alt_rounded,
+                      color: const Color(0xFFB45309),
+                      label: 'Employees',
+                      count: controller.employeeController.employees.length,
+                      onTap: () => Get.toNamed(AppRoutes.employeeList),
+                    )),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // ─── 2. Administrative Action Tiles ───
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: RequestColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.admin_panel_settings_rounded,
+                        color: RequestColors.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'CEO Management',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: RequestColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Quick administrative actions',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: RequestColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                const SizedBox(height: 14),
+
+                // 1. Create Branch
+                _CeoActionTile(
+                  icon: Icons.add_business_rounded,
+                  iconBg: const Color(0xFF0F766E),
+                  title: 'Create Branch',
+                  subtitle: 'Set up branch location & GPS geofence',
+                  onTap: () async {
+                    final result = await Get.toNamed(AppRoutes.createBranch);
+                    if (result == true) {
+                      controller.refreshAdminOverview();
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // 2. Create Department
+                _CeoActionTile(
+                  icon: Icons.domain_add_rounded,
+                  iconBg: const Color(0xFF1D4ED8),
+                  title: 'Create Department',
+                  subtitle: 'Add department to an existing branch',
+                  onTap: () async {
+                    final result = await Get.toNamed(AppRoutes.createDepartment);
+                    if (result == true) {
+                      controller.refreshAdminOverview();
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // 3. Create User
+                _CeoActionTile(
+                  icon: Icons.person_add_alt_1_rounded,
+                  iconBg: const Color(0xFFB45309),
+                  title: 'Create User',
+                  subtitle: 'Invite Manager, Leader, or Employee',
+                  onTap: () async {
+                    final result = await Get.toNamed(AppRoutes.createEmployee);
+                    if (result == true) {
+                      controller.refreshAdminOverview();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // ─── 3. Recent Activity / Created Lists Preview ───
+          _RecentCreatedOverview(controller: controller),
+        ],
+      ),
+    );
+  }
+}
+
+class _CeoStatCard extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final int count;
+  final VoidCallback onTap;
+
+  const _CeoStatCard({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.count,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$count',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: RequestColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: RequestColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CeoActionTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _CeoActionTile({
+    required this.icon,
+    required this.iconBg,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: RequestColors.softSurface.withValues(alpha: 0.6),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: iconBg.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconBg, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: RequestColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: RequestColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: RequestColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentCreatedOverview extends StatelessWidget {
+  final HomeController controller;
+
+  const _RecentCreatedOverview({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ─── Recent Branches Card ───
+        Obx(() {
+          final branches = controller.branchController.branches;
+          if (branches.isEmpty) return const SizedBox.shrink();
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.business_rounded, size: 20, color: Color(0xFF0F766E)),
+                        SizedBox(width: 8),
+                        Text(
+                          'Created Branches',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: RequestColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () => Get.toNamed(AppRoutes.branchList),
+                      child: const Text(
+                        'View All',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: RequestColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 8),
+                ...branches.take(3).map((b) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F766E).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.location_on_rounded, size: 18, color: Color(0xFF0F766E)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  b.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: RequestColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Radius: ${b.radius.toInt()}m geofence',
+                                  style: const TextStyle(fontSize: 12, color: RequestColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            '${b.employeeCount} staff',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: RequestColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+            ),
+          );
+        }),
+
+        // ─── Recent Departments Card ───
+        Obx(() {
+          final departments = controller.departmentController.departments;
+          if (departments.isEmpty) return const SizedBox.shrink();
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.domain_rounded, size: 20, color: Color(0xFF1D4ED8)),
+                        SizedBox(width: 8),
+                        Text(
+                          'Created Departments',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: RequestColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () => Get.toNamed(AppRoutes.departmentList),
+                      child: const Text(
+                        'View All',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: RequestColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 8),
+                ...departments.take(3).map((d) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1D4ED8).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.corporate_fare_rounded, size: 18, color: Color(0xFF1D4ED8)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  d.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: RequestColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  d.branchName.isNotEmpty ? d.branchName : 'Branch #${d.branchId}',
+                                  style: const TextStyle(fontSize: 12, color: RequestColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            '${d.employeeCount} staff',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: RequestColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+            ),
+          );
+        }),
+
+        // ─── Recent Users Card ───
+        Obx(() {
+          final employees = controller.employeeController.employees;
+          if (employees.isEmpty) return const SizedBox.shrink();
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.people_alt_rounded, size: 20, color: Color(0xFFB45309)),
+                        SizedBox(width: 8),
+                        Text(
+                          'Invited Users',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: RequestColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () => Get.toNamed(AppRoutes.employeeList),
+                      child: const Text(
+                        'View All',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: RequestColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 8),
+                ...employees.take(3).map((e) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: RequestColors.primary.withValues(alpha: 0.1),
+                            child: Text(
+                              e.fullname.isNotEmpty ? e.fullname[0].toUpperCase() : '?',
+                              style: const TextStyle(
+                                color: RequestColors.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  e.fullname,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: RequestColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  e.email,
+                                  style: const TextStyle(fontSize: 12, color: RequestColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: RequestColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              e.role.name.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: RequestColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
 }

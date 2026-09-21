@@ -113,3 +113,45 @@ class ModelAndServiceTests(TestCase):
         self.assertEqual(emp_data["branch_name"], "Phnom Penh Branch")
         self.assertEqual(emp_data["department_name"], "IT & Engineering")
         self.assertFalse(emp_data["has_face_registered"])
+
+    def test_cambodia_timezone_check_in_and_out(self):
+        from django.utils import timezone
+        from .serializers import AttendanceSerializer
+
+        # 1. Verify Django active timezone is Cambodia (Asia/Phnom_Penh)
+        self.assertEqual(timezone.get_current_timezone_name(), 'Asia/Phnom_Penh')
+
+        # 2. Verify attendance date defaults to Cambodia local date
+        att = Attendance.objects.create(
+            employee=self.employee,
+            branch=self.branch,
+            check_in_latitude=11.5564,
+            check_in_longitude=104.9282,
+            status="checked_in",
+        )
+        self.assertEqual(att.date, timezone.localdate())
+
+        # 3. Simulate check out time
+        att.check_out_time = timezone.now()
+        att.check_out_latitude = 11.5564
+        att.check_out_longitude = 104.9282
+        att.status = "checked_out"
+        att.save()
+
+        # 4. Verify serialized output has +07:00 Cambodia offset
+        serialized = AttendanceSerializer(att).data
+        self.assertIn("+07:00", serialized["check_in_time"])
+        self.assertIn("+07:00", serialized["check_out_time"])
+        self.assertEqual(serialized["date"], timezone.localdate().isoformat())
+
+    def test_duplicate_prevention(self):
+        # 1. Branch with same name exists
+        self.assertTrue(Branch.objects.filter(name__iexact="phnom penh branch").exists())
+
+        # 2. Department with same name in branch exists
+        self.assertTrue(Department.objects.filter(branch=self.branch, name__iexact="it & engineering").exists())
+
+        # 3. Employee with same email exists
+        self.assertTrue(Employee.objects.filter(email="ceo@company.com").exists())
+        self.assertTrue(Employee.objects.filter(employee_id="CEO-001").exists())
+

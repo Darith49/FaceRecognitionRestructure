@@ -78,6 +78,13 @@ class FirebaseService {
     return _auth.currentUser;
   }
 
+  // Get Firebase ID Token for Django API authentication
+  Future<String?> getIdToken() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    return await user.getIdToken();
+  }
+
   //Find User in Firestore by uid
   Future<UserModel?> getUserByUid(String uid) async {
     final doc = await _userCollection.doc(uid).get();

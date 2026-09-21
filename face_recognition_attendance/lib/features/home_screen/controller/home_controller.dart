@@ -1,7 +1,14 @@
 import 'dart:async';
 
+import 'package:face_recognition_attendance/config/routes/app_routes.dart';
+import 'package:face_recognition_attendance/core/services/api_service.dart';
+import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
+import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
+import 'package:face_recognition_attendance/features/branch/controller/branch_controller.dart';
+import 'package:face_recognition_attendance/features/department/controller/department_controller.dart';
+import 'package:face_recognition_attendance/features/employee/controller/employee_controller.dart';
 import 'package:get/get.dart';
 
 enum CheckState {
@@ -42,14 +49,47 @@ class HomeController extends GetxController {
 
   final double goalHours = 8.0;
 
+  final ApiService _apiService = ApiService();
   Timer? _timer;
 
   @override
   void onInit() {
     super.onInit();
+    now.value = DateText.nowCambodia();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      now.value = DateTime.now();
+      now.value = DateText.nowCambodia();
     });
+    if (isCeo) {
+      refreshAdminOverview();
+    } else {
+      _authController.checkFaceStatus();
+      fetchTodayAttendanceStatus();
+    }
+  }
+
+  Future<void> fetchTodayAttendanceStatus() async {
+    if (isCeo) return;
+    try {
+      final res = await _apiService.get('/attendance/status/');
+      if (res is Map && res['record'] != null) {
+        final record = res['record'] as Map;
+        final checkInStr = record['check_in_time']?.toString();
+        final checkOutStr = record['check_out_time']?.toString();
+        final isCheckedIn = res['is_checked_in'] == true;
+
+        if (checkInStr != null && checkInStr.isNotEmpty) {
+          session1CheckIn.value = DateText.parseCambodia(checkInStr);
+          if (isCheckedIn) {
+            state.value = CheckState.session1CheckedIn;
+          } else if (checkOutStr != null && checkOutStr.isNotEmpty) {
+            session1CheckOut.value = DateText.parseCambodia(checkOutStr);
+            state.value = CheckState.session2NotCheckedIn;
+          }
+        }
+      }
+    } catch (_) {
+      // Graceful fallback
+    }
   }
 
   @override
@@ -59,6 +99,30 @@ class HomeController extends GetxController {
   }
 
   UserModel? get currentUser => _authController.currentuser.value;
+  bool get isCeo => currentUser?.role == UserRole.ceo;
+  bool get hasFaceRegistered => _authController.hasFaceRegistered.value;
+
+  BranchController get branchController => Get.isRegistered<BranchController>()
+      ? Get.find<BranchController>()
+      : Get.put(BranchController());
+
+  DepartmentController get departmentController => Get.isRegistered<DepartmentController>()
+      ? Get.find<DepartmentController>()
+      : Get.put(DepartmentController());
+
+  EmployeeController get employeeController => Get.isRegistered<EmployeeController>()
+      ? Get.find<EmployeeController>()
+      : Get.put(EmployeeController());
+
+  Future<void> refreshAdminOverview() async {
+    if (isCeo) {
+      await Future.wait([
+        branchController.fetchBranches(),
+        departmentController.fetchDepartments(),
+        employeeController.fetchEmployees(),
+      ]);
+    }
+  }
 
   String get greeting {
     final hour = now.value.hour;
@@ -191,6 +255,9 @@ class HomeController extends GetxController {
   // ─── Button Label & Subtext ─────────────────────────────────────────────────
 
   String get buttonLabel {
+    if (!isCeo && !hasFaceRegistered) {
+      return 'Register Face';
+    }
     switch (state.value) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
@@ -209,6 +276,9 @@ class HomeController extends GetxController {
   }
 
   String get buttonSubtext {
+    if (!isCeo && !hasFaceRegistered) {
+      return 'Enroll your face first';
+    }
     switch (state.value) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
@@ -246,30 +316,70 @@ class HomeController extends GetxController {
 
   // ─── State Progression ──────────────────────────────────────────────────────
 
-  void onMainButtonPressed() {
+  Future<void> onMainButtonPressed() async {
+    if (isCeo) return; // CEO does not check in
+
+    // Account without registered face -> directly route to face enrollment
+    if (!hasFaceRegistered) {
+      final res = await Get.toNamed(AppRoutes.faceCapture, arguments: {'action': 'register'});
+      if (res != null) {
+        await _authController.checkFaceStatus();
+        await fetchTodayAttendanceStatus();
+      }
+      return;
+    }
+
+    String? action;
     switch (state.value) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
-        session1CheckIn.value = DateTime.now();
-        state.value = CheckState.session1CheckedIn;
+        action = 'check_in';
         break;
       case CheckState.session1CheckedIn:
       case CheckState.checkedIn:
-        session1CheckOut.value = DateTime.now();
-        state.value = CheckState.session2NotCheckedIn;
+        action = 'check_out';
         break;
       case CheckState.session2NotCheckedIn:
-        session2CheckIn.value = DateTime.now();
-        state.value = CheckState.session2CheckedIn;
+        action = 'check_in';
         break;
       case CheckState.session2CheckedIn:
-        session2CheckOut.value = DateTime.now();
-        state.value = CheckState.completed;
+        action = 'check_out';
         break;
       case CheckState.completed:
       case CheckState.checkedOut:
-        // Both sessions already completed
-        break;
+        return;
+    }
+
+    final result = await Get.toNamed(AppRoutes.faceCapture, arguments: {'action': action});
+    if (result != null) {
+      if (action == 'check_in') {
+        DateTime time = DateText.nowCambodia();
+        if (result is Map && result['check_in_time'] != null) {
+          time = DateText.parseCambodia(result['check_in_time'].toString());
+        }
+        if (state.value == CheckState.session1NotCheckedIn ||
+            state.value == CheckState.notCheckedIn) {
+          session1CheckIn.value = time;
+          state.value = CheckState.session1CheckedIn;
+        } else {
+          session2CheckIn.value = time;
+          state.value = CheckState.session2CheckedIn;
+        }
+      } else if (action == 'check_out') {
+        DateTime time = DateText.nowCambodia();
+        if (result is Map && result['check_out_time'] != null) {
+          time = DateText.parseCambodia(result['check_out_time'].toString());
+        }
+        if (state.value == CheckState.session1CheckedIn ||
+            state.value == CheckState.checkedIn) {
+          session1CheckOut.value = time;
+          state.value = CheckState.session2NotCheckedIn;
+        } else {
+          session2CheckOut.value = time;
+          state.value = CheckState.completed;
+        }
+      }
+      await fetchTodayAttendanceStatus();
     }
   }
 

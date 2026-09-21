@@ -34,4 +34,19 @@ abstract class AppRoutes {
 
   // Settings
   static const String settings = "/settings";
+
+  // Branch Management
+  static const String branchList = "/branch-list";
+  static const String createBranch = "/create-branch";
+
+  // Department Management
+  static const String departmentList = "/department-list";
+  static const String createDepartment = "/create-department";
+
+  // Employee Directory & Management
+  static const String employeeList = "/employee-list";
+  static const String createEmployee = "/create-employee";
+
+  // Face Biometrics & Camera
+  static const String faceCapture = "/face-capture";
 }

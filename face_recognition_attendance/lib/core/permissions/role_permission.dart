@@ -11,19 +11,44 @@ class RolePermission {
       AppPermission.accessManagerPanel,
       AppPermission.accessLeaderPanel,
       AppPermission.accessEmployeePanel,
+      // Organization Management
+      AppPermission.createBranch,
+      AppPermission.editBranch,
+      AppPermission.deleteBranch,
+      AppPermission.createDepartment,
+      AppPermission.editDepartment,
+      AppPermission.deleteDepartment,
+      AppPermission.createEmployee,
+      // Note: CEO does NOT check in
     },
 
     UserRole.manager: {
       AppPermission.accessManagerPanel,
       AppPermission.accessLeaderPanel,
       AppPermission.accessEmployeePanel,
+      AppPermission.createDepartment,
+      AppPermission.editDepartment,
+      AppPermission.deleteDepartment,
+      AppPermission.createEmployee,
+      AppPermission.attendanceCheckIn,
+      AppPermission.attendanceCheckOut,
+      AppPermission.registerFace,
     },
 
     UserRole.leader: {
       AppPermission.accessLeaderPanel,
       AppPermission.accessEmployeePanel,
+      AppPermission.createEmployee,
+      AppPermission.attendanceCheckIn,
+      AppPermission.attendanceCheckOut,
+      AppPermission.registerFace,
     },
-    UserRole.employee: {AppPermission.accessEmployeePanel},
+    UserRole.employee: {
+      AppPermission.accessEmployeePanel,
+      AppPermission.attendanceCheckIn,
+      AppPermission.attendanceCheckOut,
+      AppPermission.registerFace,
+    },
   };
 
   //Check Permission

@@ -1,5 +1,4 @@
 import logging
-from datetime import date
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes, permission_classes
@@ -20,6 +19,7 @@ from .serializers import (
 from .permissions import IsCEO, IsLeaderOrAbove, IsManagerOrAbove
 from .services.firebase_service import (
     create_firebase_user,
+    update_firebase_user,
     generate_password_setup_link,
     sync_firestore_user_profile,
 )
@@ -47,6 +47,12 @@ def branch_list_create(request):
     elif request.method == 'POST':
         if getattr(request.user, 'role', '') != 'ceo':
             return Response({"error": "Only CEO can create branches."}, status=status.HTTP_403_FORBIDDEN)
+
+        name = request.data.get('name', '').strip()
+        if not name:
+            return Response({"error": "Branch name is required."}, status=status.HTTP_400_BAD_REQUEST)
+        if Branch.objects.filter(name__iexact=name).exists():
+            return Response({"error": f"A branch with the name '{name}' already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = BranchSerializer(data=request.data)
         if serializer.is_valid():
@@ -112,6 +118,13 @@ def department_list_create(request):
             branch = Branch.objects.get(pk=branch_id)
         except Branch.DoesNotExist:
             return Response({"error": "Selected branch does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+        name = request.data.get('name', '').strip()
+        if not name:
+            return Response({"error": "Department name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if Department.objects.filter(branch=branch, name__iexact=name).exists():
+            return Response({"error": f"A department named '{name}' already exists in this branch."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = DepartmentSerializer(data=request.data)
         if serializer.is_valid():
@@ -227,6 +240,10 @@ def employee_list_create(request):
         if Employee.objects.filter(email=email).exists():
             return Response({"error": "An employee with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
+        emp_id = data.get('employee_id', '').strip()
+        if emp_id and Employee.objects.filter(employee_id=emp_id).exists():
+            return Response({"error": f"An employee with ID '{emp_id}' already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
         # 1. Create Firebase Auth account via Firebase Admin SDK
         try:
             firebase_uid = create_firebase_user(email=email, fullname=fullname)
@@ -295,9 +312,48 @@ def employee_detail(request, pk):
     elif request.method == 'PATCH':
         serializer = EmployeeSerializer(employee, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            updated_emp = serializer.save()
+            new_email = request.data.get('email')
+            new_name = request.data.get('fullname')
+            if new_email or new_name:
+                update_firebase_user(
+                    employee.firebase_uid,
+                    email=new_email.strip().lower() if new_email else None,
+                    fullname=new_name.strip() if new_name else None,
+                )
+            firestore_payload = {
+                'fullname': updated_emp.fullname,
+                'email': updated_emp.email,
+                'role': updated_emp.role,
+                'branchId': str(updated_emp.branch.id) if updated_emp.branch else '',
+                'departmentId': str(updated_emp.department.id) if updated_emp.department else '',
+                'employeeId': updated_emp.employee_id,
+            }
+            sync_firestore_user_profile(updated_emp.firebase_uid, firestore_payload)
+            return Response(EmployeeSerializer(updated_emp).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def resend_employee_invitation(request, pk):
+    """
+    Resends password reset/setup invitation email for the specified employee.
+    Requires CEO, Manager, or Leader role.
+    """
+    creator_role = getattr(request.user, 'role', '')
+    if creator_role == 'employee':
+        return Response({"error": "Employees cannot resend invitations."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        employee = Employee.objects.get(pk=pk)
+    except Employee.DoesNotExist:
+        return Response({"error": "Employee not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    invitation_link = generate_password_setup_link(employee.email)
+    return Response({
+        "message": f"Invitation link generated for {employee.fullname} ({employee.email}).",
+        "invitation_link": invitation_link,
+    }, status=status.HTTP_200_OK)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -442,7 +498,7 @@ def check_out(request):
 def attendance_status(request):
     """Checks whether the authenticated employee is currently checked in today."""
     employee = request.user
-    today = date.today()
+    today = timezone.localdate()
 
     record = Attendance.objects.filter(
         employee=employee,

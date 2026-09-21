@@ -3,27 +3,40 @@ import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Colors used by the Clock / Request / Permission screens (from the Figma design).
+/// Colors used across all screens — Apple Design System tokens.
 class RequestColors {
   RequestColors._();
 
-  static const Color background = Color(0xFFDCDEEA);
-  static const Color softSurface = Color(0xFFEAEDF7);
-  static const Color textPrimary = Color(0xFF1B2437);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color primary = Color(0xFF3B78F0);
-  static const Color danger = Color(0xFFE82020);
-  static const Color pendingBackground = Color(0xFFF6EBC8);
+  static const Color background = Color(0xFFF5F5F7);     // Canvas parchment
+  static const Color softSurface = Color(0xFFFAFAFC);    // Surface pearl
+  static const Color textPrimary = Color(0xFF1D1D1F);    // Ink
+  static const Color textSecondary = Color(0xFF6B7280);   // Muted gray
+  static const Color primary = Color(0xFF0066CC);         // Apple Blue
+  static const Color danger = Color(0xFFFF3B30);          // Apple Red
+  static const Color pendingBackground = Color(0xFFFFF3CD);
   static const Color pendingText = Color(0xFF9C7F0C);
-  static const Color approvedBackground = Color(0xFF39F07C);
+  static const Color approvedBackground = Color(0xFFD4EDDA);
   static const Color approvedText = Color(0xFF0B3D1E);
-  static const Color approvedStatus = Color(0xFF1B9A3A);
-  static const Color gold = Color(0xFFD4A017);
+  static const Color approvedStatus = Color(0xFF34C759);  // Apple Green
+  static const Color gold = Color(0xFFFF9500);            // Apple Amber
   static const Color teal = Color(0xFF3E5C76);
 }
 
+/// Standard shadows for Apple-style cards.
+const List<BoxShadow> appleSoftShadow = [
+  BoxShadow(color: Color(0x08000000), blurRadius: 16, offset: Offset(0, 2)),
+  BoxShadow(color: Color(0x05000000), blurRadius: 4, offset: Offset(0, 1)),
+];
+
+/// Apple-style card decoration.
+BoxDecoration appleCardDecoration({double radius = 16}) => BoxDecoration(
+  color: Colors.white,
+  borderRadius: BorderRadius.circular(radius),
+  boxShadow: appleSoftShadow,
+);
+
 /// Page frame used by every screen in this feature:
-/// white app bar with a title + back arrow, and the light purple-grey body.
+/// white app bar with a title + back arrow, and the light grey body.
 class RequestScaffold extends StatelessWidget {
   const RequestScaffold({
     super.key,
@@ -33,6 +46,7 @@ class RequestScaffold extends StatelessWidget {
     this.centerTitle = false,
     this.floatingActionButton,
     this.actions,
+    this.backLabel,
   });
 
   final String title;
@@ -41,6 +55,7 @@ class RequestScaffold extends StatelessWidget {
   final bool centerTitle;
   final Widget? floatingActionButton;
   final List<Widget>? actions;
+  final String? backLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -53,25 +68,42 @@ class RequestScaffold extends StatelessWidget {
         backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0,
+        scrolledUnderElevation: 0.5,
         centerTitle: centerTitle,
         automaticallyImplyLeading: false,
         titleSpacing: showBackButton ? 0.0 : 16.0,
         leading: showBackButton
-            ? IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 18,
-                  color: isDark ? AppColors.darkText : RequestColors.textPrimary,
+            ? GestureDetector(
+                onTap: () => Get.back(),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.chevron_left_rounded,
+                        size: 28,
+                        color: RequestColors.primary,
+                      ),
+                      if (backLabel != null)
+                        Text(
+                          backLabel!,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            color: RequestColors.primary,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                onPressed: () => Get.back(),
               )
             : null,
+        leadingWidth: showBackButton ? (backLabel != null ? 120 : 44) : null,
         title: Text(
           title,
           style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
             color: isDark ? AppColors.darkText : RequestColors.textPrimary,
           ),
         ),
@@ -112,19 +144,19 @@ class RequestMenuCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           child: Row(
             children: [
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: iconBackground,
+                  color: iconBackground.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: Colors.white, size: 24),
+                child: Icon(icon, color: iconBackground, size: 22),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,8 +165,8 @@ class RequestMenuCard extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                       ),
                     ),
@@ -142,7 +174,7 @@ class RequestMenuCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 13,
                         color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                       ),
                     ),
@@ -151,7 +183,8 @@ class RequestMenuCard extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: isDark ? AppColors.darkTextSecondary : RequestColors.textPrimary,
+                color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                size: 22,
               ),
             ],
           ),
@@ -171,13 +204,14 @@ class RequestLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
         style: TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: isDark ? AppColors.darkText : RequestColors.textPrimary,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+          color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
         ),
       ),
     );
@@ -213,16 +247,16 @@ class RequestField extends StatelessWidget {
         Container(
           width: double.infinity,
           constraints: BoxConstraints(minHeight: multiline ? 110.0 : 48.0),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           alignment: multiline ? Alignment.topLeft : Alignment.centerLeft,
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkSurface : Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             value,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: valueWeight,
               color: textColor,
             ),
@@ -233,7 +267,7 @@ class RequestField extends StatelessWidget {
   }
 }
 
-/// Full-width button. `filled: true` = blue button, `filled: false` = white button.
+/// Full-width button. Apple-style pill shape.
 class RequestButton extends StatelessWidget {
   const RequestButton({
     super.key,
@@ -241,15 +275,16 @@ class RequestButton extends StatelessWidget {
     required this.onPressed,
     this.filled = true,
     this.color,
+    this.icon,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool filled;
 
-  /// Overrides the background color (text becomes white). Used for
-  /// non-standard buttons like the red "Delete" button on Suggestion.
+  /// Overrides the background color (text becomes white).
   final Color? color;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -266,7 +301,7 @@ class RequestButton extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      height: 46,
+      height: 52,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -275,10 +310,21 @@ class RequestButton extends StatelessWidget {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
+            side: filled ? BorderSide.none : BorderSide(color: AppColors.hairline),
           ),
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
         ),
-        child: Text(label),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label),
+            if (icon != null) ...[
+              const SizedBox(width: 8),
+              Icon(icon, size: 20),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -349,9 +395,9 @@ class RequestDateField extends StatelessWidget {
 
     return Material(
       color: isDark ? AppColors.darkSurface : Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         onTap: () => _pickDate(context),
         child: SizedBox(
           width: double.infinity,
@@ -360,8 +406,8 @@ class RequestDateField extends StatelessWidget {
             child: Text(
               current == null ? placeholder : DateText.ymd(current),
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
                 color: isDark ? AppColors.darkText : RequestColors.textPrimary,
               ),
             ),
@@ -372,7 +418,7 @@ class RequestDateField extends StatelessWidget {
   }
 }
 
-/// Rounded dropdown. [value] must be one of the [items] (or null to show [hint]).
+/// Rounded dropdown.
 class RequestDropdownField<T> extends StatelessWidget {
   const RequestDropdownField({
     super.key,
@@ -398,20 +444,20 @@ class RequestDropdownField<T> extends StatelessWidget {
 
     return Container(
       height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: resolvedFill,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
           isExpanded: true,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           icon: Icon(icon, color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
           style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
             color: isDark ? AppColors.darkText : RequestColors.textPrimary,
           ),
           hint: hint == null
@@ -419,8 +465,8 @@ class RequestDropdownField<T> extends StatelessWidget {
               : Text(
                   hint!,
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
                     color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                   ),
                 ),
@@ -456,21 +502,148 @@ class RequestTextArea extends StatelessWidget {
       minLines: lines,
       maxLines: lines,
       style: TextStyle(
-        fontSize: 13,
+        fontSize: 15,
         color: isDark ? AppColors.darkText : RequestColors.textPrimary,
       ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(
-          fontSize: 13,
+          fontSize: 15,
           color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
         ),
         filled: true,
         fillColor: isDark ? AppColors.darkSurface : Colors.white,
-        contentPadding: const EdgeInsets.all(14),
+        contentPadding: const EdgeInsets.all(16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+}
+
+/// Apple-style segmented control (tab bar).
+class AppleSegmentedControl extends StatelessWidget {
+  const AppleSegmentedControl({
+    super.key,
+    required this.tabs,
+    required this.selectedIndex,
+    required this.onChanged,
+  });
+
+  final List<String> tabs;
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 40,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8E8ED),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: List.generate(tabs.length, (i) {
+          final selected = i == selectedIndex;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onChanged(i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  tabs[i],
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: selected
+                        ? RequestColors.textPrimary
+                        : RequestColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+/// Apple-style "Change" pill button.
+class ChangePill extends StatelessWidget {
+  const ChangePill({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: RequestColors.primary.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          child: Text(
+            'Change',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: RequestColors.primary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Progress bar used in various cards.
+class AppleProgressBar extends StatelessWidget {
+  const AppleProgressBar({
+    super.key,
+    required this.value,
+    this.color = RequestColors.primary,
+    this.trackColor,
+    this.height = 6,
+  });
+
+  final double value;
+  final Color color;
+  final Color? trackColor;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(height / 2),
+      child: SizedBox(
+        height: height,
+        child: LinearProgressIndicator(
+          value: value.clamp(0.0, 1.0),
+          backgroundColor: trackColor ?? color.withValues(alpha: 0.15),
+          valueColor: AlwaysStoppedAnimation(color),
+          minHeight: height,
         ),
       ),
     );

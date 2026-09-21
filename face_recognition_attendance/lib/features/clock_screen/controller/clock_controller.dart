@@ -20,6 +20,8 @@ class ClockController extends GetxController {
   String get totalHoursText => _home.totalHoursText;
   String get checkInText => _home.checkInText;
   String get checkOutText => _home.checkOutText;
+  String get userName => _home.userName;
+  String get greeting => _home.greeting;
 
   void onMainButtonPressed() => _home.onMainButtonPressed();
 }

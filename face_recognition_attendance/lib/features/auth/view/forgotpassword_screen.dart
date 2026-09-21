@@ -1,3 +1,5 @@
+import 'package:face_recognition_attendance/config/theme/app_colors.dart';
+import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/forgotpassword_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,10 +9,11 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -18,51 +21,33 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: size.height * 0.08),
+                const SizedBox(height: 16),
 
-                // Icon
-                SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 32, 83, 192),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
+                // Lock / Reset Icon matching login screen Apple style
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.lock_reset_rounded,
+                    size: 32,
+                    color: AppColors.primary,
                   ),
                 ),
 
                 const SizedBox(height: 28),
 
                 // Title
-                const Text(
+                Text(
                   'Forgot password?',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF111827),
                     letterSpacing: -0.5,
+                    color: isDark ? AppColors.darkText : AppColors.ink,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -70,41 +55,40 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
                 const SizedBox(height: 8),
 
                 // Description
-                const Text(
-                  'Enter your email and we’ll send you a link to reset your password.',
+                Text(
+                  'Enter your email and we\'ll send you a link to reset your password.',
                   style: TextStyle(
                     fontSize: 15,
-                    color: Color(0xFF6B7280),
-                    height: 1.5,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                    height: 1.4,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                SizedBox(height: size.height * 0.05),
+                const SizedBox(height: 32),
 
                 // Messages
                 Obx(() {
                   final success = controller.successMessage.value;
-
-                  if (success == null) {
-                    return const SizedBox.shrink();
-                  }
+                  if (success == null) return const SizedBox.shrink();
 
                   return Container(
                     width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin: const EdgeInsets.only(bottom: 20),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
+                      color: RequestColors.approvedStatus.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                      border: Border.all(
+                        color: RequestColors.approvedStatus.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(
-                          Icons.check_circle_outline,
-                          color: Color(0xFF059669),
+                          Icons.check_circle_outline_rounded,
+                          color: RequestColors.approvedStatus,
                           size: 20,
                         ),
                         const SizedBox(width: 10),
@@ -113,8 +97,9 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
                             success,
                             style: const TextStyle(
                               fontSize: 14,
-                              color: Color(0xFF047857),
+                              color: RequestColors.approvedStatus,
                               height: 1.4,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -125,26 +110,25 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
 
                 Obx(() {
                   final error = controller.errorMessage.value;
-
-                  if (error == null) {
-                    return const SizedBox.shrink();
-                  }
+                  if (error == null) return const SizedBox.shrink();
 
                   return Container(
                     width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin: const EdgeInsets.only(bottom: 20),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
+                      color: AppColors.error.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFECACA)),
+                      border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(
-                          Icons.error_outline,
-                          color: Color(0xFFDC2626),
+                          Icons.error_outline_rounded,
+                          color: AppColors.error,
                           size: 20,
                         ),
                         const SizedBox(width: 10),
@@ -153,8 +137,9 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
                             error,
                             style: const TextStyle(
                               fontSize: 14,
-                              color: Color(0xFFB91C1C),
+                              color: AppColors.error,
                               height: 1.4,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -163,42 +148,47 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
                   );
                 }),
 
-                // Email
+                // Email field with Apple styling
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      'auth_email'.tr,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     Obx(
                       () => Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
+                          color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
                           borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
+                          border: Border.all(
+                            color: isDark ? AppColors.darkBorder : AppColors.hairline,
+                          ),
                         ),
                         child: TextField(
                           controller: controller.emailController,
                           enabled: !controller.isLoading.value,
                           keyboardType: TextInputType.emailAddress,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF111827),
+                            color: isDark ? AppColors.darkText : AppColors.ink,
                           ),
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            labelStyle: TextStyle(
-                              color: Color(0xFF9CA3AF),
-                              fontSize: 14,
-                            ),
+                          decoration: InputDecoration(
                             hintText: 'example@gmail.com',
                             hintStyle: TextStyle(
-                              color: Color(0xFF111827),
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
                               fontSize: 16,
                             ),
                             border: InputBorder.none,
-                            floatingLabelBehavior: FloatingLabelBehavior.always,
-                            contentPadding: EdgeInsets.only(bottom: 8),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                           ),
                         ),
                       ),
@@ -208,33 +198,29 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
 
                 const SizedBox(height: 24),
 
-                // Send Reset Link
+                // Send Reset Link Button (Apple pill shape)
                 Obx(
                   () => SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: 50,
                     child: ElevatedButton(
                       onPressed: controller.isLoading.value
                           ? null
                           : controller.resetPassword,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 32, 83, 192),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: const Color.fromARGB(
-                          255,
-                          32,
-                          83,
-                          192,
-                        ).withOpacity(0.6),
+                        disabledBackgroundColor:
+                            AppColors.primary.withValues(alpha: 0.5),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(9999),
                         ),
                       ),
                       child: controller.isLoading.value
                           ? const SizedBox(
-                              width: 24,
-                              height: 24,
+                              width: 22,
+                              height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
                                 color: Colors.white,
@@ -253,22 +239,29 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
 
                 const SizedBox(height: 16),
 
-                // Back to Login
+                // Back to Login Link
                 Obx(
-                  () => TextButton(
+                  () => TextButton.icon(
                     onPressed: controller.isLoading.value
                         ? null
                         : controller.backToLogin,
-                    child: const Text(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
+                    label: const Text(
                       'Back to login',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827),
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 24),
               ],
             ),
           ),

@@ -1,5 +1,3 @@
-import 'package:curved_labeled_navigation_bar/curved_navigation_bar.dart';
-import 'package:curved_labeled_navigation_bar/curved_navigation_bar_item.dart';
 import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/home_screen.dart';
@@ -16,85 +14,124 @@ class NavigationScreen extends GetView<NavigationController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          // 1. Full Screen Body (Edge-to-Edge)
-          NotificationListener<ScrollNotification>(
-            onNotification: controller.onScrollNotification,
-            child: Obx(
-              () => IndexedStack(
-                index: controller.currentIndex.value,
-                children: const [
-                  HomeScreen(),
-                  ScheduleScreen(),
-                  MyteamScreen(),
-                  RequestScreen(),
-                  ProfileScreen(),
-                ],
+      backgroundColor: AppColors.canvasParchment,
+      body: Obx(
+        () => IndexedStack(
+          index: controller.currentIndex.value,
+          children: const [
+            HomeScreen(),
+            ScheduleScreen(),
+            MyteamScreen(),
+            RequestScreen(),
+            ProfileScreen(),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Obx(
+        () => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: Color(0xFFE5E5EA),
+                width: 0.5,
               ),
             ),
           ),
-
-          Obx(
-            () => AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              left: 0,
-              right: 0,
-              bottom: controller.isNavBarVisible.value ? 0 : -130,
-              child: CurvedNavigationBar(
-                index: controller.currentIndex.value,
-                height: 75,
-                backgroundColor: Colors.transparent,
-                color: AppColors.primary,
-                buttonBackgroundColor: AppColors.primary,
-                animationCurve: Curves.easeInOut,
-                animationDuration: const Duration(milliseconds: 400),
-                onTap: controller.changePage,
-                items: [
-                  CurvedNavigationBarItem(
-                    child: const Icon(Icons.home_outlined, size: 28, color: Colors.white),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _NavTab(
+                    icon: Icons.home_rounded,
+                    outlinedIcon: Icons.home_outlined,
                     label: 'nav_home'.tr,
-                    labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
+                    isSelected: controller.currentIndex.value == 0,
+                    onTap: () => controller.changePage(0),
                   ),
-                  CurvedNavigationBarItem(
-                    child: const Icon(
-                      Icons.calendar_month_outlined,
-                      size: 28,
-                      color: Colors.white,
-                    ),
+                  _NavTab(
+                    icon: Icons.calendar_month_rounded,
+                    outlinedIcon: Icons.calendar_month_outlined,
                     label: 'nav_schedule'.tr,
-                    labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
+                    isSelected: controller.currentIndex.value == 1,
+                    onTap: () => controller.changePage(1),
                   ),
-                  CurvedNavigationBarItem(
-                    child: const Icon(
-                      Icons.people_alt_outlined,
-                      size: 28,
-                      color: Colors.white,
-                    ),
+                  _NavTab(
+                    icon: Icons.people_alt_rounded,
+                    outlinedIcon: Icons.people_alt_outlined,
                     label: 'nav_myteam'.tr,
-                    labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
+                    isSelected: controller.currentIndex.value == 2,
+                    onTap: () => controller.changePage(2),
                   ),
-                  CurvedNavigationBarItem(
-                    child: const Icon(
-                      Icons.pending_actions_outlined,
-                      size: 28,
-                      color: Colors.white,
-                    ),
+                  _NavTab(
+                    icon: Icons.assignment_rounded,
+                    outlinedIcon: Icons.assignment_outlined,
                     label: 'nav_request'.tr,
-                    labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
+                    isSelected: controller.currentIndex.value == 3,
+                    onTap: () => controller.changePage(3),
                   ),
-                  CurvedNavigationBarItem(
-                    child: const Icon(Icons.perm_identity, size: 28, color: Colors.white),
+                  _NavTab(
+                    icon: Icons.person_rounded,
+                    outlinedIcon: Icons.person_outline_rounded,
                     label: 'nav_profile'.tr,
-                    labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
+                    isSelected: controller.currentIndex.value == 4,
+                    onTap: () => controller.changePage(4),
                   ),
                 ],
               ),
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavTab extends StatelessWidget {
+  const _NavTab({
+    required this.icon,
+    required this.outlinedIcon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final IconData outlinedIcon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSelected ? AppColors.primary : const Color(0xFF8E8E93);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? icon : outlinedIcon,
+              size: 24,
+              color: color,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

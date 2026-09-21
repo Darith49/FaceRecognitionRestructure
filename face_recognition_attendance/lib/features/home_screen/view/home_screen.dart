@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -91,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 120),
+          padding: const EdgeInsets.only(bottom: 24),
           child: Column(
             children: [
               AnimatedBuilder(
@@ -106,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: _GreetingHeader(controller: controller),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
               AnimatedBuilder(
                 animation: _entranceController,
@@ -123,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
 
               AnimatedBuilder(
                 animation: _entranceController,
@@ -135,6 +136,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
                 child: _CheckInButton(controller: controller),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Wi-Fi Status Pill
+              _WifiStatusPill(),
+
+              const SizedBox(height: 16),
+
+              // Next schedule
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: RequestColors.textSecondary,
+                    ),
+                    children: [
+                      const TextSpan(text: 'Next schedule: '),
+                      TextSpan(
+                        text: 'Tomorrow, 09:00 AM',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: RequestColors.textPrimary,
+                        ),
+                      ),
+                      const TextSpan(text: ' (Normal Shift)'),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -159,6 +191,8 @@ class AnimatedBuilder extends AnimatedWidget {
   Widget build(BuildContext context) => builder(context, child);
 }
 
+// ─── Greeting Header ─────────────────────────────────────────────────────────
+
 class _GreetingHeader extends StatelessWidget {
   const _GreetingHeader({required this.controller});
 
@@ -168,63 +202,123 @@ class _GreetingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       child: Obx(
-        () => Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: RequestColors.primary.withValues(alpha: 0.12),
-              ),
-              child: Center(
-                child: Text(
-                  _initials(controller.userName),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: RequestColors.primary,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        () {
+          final loginController = Get.isRegistered<LoginController>()
+              ? Get.find<LoginController>()
+              : null;
+          final user = loginController?.currentuser.value;
+          final role = user?.role.name ?? 'Employee';
+
+          return Row(
+            children: [
+              // Avatar with online dot
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Text(
-                    '${controller.greeting}, ${controller.userName}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: RequestColors.textPrimary,
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: RequestColors.primary.withValues(alpha: 0.10),
+                      border: Border.all(
+                        color: RequestColors.primary.withValues(alpha: 0.20),
+                        width: 2,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    child: Center(
+                      child: Text(
+                        _initials(controller.userName),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: RequestColors.primary,
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 3),
-                  const Text(
-                    'Have a productive day',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: RequestColors.textSecondary,
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: RequestColors.approvedStatus,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            controller.userName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: RequestColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: RequestColors.approvedStatus.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            role,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: RequestColors.approvedStatus,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${controller.greeting} • Have a productive day',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: RequestColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Notification bell
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
+                ),
+                child: const Icon(
+                  Icons.notifications_none_rounded,
+                  size: 20,
+                  color: RequestColors.textSecondary,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -237,6 +331,8 @@ class _GreetingHeader extends StatelessWidget {
   }
 }
 
+// ─── Attendance Card ─────────────────────────────────────────────────────────
+
 class _AttendanceCard extends StatelessWidget {
   const _AttendanceCard({required this.controller});
 
@@ -245,11 +341,8 @@ class _AttendanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
+      padding: const EdgeInsets.all(18),
+      decoration: appleCardDecoration(radius: 20),
       child: Column(
         children: [
           Obx(
@@ -259,12 +352,13 @@ class _AttendanceCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: RequestColors.textPrimary,
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFF5F5F7),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Icon(
                     Icons.access_time_rounded,
-                    color: Colors.white,
+                    color: RequestColors.textPrimary,
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -282,49 +376,55 @@ class _AttendanceCard extends StatelessWidget {
                           DateText.clock(controller.now.value),
                           key: ValueKey(DateText.clock(controller.now.value)),
                           style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
                             color: RequestColors.textPrimary,
+                            letterSpacing: -0.5,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 2),
                       Text(
                         DateText.fullDate(controller.now.value),
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           color: RequestColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                _GoalProgressRing(controller: controller),
+                _GoalBadge(controller: controller),
               ],
             ),
           ),
 
           const SizedBox(height: 16),
-          const Divider(height: 1),
-          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFF0F0F0)),
+          const SizedBox(height: 14),
 
           Obx(
             () => IntrinsicHeight(
               child: Row(
                 children: [
-                  _AnimatedStatColumn(
-                    label: 'Check in',
+                  _StatColumn(
+                    label: 'CHECK IN',
                     value: controller.checkInText,
+                    subLabel: 'Scheduled 09:00',
                   ),
-                  const VerticalDivider(width: 1),
-                  _AnimatedStatColumn(
-                    label: 'Check out',
+                  Container(width: 1, color: const Color(0xFFF0F0F0)),
+                  _StatColumn(
+                    label: 'CHECK OUT',
                     value: controller.checkOutText,
+                    subLabel: 'Standard 18:00',
                   ),
-                  const VerticalDivider(width: 1),
-                  _AnimatedStatColumn(
-                    label: 'Total Hrs',
+                  Container(width: 1, color: const Color(0xFFF0F0F0)),
+                  _StatColumn(
+                    label: 'TOTAL HRS',
                     value: controller.totalHoursText,
+                    subLabel: '${(controller.goalProgress * 100).toInt()}% reached',
+                    subLabelColor: controller.goalProgress >= 1.0
+                        ? RequestColors.approvedStatus
+                        : RequestColors.gold,
                   ),
                 ],
               ),
@@ -333,9 +433,26 @@ class _AttendanceCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          RequestButton(
-            label: 'Request',
-            onPressed: () => Get.toNamed(AppRoutes.request),
+          // Request Time Adjustment button
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: OutlinedButton.icon(
+              onPressed: () => Get.toNamed(AppRoutes.request),
+              icon: const Icon(Icons.edit_note_rounded, size: 20),
+              label: const Text('Request Time Adjustment'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: RequestColors.textPrimary,
+                side: const BorderSide(color: Color(0xFFE0E0E0)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -343,119 +460,57 @@ class _AttendanceCard extends StatelessWidget {
   }
 }
 
-class _GoalProgressRing extends StatelessWidget {
-  const _GoalProgressRing({required this.controller});
+class _GoalBadge extends StatelessWidget {
+  const _GoalBadge({required this.controller});
 
   final HomeController controller;
 
   @override
   Widget build(BuildContext context) {
-    final progress = controller.goalProgress;
-    final reached = progress >= 1.0;
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: progress),
-      duration: const Duration(milliseconds: 800),
-      curve: Curves.easeOutCubic,
-      builder: (context, animatedProgress, child) {
-        return SizedBox(
-          width: 56,
-          height: 56,
-          child: CustomPaint(
-            painter: _GoalRingPainter(
-              progress: animatedProgress,
-              reached: reached,
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    reached ? '✓' : 'Goal',
-                    style: TextStyle(
-                      fontSize: reached ? 12 : 9,
-                      fontWeight: FontWeight.w600,
-                      color: reached
-                          ? const Color(0xFF1B9A3A)
-                          : RequestColors.primary,
-                    ),
-                  ),
-                  if (!reached)
-                    Text(
-                      controller.remainingGoalText,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: RequestColors.primary,
-                      ),
-                    ),
-                  if (reached)
-                    Text(
-                      'Done!',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1B9A3A),
-                      ),
-                    ),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F7),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            'GOAL',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: RequestColors.textSecondary,
+              letterSpacing: 0.5,
             ),
           ),
-        );
-      },
+          const SizedBox(height: 2),
+          Text(
+            '${controller.goalHours.toStringAsFixed(1)} hrs',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: RequestColors.approvedStatus,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _GoalRingPainter extends CustomPainter {
-  _GoalRingPainter({required this.progress, required this.reached});
-
-  final double progress;
-  final bool reached;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - 6) / 2;
-    const strokeWidth = 4.0;
-
-    final bgPaint = Paint()
-      ..color = (reached ? const Color(0xFF1B9A3A) : RequestColors.primary)
-          .withValues(alpha: 0.12)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawCircle(center, radius, bgPaint);
-
-    if (progress > 0) {
-      final fgPaint = Paint()
-        ..color = reached ? const Color(0xFF1B9A3A) : RequestColors.primary
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round;
-
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        -math.pi / 2,
-        2 * math.pi * progress,
-        false,
-        fgPaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_GoalRingPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.reached != reached;
-}
-
-class _AnimatedStatColumn extends StatelessWidget {
-  const _AnimatedStatColumn({required this.label, required this.value});
+class _StatColumn extends StatelessWidget {
+  const _StatColumn({
+    required this.label,
+    required this.value,
+    this.subLabel,
+    this.subLabelColor,
+  });
 
   final String label;
   final String value;
+  final String? subLabel;
+  final Color? subLabelColor;
 
   @override
   Widget build(BuildContext context) {
@@ -465,28 +520,71 @@ class _AnimatedStatColumn extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: RequestColors.textPrimary,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: RequestColors.textSecondary,
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 350),
-            transitionBuilder: (child, anim) => SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.3),
-                end: Offset.zero,
-              ).animate(anim),
-              child: FadeTransition(opacity: anim, child: child),
-            ),
             child: Text(
               value,
               key: ValueKey(value),
               style: const TextStyle(
-                fontSize: 12,
-                color: RequestColors.textSecondary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: RequestColors.textPrimary,
               ),
+            ),
+          ),
+          if (subLabel != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subLabel!,
+              style: TextStyle(
+                fontSize: 11,
+                color: subLabelColor ?? RequestColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Wi-Fi Status Pill ───────────────────────────────────────────────────────
+
+class _WifiStatusPill extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5E5EA)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: RequestColors.approvedStatus,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            'Office Wi-Fi Connected • Main HQ',
+            style: TextStyle(
+              fontSize: 13,
+              color: RequestColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -494,6 +592,8 @@ class _AnimatedStatColumn extends StatelessWidget {
     );
   }
 }
+
+// ─── Check In Button ─────────────────────────────────────────────────────────
 
 class _CheckInButton extends StatefulWidget {
   const _CheckInButton({required this.controller});
@@ -518,7 +618,7 @@ class _CheckInButtonState extends State<_CheckInButton>
 
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
 
     _pulseAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -530,7 +630,7 @@ class _CheckInButtonState extends State<_CheckInButton>
       duration: const Duration(milliseconds: 120),
     );
 
-    _tapScale = Tween<double>(begin: 1.0, end: 0.9).animate(
+    _tapScale = Tween<double>(begin: 1.0, end: 0.92).animate(
       CurvedAnimation(parent: _tapController, curve: Curves.easeInOut),
     );
   }
@@ -542,19 +642,6 @@ class _CheckInButtonState extends State<_CheckInButton>
     super.dispose();
   }
 
-  void _onTapDown(TapDownDetails _) {
-    _tapController.forward();
-  }
-
-  void _onTapUp(TapUpDetails _) {
-    _tapController.reverse();
-    widget.controller.onMainButtonPressed();
-  }
-
-  void _onTapCancel() {
-    _tapController.reverse();
-  }
-
   Color _buttonColor(CheckState state) {
     switch (state) {
       case CheckState.notCheckedIn:
@@ -563,6 +650,28 @@ class _CheckInButtonState extends State<_CheckInButton>
         return RequestColors.danger;
       case CheckState.checkedOut:
         return RequestColors.approvedStatus;
+    }
+  }
+
+  IconData _buttonIcon(CheckState state) {
+    switch (state) {
+      case CheckState.notCheckedIn:
+        return Icons.wifi_tethering_rounded;
+      case CheckState.checkedIn:
+        return Icons.logout_rounded;
+      case CheckState.checkedOut:
+        return Icons.check_rounded;
+    }
+  }
+
+  String _buttonSubtext(CheckState state) {
+    switch (state) {
+      case CheckState.notCheckedIn:
+        return 'Face or Tap ID';
+      case CheckState.checkedIn:
+        return 'Tap to finish shift';
+      case CheckState.checkedOut:
+        return 'Shift Recorded';
     }
   }
 
@@ -587,52 +696,100 @@ class _CheckInButtonState extends State<_CheckInButton>
           return Transform.scale(
             scale: _tapScale.value,
             child: GestureDetector(
-              onTapDown: done ? null : _onTapDown,
-              onTapUp: done ? null : _onTapUp,
-              onTapCancel: done ? null : _onTapCancel,
-              child: Container(
-                width: 200,
-                height: 200,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.55),
-                ),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeInOut,
-                  width: 132,
-                  height: 132,
+              onTapDown: done ? null : (_) => _tapController.forward(),
+              onTapUp: done
+                  ? null
+                  : (_) {
+                      _tapController.reverse();
+                      widget.controller.onMainButtonPressed();
+                    },
+              onTapCancel: done ? null : () => _tapController.reverse(),
+              child: SizedBox(
+                width: 240,
+                height: 240,
+                child: Stack(
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: buttonColor,
-                    border: Border.all(color: Colors.white, width: 5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: buttonColor.withValues(
-                            alpha: done ? 0.0 : 0.15 + pulseValue * 0.25),
-                        blurRadius: 20 + pulseValue * 16,
-                        spreadRadius: 1 + pulseValue * 4,
+                  children: [
+                    // Outer dashed ring (ambient)
+                    CustomPaint(
+                      size: const Size(240, 240),
+                      painter: _DashedCirclePainter(
+                        color: buttonColor.withValues(alpha: 0.15 + pulseValue * 0.10),
+                        strokeWidth: 1.5,
+                        dashWidth: 6,
+                        dashSpace: 4,
                       ),
-                    ],
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 150),
-                    transitionBuilder: (child, anim) => ScaleTransition(
-                      scale: anim,
-                      child: FadeTransition(opacity: anim, child: child),
                     ),
-                    child: Text(
-                      widget.controller.buttonLabel,
-                      key: ValueKey(widget.controller.buttonLabel),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                    // Middle white ring
+                    Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
                         color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: buttonColor.withValues(alpha: done ? 0.0 : 0.08 + pulseValue * 0.12),
+                            blurRadius: 20 + pulseValue * 10,
+                            spreadRadius: 2 + pulseValue * 4,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                    // Inner colored button
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 160,
+                      height: 160,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            buttonColor,
+                            Color.lerp(buttonColor, Colors.black, 0.15)!,
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: buttonColor.withValues(alpha: 0.3),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _buttonIcon(state),
+                            size: 32,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(height: 8),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: Text(
+                              widget.controller.buttonLabel,
+                              key: ValueKey(widget.controller.buttonLabel),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _buttonSubtext(state),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -641,4 +798,46 @@ class _CheckInButtonState extends State<_CheckInButton>
       );
     });
   }
+}
+
+class _DashedCirclePainter extends CustomPainter {
+  _DashedCirclePainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.dashWidth,
+    required this.dashSpace,
+  });
+
+  final Color color;
+  final double strokeWidth;
+  final double dashWidth;
+  final double dashSpace;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+    final circumference = 2 * math.pi * radius;
+    final dashCount = (circumference / (dashWidth + dashSpace)).floor();
+
+    for (int i = 0; i < dashCount; i++) {
+      final startAngle = (i * (dashWidth + dashSpace)) / radius - math.pi / 2;
+      final sweepAngle = dashWidth / radius;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedCirclePainter old) => old.color != color;
 }

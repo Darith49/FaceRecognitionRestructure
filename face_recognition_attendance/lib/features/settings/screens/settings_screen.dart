@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../config/theme/app_colors.dart';
@@ -8,94 +9,282 @@ class SettingsScreen extends GetView<SettingsController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('settings_title'.tr),
-      ),
+    return RequestScaffold(
+      title: 'Face Attendance Settings',
+      backLabel: '',
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ============== LANGUAGE SECTION ==============
-            _buildSectionHeader('settings_language'.tr),
-            _buildLanguageSelector(context),
+            _SectionLabel('LANGUAGE / ភាសា'),
+            const SizedBox(height: 8),
+            Container(
+              decoration: appleCardDecoration(),
+              clipBehavior: Clip.antiAlias,
+              child: GetBuilder<SettingsController>(
+                builder: (ctrl) => Column(
+                  children: [
+                    _LanguageTile(
+                      title: 'settings_language_english'.tr,
+                      subtitle: 'English (US)',
+                      isSelected: !ctrl.isKhmer,
+                      onTap: () => ctrl.changeLanguageToEnglish(),
+                    ),
+                    const Divider(height: 1, indent: 16, endIndent: 16),
+                    _LanguageTile(
+                      title: 'settings_language_khmer'.tr,
+                      subtitle: 'ខ្មែរ (Khmer)',
+                      isSelected: ctrl.isKhmer,
+                      onTap: () => ctrl.changeLanguageToKhmer(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                'App content and interface language',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: RequestColors.textSecondary,
+                ),
+              ),
+            ),
 
-            const Divider(),
+            const SizedBox(height: 28),
 
             // ============== ABOUT SECTION ==============
-            _buildSectionHeader('settings_about'.tr),
-            _buildAboutSection(),
+            _SectionLabel('ABOUT'),
+            const SizedBox(height: 8),
+            Container(
+              decoration: appleCardDecoration(),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  _AboutRow(
+                    title: 'settings_version'.tr,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          '1.0.0 (Build 42)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: RequestColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: RequestColors.approvedStatus.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Latest',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: RequestColors.approvedStatus,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  _AboutRow(
+                    title: 'Terms of Service',
+                    showChevron: true,
+                    onTap: () {},
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  _AboutRow(
+                    title: 'Privacy Policy',
+                    showChevron: true,
+                    onTap: () {},
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  _AboutRow(
+                    title: 'Support & Documentation',
+                    showChevron: true,
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 40),
+
+            // Footer
+            Center(
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: RequestColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: const Icon(
+                      Icons.qr_code_scanner_rounded,
+                      size: 20,
+                      color: RequestColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Face Attendance Security Suite',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: RequestColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '© ${DateTime.now().year} All rights reserved.',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: RequestColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildSectionHeader(String title) {
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: Get.textTheme.titleLarge,
+      padding: const EdgeInsets.only(left: 4, bottom: 2),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: RequestColors.textSecondary,
+          letterSpacing: 0.5,
         ),
       ),
     );
   }
+}
 
+class _LanguageTile extends StatelessWidget {
+  const _LanguageTile({
+    required this.title,
+    this.subtitle,
+    required this.isSelected,
+    required this.onTap,
+  });
 
-  Widget _buildLanguageSelector(BuildContext context) {
-    return GetBuilder<SettingsController>(
-      builder: (controller) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              _buildLanguageTile(
-                title: 'settings_language_english'.tr,
-                isSelected: !controller.isKhmer,
-                onTap: () => controller.changeLanguageToEnglish(),
+  final String title;
+  final String? subtitle;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: RequestColors.textPrimary,
+                    ),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: RequestColors.textSecondary,
+                      ),
+                    ),
+                ],
               ),
-              _buildLanguageTile(
-                title: 'settings_language_khmer'.tr,
-                isSelected: controller.isKhmer,
-                onTap: () => controller.changeLanguageToKhmer(),
+            ),
+            if (isSelected)
+              const Icon(
+                Icons.check_rounded,
+                color: AppColors.primary,
+                size: 22,
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAboutSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        children: [
-          ListTile(
-            title: Text('settings_version'.tr),
-            subtitle: const Text('1.0.0'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
 
+class _AboutRow extends StatelessWidget {
+  const _AboutRow({
+    required this.title,
+    this.trailing,
+    this.showChevron = false,
+    this.onTap,
+  });
 
-  Widget _buildLanguageTile({
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      title: Text(title),
-      trailing: isSelected
-          ? const Icon(Icons.check, color: AppColors.primary)
-          : null,
+  final String title;
+  final Widget? trailing;
+  final bool showChevron;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
       onTap: onTap,
-      selected: isSelected,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: RequestColors.textPrimary,
+                ),
+              ),
+            ),
+            if (trailing != null) trailing!,
+            if (showChevron)
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: RequestColors.textSecondary,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

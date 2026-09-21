@@ -9,12 +9,11 @@ class LoginScreen extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -23,47 +22,33 @@ class LoginScreen extends GetView<LoginController> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Logo
-                SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 16),
+
+                // Logo / Scan Icon
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.qr_code_scanner_rounded,
+                    size: 32,
+                    color: AppColors.primary,
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
 
                 // Title
                 Text(
                   'auth_welcome_back'.tr,
-                  style: theme.textTheme.headlineMedium?.copyWith(
+                  style: TextStyle(
+                    fontSize: 28,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
+                    color: isDark ? AppColors.darkText : AppColors.ink,
                   ),
                 ),
 
@@ -71,81 +56,97 @@ class LoginScreen extends GetView<LoginController> {
 
                 Text(
                   'auth_enter_details'.tr,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
                   ),
                 ),
 
-                SizedBox(height: size.height * 0.05),
+                const SizedBox(height: 32),
 
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Email Label
+                    Text(
+                      'auth_email'.tr,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Email Field
                     Container(
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : const Color(0xFFF3F4F6),
+                        color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
                         borderRadius: BorderRadius.circular(12),
-                        border: isDark ? Border.all(color: AppColors.darkBorder) : null,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
+                        border: Border.all(
+                          color: isDark ? AppColors.darkBorder : AppColors.hairline,
+                        ),
                       ),
                       child: TextField(
                         controller: controller.emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: theme.textTheme.bodyLarge,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isDark ? AppColors.darkText : AppColors.ink,
+                        ),
                         decoration: InputDecoration(
-                          labelText: 'auth_email'.tr,
-                          labelStyle: TextStyle(
-                            color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
-                            fontSize: 14,
-                          ),
                           hintText: 'example@gmail.com',
                           hintStyle: TextStyle(
-                            color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
                             fontSize: 16,
                           ),
                           border: InputBorder.none,
-                          floatingLabelBehavior: FloatingLabelBehavior.always,
-                          contentPadding: const EdgeInsets.only(bottom: 8),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
 
+                    // Password Label
+                    Text(
+                      'auth_password'.tr,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Password Field
                     Obx(
                       () => Container(
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkSurface : const Color(0xFFF3F4F6),
+                          color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
                           borderRadius: BorderRadius.circular(12),
-                          border: isDark ? Border.all(color: AppColors.darkBorder) : null,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
+                          border: Border.all(
+                            color: isDark ? AppColors.darkBorder : AppColors.hairline,
+                          ),
                         ),
                         child: TextField(
                           controller: controller.passwordController,
                           obscureText: controller.isPasswordHidden.value,
-                          style: theme.textTheme.bodyLarge,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isDark ? AppColors.darkText : AppColors.ink,
+                          ),
                           decoration: InputDecoration(
-                            labelText: 'auth_password'.tr,
-                            labelStyle: TextStyle(
-                              color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
-                              fontSize: 14,
-                            ),
                             hintText: '••••••••',
                             hintStyle: TextStyle(
-                              color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
                               fontSize: 16,
                             ),
                             border: InputBorder.none,
-                            floatingLabelBehavior: FloatingLabelBehavior.always,
-                            contentPadding: const EdgeInsets.only(
-                              bottom: 8,
-                              top: 8,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
                             ),
                             suffixIcon: GestureDetector(
                               onTap: () => controller.isPasswordHidden.toggle(),
@@ -153,7 +154,7 @@ class LoginScreen extends GetView<LoginController> {
                                 controller.isPasswordHidden.value
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
-                                color: isDark ? AppColors.darkTextSecondary : const Color(0xFF9CA3AF),
+                                color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
                                 size: 20,
                               ),
                             ),
@@ -162,8 +163,9 @@ class LoginScreen extends GetView<LoginController> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
+                    // Remember me + Forgot password
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -171,19 +173,19 @@ class LoginScreen extends GetView<LoginController> {
                           children: [
                             Obx(
                               () => SizedBox(
-                                height: 24,
-                                width: 24,
+                                height: 22,
+                                width: 22,
                                 child: Checkbox(
                                   value: controller.rememberMe.value,
                                   onChanged: (val) =>
-                                      controller.rememberMe.value =
-                                          val ?? false,
+                                      controller.rememberMe.value = val ?? false,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
+                                    borderRadius: BorderRadius.circular(5),
                                   ),
                                   activeColor: AppColors.primary,
                                   side: BorderSide(
-                                    color: isDark ? AppColors.darkBorder : const Color(0xFFD1D5DB),
+                                    color: isDark ? AppColors.darkBorder : AppColors.hairline,
+                                    width: 1.5,
                                   ),
                                 ),
                               ),
@@ -191,39 +193,46 @@ class LoginScreen extends GetView<LoginController> {
                             const SizedBox(width: 8),
                             Text(
                               'auth_remember_me'.tr,
-                              style: theme.textTheme.bodyMedium?.copyWith(
+                              style: TextStyle(
+                                fontSize: 14,
                                 fontWeight: FontWeight.w500,
+                                color: isDark ? AppColors.darkText : AppColors.ink,
                               ),
                             ),
                           ],
                         ),
                         TextButton(
-                          onPressed: () {
-                            Get.toNamed(AppRoutes.forgotpassword);
-                          },
+                          onPressed: () => Get.toNamed(AppRoutes.forgotpassword),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 0),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: Text(
                             'auth_forgot_password'.tr,
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
 
+                    // Sign In Button
                     Obx(
                       () => SizedBox(
                         width: double.infinity,
-                        height: 56,
+                        height: 52,
                         child: ElevatedButton(
                           onPressed: controller.isLoading.value
                               ? null
                               : () => controller.login(
                                   email: controller.emailController.text.trim(),
-                                  password: controller.passwordController.text
-                                      .trim(),
+                                  password: controller.passwordController.text.trim(),
                                 ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
@@ -231,13 +240,13 @@ class LoginScreen extends GetView<LoginController> {
                             disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                           child: controller.isLoading.value
                               ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
+                                  width: 22,
+                                  height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
                                     color: Colors.white,
@@ -246,7 +255,7 @@ class LoginScreen extends GetView<LoginController> {
                               : Text(
                                   'auth_sign_in'.tr,
                                   style: const TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 17,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -254,38 +263,36 @@ class LoginScreen extends GetView<LoginController> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
-                    // Sign in with Google
+                    // Google Sign In
                     Obx(() {
                       final isAnyLoading =
-                          controller.isLoading.value ||
-                          controller.isGoogleLoading.value;
+                          controller.isLoading.value || controller.isGoogleLoading.value;
                       final isGoogleLoading = controller.isGoogleLoading.value;
 
                       return SizedBox(
                         width: double.infinity,
-                        height: 56,
+                        height: 52,
                         child: OutlinedButton(
                           onPressed: isAnyLoading
                               ? null
                               : () => controller.loginWithGoogle(),
                           style: OutlinedButton.styleFrom(
                             backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-                            foregroundColor: isDark ? AppColors.darkText : AppColors.lightText,
+                            foregroundColor: isDark ? AppColors.darkText : AppColors.ink,
                             side: BorderSide(
-                              color: isDark ? AppColors.darkBorder : const Color(0xFFE5E7EB),
-                              width: 1,
+                              color: isDark ? AppColors.darkBorder : AppColors.hairline,
                             ),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                           child: isGoogleLoading
                               ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
+                                  width: 22,
+                                  height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
                                     color: AppColors.primary,
@@ -296,8 +303,8 @@ class LoginScreen extends GetView<LoginController> {
                                   children: [
                                     Image.asset(
                                       "assets/login/Google.png",
-                                      width: 24,
-                                      height: 24,
+                                      width: 22,
+                                      height: 22,
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
@@ -305,7 +312,7 @@ class LoginScreen extends GetView<LoginController> {
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
-                                        color: isDark ? AppColors.darkText : AppColors.lightText,
+                                        color: isDark ? AppColors.darkText : AppColors.ink,
                                       ),
                                     ),
                                   ],
@@ -313,59 +320,91 @@ class LoginScreen extends GetView<LoginController> {
                         ),
                       );
                     }),
-                    const SizedBox(height: 24),
 
-                    // Test Accounts Preview Box
+                    const SizedBox(height: 28),
+
+                    // FAST DEMO ACCESS Card
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
+                        color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isDark ? AppColors.darkBorder : Colors.grey.shade300,
+                          color: isDark ? AppColors.darkBorder : AppColors.hairline,
                         ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          _buildAccountRow(
-                            'CEO',
-                            'sonarseang@gmail.com',
-                            '123456',
-                            context,
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.flash_on_rounded,
+                                size: 18,
+                                color: AppColors.warning,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'FAST DEMO ACCESS',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                ),
+                              ),
+                            ],
                           ),
-                          const Divider(height: 12),
-                          _buildAccountRow(
-                            'Admin',
-                            'admin@gmail.com',
-                            '123456',
-                            context,
+                          const SizedBox(height: 12),
+                          // Table header
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 70,
+                                child: Text(
+                                  'Role',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  'Email',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                'Pass',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                ),
+                              ),
+                            ],
                           ),
-                          const Divider(height: 12),
-                          _buildAccountRow(
-                            'Manager',
-                            'manager@gmail.com',
-                            '123456',
-                            context,
-                          ),
-                          const Divider(height: 12),
-                          _buildAccountRow(
-                            'Leader',
-                            'leader@gmail.com',
-                            '123456',
-                            context,
-                          ),
-                          const Divider(height: 12),
-                          _buildAccountRow(
-                            'Employee',
-                            'employee@gmail.com',
-                            '123456',
-                            context,
-                          ),
+                          const SizedBox(height: 8),
+                          _buildAccountRow('CEO', 'sonarseang@gmail.com', '123456', context),
+                          _accountDivider(),
+                          _buildAccountRow('Admin', 'admin@gmail.com', '123456', context),
+                          _accountDivider(),
+                          _buildAccountRow('Manager', 'manager@gmail.com', '123456', context),
+                          _accountDivider(),
+                          _buildAccountRow('Leader', 'leader@gmail.com', '123456', context),
+                          _accountDivider(),
+                          _buildAccountRow('Employee', 'employee@gmail.com', '123456', context),
                         ],
                       ),
                     ),
+
+                    const SizedBox(height: 24),
                   ],
                 ),
               ],
@@ -376,42 +415,65 @@ class LoginScreen extends GetView<LoginController> {
     );
   }
 
-  Widget _buildAccountRow(String role, String email, String password, BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  Widget _accountDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Divider(height: 1, color: AppColors.hairline),
+    );
+  }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: 75,
-          child: Text(
-            role,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              color: isDark ? AppColors.darkText : AppColors.lightText,
+  Widget _buildAccountRow(String role, String email, String password, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: () {
+        controller.emailController.text = email;
+        controller.passwordController.text = password;
+      },
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 70,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  role,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            email,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? AppColors.darkTextSecondary : Colors.grey.shade800,
+            Expanded(
+              child: Text(
+                email,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted80,
+                ),
+              ),
             ),
-          ),
+            Text(
+              password,
+              style: TextStyle(
+                fontSize: 12,
+                fontFamily: 'monospace',
+                color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+              ),
+            ),
+          ],
         ),
-        Text(
-          password,
-          style: TextStyle(
-            fontSize: 12,
-            fontFamily: 'monospace',
-            color: isDark ? AppColors.darkTextSecondary : Colors.grey.shade600,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

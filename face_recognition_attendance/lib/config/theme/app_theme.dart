@@ -5,11 +5,12 @@ import 'app_text_styles.dart';
 class AppTheme {
   AppTheme._();
 
-  // ============== LIGHT THEME ==============
+  // ============== LIGHT THEME (Apple-inspired) ==============
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: AppColors.lightBackground,
+    scaffoldBackgroundColor: AppColors.canvasParchment,
+    fontFamily: 'Inter',
 
     // Color Scheme
     colorScheme: const ColorScheme.light(
@@ -21,70 +22,69 @@ class AppTheme {
       onError: Colors.white,
     ),
 
-    // App Bar Theme
+    // App Bar Theme — Apple-style white bar, dark text
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
+      backgroundColor: Colors.white,
+      foregroundColor: AppColors.ink,
       elevation: 0,
+      scrolledUnderElevation: 0.5,
       centerTitle: true,
       titleTextStyle: TextStyle(
-        color: Colors.white,
-        fontSize: 18,
+        color: AppColors.ink,
+        fontSize: 17,
         fontWeight: FontWeight.w600,
+        fontFamily: 'Inter',
       ),
+      iconTheme: IconThemeData(color: AppColors.ink, size: 22),
     ),
 
-    // Card Theme
+    // Card Theme — clean white with subtle shadow
     cardTheme: CardThemeData(
       color: AppColors.lightSurface,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(
-          color: AppColors.lightBorder,
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(16),
       ),
     ),
 
     // Input Decoration Theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.lightBackground,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      fillColor: AppColors.canvasParchment,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.lightBorder),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.hairline),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.lightBorder),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.hairline),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.error, width: 2),
       ),
       labelStyle: const TextStyle(color: AppColors.lightTextSecondary),
       hintStyle: const TextStyle(color: AppColors.lightTextSecondary),
     ),
 
-    // Elevated Button Theme
+    // Elevated Button Theme — pill-shaped
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
         ),
         textStyle: AppTextStyles.buttonLarge,
       ),
@@ -94,10 +94,10 @@ class AppTheme {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.primary,
-        side: const BorderSide(color: AppColors.primary, width: 1),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        side: const BorderSide(color: AppColors.hairline, width: 1),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
         ),
         textStyle: AppTextStyles.buttonLarge,
       ),
@@ -114,10 +114,13 @@ class AppTheme {
 
     // Navigation Bar Theme (for bottom navigation)
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: AppColors.lightSurface,
+      backgroundColor: Colors.white,
       selectedItemColor: AppColors.primary,
       unselectedItemColor: AppColors.lightTextSecondary,
-      elevation: 8,
+      elevation: 0,
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
     ),
 
     // Dialog Theme
@@ -125,15 +128,15 @@ class AppTheme {
       backgroundColor: AppColors.lightSurface,
       elevation: 8,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
     ),
 
     // Divider Theme
     dividerTheme: const DividerThemeData(
-      color: AppColors.lightDivider,
+      color: AppColors.dividerSoft,
       thickness: 1,
-      space: 16,
+      space: 0,
     ),
 
     // Text Theme
@@ -145,10 +148,11 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.dark,
     scaffoldBackgroundColor: AppColors.darkBackground,
+    fontFamily: 'Inter',
 
     // Color Scheme
     colorScheme: const ColorScheme.dark(
-      primary: AppColors.primary,
+      primary: AppColors.primaryOnDark,
       secondary: AppColors.secondary,
       surface: AppColors.darkSurface,
       onSurface: AppColors.darkText,
@@ -158,14 +162,15 @@ class AppTheme {
 
     // App Bar Theme
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
+      backgroundColor: AppColors.darkSurface,
+      foregroundColor: AppColors.darkText,
       elevation: 0,
       centerTitle: true,
       titleTextStyle: TextStyle(
-        color: Colors.white,
-        fontSize: 18,
+        color: AppColors.darkText,
+        fontSize: 17,
         fontWeight: FontWeight.w600,
+        fontFamily: 'Inter',
       ),
     ),
 
@@ -174,7 +179,7 @@ class AppTheme {
       color: AppColors.darkSurface,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         side: const BorderSide(
           color: AppColors.darkBorder,
           width: 1,
@@ -186,25 +191,25 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppColors.darkBackground,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.darkBorder),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.darkBorder),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primaryOnDark, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.error, width: 2),
       ),
       labelStyle: const TextStyle(color: AppColors.darkTextSecondary),
@@ -214,12 +219,12 @@ class AppTheme {
     // Elevated Button Theme
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.primaryOnDark,
         foregroundColor: Colors.white,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
         ),
         textStyle: AppTextStyles.buttonLarge,
       ),
@@ -228,11 +233,11 @@ class AppTheme {
     // Outlined Button Theme
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primary,
-        side: const BorderSide(color: AppColors.primary, width: 1),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        foregroundColor: AppColors.primaryOnDark,
+        side: const BorderSide(color: AppColors.darkBorder, width: 1),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
         ),
         textStyle: AppTextStyles.buttonLarge,
       ),
@@ -241,7 +246,7 @@ class AppTheme {
     // Text Button Theme
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: AppColors.primary,
+        foregroundColor: AppColors.primaryOnDark,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         textStyle: AppTextStyles.buttonLarge,
       ),
@@ -250,9 +255,9 @@ class AppTheme {
     // Navigation Bar Theme
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: AppColors.darkSurface,
-      selectedItemColor: AppColors.primary,
+      selectedItemColor: AppColors.primaryOnDark,
       unselectedItemColor: AppColors.darkTextSecondary,
-      elevation: 8,
+      elevation: 0,
     ),
 
     // Dialog Theme
@@ -260,7 +265,7 @@ class AppTheme {
       backgroundColor: AppColors.darkSurface,
       elevation: 8,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
     ),
 
@@ -268,7 +273,7 @@ class AppTheme {
     dividerTheme: const DividerThemeData(
       color: AppColors.darkDivider,
       thickness: 1,
-      space: 16,
+      space: 0,
     ),
 
     // Text Theme

@@ -130,29 +130,11 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                           decoration: BoxDecoration(
                             color: selected
                                 ? RequestColors.primary
-                                : Colors.white.withValues(alpha: 0.8),
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: selected
-                                  ? RequestColors.primary
-                                  : Colors.white.withValues(alpha: 0.9),
-                              width: 1.0,
-                            ),
-                            boxShadow: selected
-                                ? [
-                                    BoxShadow(
-                                      color: RequestColors.primary.withValues(alpha: 0.25),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ]
-                                : const [
-                                    BoxShadow(
-                                      color: Color(0x06000000),
-                                      blurRadius: 6,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
+                            border: selected
+                                ? null
+                                : Border.all(color: const Color(0xFFE5E5EA)),
                           ),
                           child: Text(
                             _categories[i],

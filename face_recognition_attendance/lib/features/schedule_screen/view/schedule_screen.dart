@@ -10,17 +10,14 @@ import 'package:table_calendar/table_calendar.dart';
 
 const Color _primaryDark = Color(0xFF2456C7);
 
+const List<BoxShadow> _softShadow = [
+  BoxShadow(color: Color(0x0F1B2437), blurRadius: 14, offset: Offset(0, 4)),
+];
+
 BoxDecoration _cardDecoration({double radius = 20}) => BoxDecoration(
   color: Colors.white,
   borderRadius: BorderRadius.circular(radius),
-  border: Border.all(
-    color: Colors.white.withValues(alpha: 0.8),
-    width: 1.0,
-  ),
-  boxShadow: const [
-    BoxShadow(color: Color(0x0A1B2437), blurRadius: 18, offset: Offset(0, 4)),
-    BoxShadow(color: Color(0x051B2437), blurRadius: 6, offset: Offset(0, 1)),
-  ],
+  boxShadow: _softShadow,
 );
 
 // ---------------------------------------------------------------------------
@@ -908,7 +905,7 @@ class _ProgressBar extends StatelessWidget {
   final double value;
   final Color color;
   final Color trackColor;
-  static const double height = 8.0;
+  static const double height = 8;
 
   @override
   Widget build(BuildContext context) {

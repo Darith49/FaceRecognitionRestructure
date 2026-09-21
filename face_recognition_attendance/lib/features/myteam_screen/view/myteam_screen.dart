@@ -173,12 +173,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.8),
-          width: 1.0,
-        ),
         boxShadow: _softShadow,
       ),
       child: TextField(
@@ -270,10 +265,6 @@ class _MyteamScreenState extends State<MyteamScreen> {
           colors: [RequestColors.primary, _primaryDark],
         ),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.35),
-          width: 1.0,
-        ),
         boxShadow: [
           BoxShadow(
             color: RequestColors.primary.withValues(alpha: 0.30),
@@ -361,10 +352,6 @@ class _MyteamScreenState extends State<MyteamScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.8),
-          width: 1.0,
-        ),
         boxShadow: _softShadow,
       ),
       child: Row(

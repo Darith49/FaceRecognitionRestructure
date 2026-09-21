@@ -1,7 +1,6 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../../../config/theme/app_colors.dart';
 import '../controllers/settings_controller.dart';
 
@@ -21,9 +20,8 @@ class SettingsScreen extends GetView<SettingsController> {
             // ============== LANGUAGE SECTION ==============
             _SectionLabel('LANGUAGE / ភាសា'),
             const SizedBox(height: 8),
-            GlassCard(
-              useOwnLayer: true,
-              padding: EdgeInsets.zero,
+            Container(
+              decoration: appleCardDecoration(),
               clipBehavior: Clip.antiAlias,
               child: GetBuilder<SettingsController>(
                 builder: (ctrl) => Column(
@@ -62,9 +60,8 @@ class SettingsScreen extends GetView<SettingsController> {
             // ============== ABOUT SECTION ==============
             _SectionLabel('ABOUT'),
             const SizedBox(height: 8),
-            GlassCard(
-              useOwnLayer: true,
-              padding: EdgeInsets.zero,
+            Container(
+              decoration: appleCardDecoration(),
               clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [

@@ -31,17 +31,6 @@ class LoginScreen extends GetView<LoginController> {
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.20),
-                      width: 1.5,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x140066CC),
-                        blurRadius: 16,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
                   ),
                   child: const Icon(
                     Icons.qr_code_scanner_rounded,
@@ -251,7 +240,7 @@ class LoginScreen extends GetView<LoginController> {
                             disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                           child: controller.isLoading.value

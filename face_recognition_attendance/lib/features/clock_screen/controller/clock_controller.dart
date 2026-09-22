@@ -53,6 +53,11 @@ class ClockController extends GetxController {
   bool get hasFaceRegistered => _home.hasFaceRegistered;
   bool get isCeo => _home.isCeo;
 
+  String get session1SchedIn => _home.session1SchedIn.value;
+  String get session1SchedOut => _home.session1SchedOut.value;
+  String get session2SchedIn => _home.session2SchedIn.value;
+  String get session2SchedOut => _home.session2SchedOut.value;
+
   void onMainButtonPressed() => _home.onMainButtonPressed();
   void resetAttendance() => _home.resetAttendance();
 }

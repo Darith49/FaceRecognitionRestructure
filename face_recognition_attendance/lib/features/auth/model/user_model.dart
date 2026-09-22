@@ -96,6 +96,50 @@ class UserModel {
       invitationStatus: map['invitationStatus'] ?? 'accepted',
     );
   }
+
+  // Convert Object -> JSON Map (for SecureStorage / Local Cache)
+  Map<String, dynamic> toJson() {
+    return {
+      'uid': uid,
+      'employeeId': employeeId,
+      'email': email,
+      'fullname': fullname,
+      'gender': gender,
+      'dob': dob?.toIso8601String(),
+      'phoneNumber': phoneNumber,
+      'profileUrl': profileUrl,
+      'role': userRoleToString(role),
+      'branchId': branchId,
+      'departmentId': departmentId,
+      'status': userStatusToString(status),
+      'createdBy': createdBy,
+      'createdAt': createdAt.toIso8601String(),
+      'invitationStatus': invitationStatus,
+    };
+  }
+
+  // Convert JSON Map -> UserModel
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      uid: json['uid'] ?? '',
+      employeeId: json['employeeId'] ?? '',
+      email: json['email'] ?? '',
+      fullname: json['fullname'] ?? '',
+      gender: json['gender'],
+      dob: json['dob'] != null ? DateTime.tryParse(json['dob'].toString()) : null,
+      phoneNumber: json['phoneNumber'],
+      profileUrl: json['profileUrl'],
+      role: stringToUserRole(json['role']),
+      branchId: json['branchId'] ?? '',
+      departmentId: json['departmentId'] ?? '',
+      status: stringToUserStatus(json['status']),
+      createdBy: json['createdBy'] ?? '',
+      createdAt: json['createdAt'] != null
+          ? (DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      invitationStatus: json['invitationStatus'] ?? 'accepted',
+    );
+  }
   UserModel copyWith({
     String? uid,
     String? employeeId,

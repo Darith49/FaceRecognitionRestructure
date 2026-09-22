@@ -1,6 +1,10 @@
 import 'package:face_recognition_attendance/app.dart';
+import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/services/language_service.dart';
+import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
+import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:face_recognition_attendance/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -22,6 +26,24 @@ Future<void> main() async {
   // Init Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // Fast session check for instant launch
+  final secureStorage = SecureStorageService();
+  final hasSavedSession = await secureStorage.hasValidSession();
+  final firebaseUser = FirebaseAuth.instance.currentUser;
+  final bool isLoggedIn = firebaseUser != null || hasSavedSession;
+
+  UserModel? initialUser;
+  if (isLoggedIn) {
+    final cachedData = await secureStorage.getCachedUserData();
+    if (cachedData != null) {
+      try {
+        initialUser = UserModel.fromJson(cachedData);
+      } catch (_) {}
+    }
+  }
+
+  final initialRoute = isLoggedIn ? AppRoutes.navigation : AppRoutes.login;
+
   runApp(
     LiquidGlassWidgets.wrap(
       adaptiveQuality: true,
@@ -32,7 +54,10 @@ Future<void> main() async {
         thickness: 25,
         quality: GlassQuality.standard,
       ),
-      child: const MyApp(),
+      child: MyApp(
+        initialRoute: initialRoute,
+        initialUser: initialUser,
+      ),
     ),
   );
 }

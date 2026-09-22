@@ -3,11 +3,19 @@ import 'package:face_recognition_attendance/config/localization/app_translations
 import 'package:face_recognition_attendance/config/routes/app_pages.dart';
 import 'package:face_recognition_attendance/config/theme/app_theme.dart';
 import 'package:face_recognition_attendance/core/services/language_service.dart';
+import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String? initialRoute;
+  final UserModel? initialUser;
+
+  const MyApp({
+    super.key,
+    this.initialRoute,
+    this.initialUser,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +34,8 @@ class MyApp extends StatelessWidget {
       locale: languageService.locale,
       fallbackLocale: const Locale('en', 'US'),
 
-      initialBinding: InitialBinding(),
-      initialRoute: AppPages.INITIAL,
+      initialBinding: InitialBinding(initialUser: initialUser),
+      initialRoute: initialRoute ?? AppPages.INITIAL,
       getPages: AppPages.routes,
     );
   }

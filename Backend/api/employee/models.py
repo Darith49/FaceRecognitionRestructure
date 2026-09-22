@@ -41,6 +41,12 @@ class Employee(models.Model):
         related_name='employees',
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    # Scheduled Work Sections and Work Days
+    section1_start = models.TimeField(default='07:00:00')
+    section1_end = models.TimeField(default='11:00:00')
+    section2_start = models.TimeField(default='13:00:00')
+    section2_end = models.TimeField(default='17:00:00')
+    work_days = models.CharField(max_length=100, default='mon,tue,wed,thu,fri')
     created_by = models.CharField(max_length=200, blank=True)  # Firebase UID of creator
     created_at = models.DateTimeField(auto_now_add=True)
 

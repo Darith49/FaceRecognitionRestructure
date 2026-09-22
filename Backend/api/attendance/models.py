@@ -9,6 +9,12 @@ class Attendance(models.Model):
     STATUS_CHOICES = [
         ('checked_in', 'Checked In'),
         ('checked_out', 'Checked Out'),
+        ('absent', 'Absent'),
+    ]
+
+    SESSION_CHOICES = [
+        (1, 'Section 1'),
+        (2, 'Section 2'),
     ]
 
     employee = models.ForeignKey(
@@ -28,6 +34,7 @@ class Attendance(models.Model):
     check_out_latitude = models.FloatField(null=True, blank=True)
     check_out_longitude = models.FloatField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='checked_in')
+    session = models.IntegerField(choices=SESSION_CHOICES, default=1)
     date = models.DateField(default=timezone.localdate, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

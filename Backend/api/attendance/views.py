@@ -18,11 +18,12 @@ logger = logging.getLogger(__name__)
 def check_in(request):
     """
     Face-verified, GPS geofenced check-in.
-    Expects multipart POST: image, latitude, longitude.
+    Expects multipart POST: image, latitude, longitude, optional session.
     """
     image = request.FILES.get('image')
     latitude = request.POST.get('latitude')
     longitude = request.POST.get('longitude')
+    session = request.POST.get('session')
 
     if not image:
         return Response({"error": "Face photo is required for check-in."}, status=status.HTTP_400_BAD_REQUEST)
@@ -36,7 +37,7 @@ def check_in(request):
         return Response({"error": "Invalid GPS coordinates."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        result = AttendanceService.process_check_in(request.user, image, lat, lon)
+        result = AttendanceService.process_check_in(request.user, image, lat, lon, session=session)
         return Response(result, status=status.HTTP_200_OK)
     except PermissionDenied as e:
         return Response({"success": False, "error": str(e)}, status=status.HTTP_403_FORBIDDEN)
@@ -52,11 +53,12 @@ def check_in(request):
 def check_out(request):
     """
     Face-verified, GPS geofenced check-out.
-    Expects multipart POST: image, latitude, longitude.
+    Expects multipart POST: image, latitude, longitude, optional session.
     """
     image = request.FILES.get('image')
     latitude = request.POST.get('latitude')
     longitude = request.POST.get('longitude')
+    session = request.POST.get('session')
 
     if not image:
         return Response({"error": "Face photo is required for check-out."}, status=status.HTTP_400_BAD_REQUEST)
@@ -70,7 +72,7 @@ def check_out(request):
         return Response({"error": "Invalid GPS coordinates."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        result = AttendanceService.process_check_out(request.user, image, lat, lon)
+        result = AttendanceService.process_check_out(request.user, image, lat, lon, session=session)
         return Response(result, status=status.HTTP_200_OK)
     except PermissionDenied as e:
         return Response({"success": False, "error": str(e)}, status=status.HTTP_403_FORBIDDEN)
@@ -83,24 +85,93 @@ def check_out(request):
 
 @api_view(['GET'])
 def attendance_status(request):
-    """Checks whether the authenticated employee is currently checked in today."""
+    """
+    Returns today's attendance status for Section 1 and Section 2,
+    including absence detection and schedule configuration.
+    """
     employee = request.user
     today = timezone.localdate()
+    now_time = timezone.localtime().time()
 
-    record = Attendance.objects.filter(
-        employee=employee,
-        date=today,
-    ).order_by('-check_in_time').first()
+    # Workday check
+    weekday_names = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+    today_code = weekday_names[today.weekday()]
+    allowed_days = [d.strip().lower() for d in (getattr(employee, 'work_days', '') or 'mon,tue,wed,thu,fri').split(',') if d.strip()]
+    is_work_day = today_code in allowed_days
 
-    if record:
-        serializer = AttendanceSerializer(record)
-        return Response({
-            "is_checked_in": record.status == 'checked_in',
-            "record": serializer.data
-        })
+    # Fetch today's records (order newest first for accurate status)
+    records = Attendance.objects.filter(employee=employee, date=today)
+    rec1 = records.filter(session=1).order_by('-check_in_time').first()
+    rec2 = records.filter(session=2).order_by('-check_in_time').first()
+
+    # If legacy records without session exist:
+    if not rec1 and not rec2 and records.exists():
+        rec1 = records.order_by('-check_in_time').first()
+
+    def _to_time(val):
+        import datetime
+        if val is None:
+            return None
+        if isinstance(val, datetime.time):
+            return val
+        if isinstance(val, str):
+            try:
+                return datetime.time.fromisoformat(val)
+            except ValueError:
+                parts = [int(p) for p in val.split(':')]
+                return datetime.time(*parts)
+        return None
+
+    s1_start = _to_time(getattr(employee, 'section1_start', None))
+    s1_end = _to_time(getattr(employee, 'section1_end', None))
+    s2_start = _to_time(getattr(employee, 'section2_start', None))
+    s2_end = _to_time(getattr(employee, 'section2_end', None))
+
+    # Section 1 status
+    if rec1:
+        s1_status = 'completed' if rec1.status == 'checked_out' else 'checked_in'
+    elif is_work_day and s1_end and now_time > s1_end:
+        s1_status = 'absent'
+    elif s1_start and s1_end and s1_start <= now_time <= s1_end:
+        s1_status = 'open'
+    else:
+        s1_status = 'upcoming'
+
+    # Section 2 status
+    if rec2:
+        s2_status = 'completed' if rec2.status == 'checked_out' else 'checked_in'
+    elif is_work_day and s2_end and now_time > s2_end:
+        s2_status = 'absent'
+    elif s2_start and s2_end and s2_start <= now_time <= s2_end:
+        s2_status = 'open'
+    elif rec1 and rec1.status == 'checked_out' and s2_end and now_time <= s2_end:
+        # Section 1 is finished, Section 2 is open for early check-in until it ends
+        s2_status = 'open'
+    else:
+        s2_status = 'upcoming'
+
+    latest_record = records.order_by('-check_in_time').first()
+    active_record = records.filter(status='checked_in').order_by('-check_in_time').first()
+
     return Response({
-        "is_checked_in": False,
-        "record": None
+        "is_checked_in": active_record is not None,
+        "record": AttendanceSerializer(latest_record).data if latest_record else None,
+        "session1": {
+            "status": s1_status,
+            "record": AttendanceSerializer(rec1).data if rec1 else None,
+        },
+        "session2": {
+            "status": s2_status,
+            "record": AttendanceSerializer(rec2).data if rec2 else None,
+        },
+        "schedule": {
+            "section1_start": str(s1_start) if s1_start else '07:00:00',
+            "section1_end": str(s1_end) if s1_end else '11:00:00',
+            "section2_start": str(s2_start) if s2_start else '13:00:00',
+            "section2_end": str(s2_end) if s2_end else '17:00:00',
+            "work_days": getattr(employee, 'work_days', 'mon,tue,wed,thu,fri'),
+            "is_work_day_today": is_work_day,
+        }
     })
 
 

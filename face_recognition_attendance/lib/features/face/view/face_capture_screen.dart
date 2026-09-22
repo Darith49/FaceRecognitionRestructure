@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
@@ -28,11 +29,13 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
 
   // Mode: 'register', 'check_in', or 'check_out'
   late String _action;
+  int? _session;
 
   @override
   void initState() {
     super.initState();
     _action = Get.arguments?['action'] ?? 'register';
+    _session = Get.arguments?['session'];
     _initCamera();
     if (_action != 'register') {
       _getCurrentLocation();
@@ -63,7 +66,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       await _cameraController!.initialize();
       if (mounted) setState(() {});
     } catch (e) {
-      if (mounted) setState(() => _statusText = 'Camera initialization error: $e');
+      if (mounted) {
+        setState(() => _statusText = 'Camera initialization error: $e');
+      }
     }
   }
 
@@ -73,7 +78,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
 
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        if (mounted) setState(() => _statusText = 'Please enable GPS on your device.');
+        if (mounted) {
+          setState(() => _statusText = 'Please enable GPS on your device.');
+        }
         return;
       }
 
@@ -81,13 +88,19 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          if (mounted) setState(() => _statusText = 'Location permission denied.');
+          if (mounted) {
+            setState(() => _statusText = 'Location permission denied.');
+          }
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        if (mounted) setState(() => _statusText = 'Location permission permanently denied.');
+        if (mounted) {
+          setState(
+            () => _statusText = 'Location permission permanently denied.',
+          );
+        }
         return;
       }
 
@@ -111,12 +124,17 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
   }
 
   Future<void> _captureAndProcess() async {
-    if (_isProcessing || _cameraController == null || !_cameraController!.value.isInitialized) {
+    if (_isProcessing ||
+        _cameraController == null ||
+        !_cameraController!.value.isInitialized) {
       return;
     }
 
     if (_action != 'register' && _currentPosition == null) {
-      Get.snackbar('Location Required', 'Waiting for GPS fix. Please ensure location is enabled.');
+      Get.snackbar(
+        'Location Required',
+        'Waiting for GPS fix. Please ensure location is enabled.',
+      );
       _getCurrentLocation();
       return;
     }
@@ -144,25 +162,35 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
         }
       } else if (_action == 'check_in') {
         setState(() => _statusText = 'Verifying face and geofence distance...');
+        final Map<String, String> fields = {
+          'latitude': _currentPosition!.latitude.toString(),
+          'longitude': _currentPosition!.longitude.toString(),
+        };
+        if (_session != null) {
+          fields['session'] = _session.toString();
+        }
         result = await _apiService.postMultipart(
           '/attendance/check-in/',
           file: imageFile,
           fileField: 'image',
-          fields: {
-            'latitude': _currentPosition!.latitude.toString(),
-            'longitude': _currentPosition!.longitude.toString(),
-          },
+          fields: fields,
         );
       } else if (_action == 'check_out') {
-        setState(() => _statusText = 'Verifying face and check-out geofence...');
+        setState(
+          () => _statusText = 'Verifying face and check-out geofence...',
+        );
+        final Map<String, String> fields = {
+          'latitude': _currentPosition!.latitude.toString(),
+          'longitude': _currentPosition!.longitude.toString(),
+        };
+        if (_session != null) {
+          fields['session'] = _session.toString();
+        }
         result = await _apiService.postMultipart(
           '/attendance/check-out/',
           file: imageFile,
           fileField: 'image',
-          fields: {
-            'latitude': _currentPosition!.latitude.toString(),
-            'longitude': _currentPosition!.longitude.toString(),
-          },
+          fields: fields,
         );
       }
 
@@ -174,11 +202,17 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       String? timeDisplay;
       if (result is Map) {
         if (result['check_in_time'] != null) {
-          final cambodiaTime = DateText.parseCambodia(result['check_in_time'].toString());
-          timeDisplay = 'Time: ${DateText.clock(cambodiaTime)} (Cambodia, UTC+7)';
+          final cambodiaTime = DateText.parseCambodia(
+            result['check_in_time'].toString(),
+          );
+          timeDisplay =
+              'Time: ${DateText.clock(cambodiaTime)} (Cambodia, UTC+7)';
         } else if (result['check_out_time'] != null) {
-          final cambodiaTime = DateText.parseCambodia(result['check_out_time'].toString());
-          timeDisplay = 'Time: ${DateText.clock(cambodiaTime)} (Cambodia, UTC+7)';
+          final cambodiaTime = DateText.parseCambodia(
+            result['check_out_time'].toString(),
+          );
+          timeDisplay =
+              'Time: ${DateText.clock(cambodiaTime)} (Cambodia, UTC+7)';
         }
       }
 
@@ -188,14 +222,35 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
 
       _showSuccessDialog(message, timeDisplay: timeDisplay, resultData: result);
     } on ApiException catch (e) {
-      Get.snackbar(
-        '${_getActionTitle()} Failed',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade600,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
+      final msg = e.message;
+      final isTimeIssue =
+          msg.toLowerCase().contains('section') ||
+          msg.toLowerCase().contains('scheduled') ||
+          msg.toLowerCase().contains('day off') ||
+          msg.toLowerCase().contains('current time');
+      final isLocationIssue =
+          msg.toLowerCase().contains('away from') ||
+          msg.toLowerCase().contains('radius');
+
+      if (isTimeIssue || isLocationIssue) {
+        final title = isTimeIssue
+            ? 'Outside Check-In Window'
+            : 'Location Out of Range';
+        _showRestrictionDialog(
+          title: title,
+          message: msg,
+          isTimeRestriction: isTimeIssue,
+        );
+      } else {
+        Get.snackbar(
+          '${_getActionTitle()} Failed',
+          e.message,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.shade600,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+        );
+      }
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -214,7 +269,11 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     }
   }
 
-  void _showSuccessDialog(String message, {String? timeDisplay, dynamic resultData}) {
+  void _showSuccessDialog(
+    String message, {
+    String? timeDisplay,
+    dynamic resultData,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -232,7 +291,11 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                   color: Colors.green.shade50,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.check_circle_rounded, size: 48, color: Colors.green.shade600),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  size: 48,
+                  color: Colors.green.shade600,
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -248,7 +311,10 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
               if (timeDisplay != null && timeDisplay.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(10),
@@ -257,7 +323,11 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.schedule_rounded, size: 18, color: Colors.green.shade800),
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 18,
+                        color: Colors.green.shade800,
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
@@ -285,9 +355,107 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                     backgroundColor: Colors.green.shade600,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Done', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRestrictionDialog({
+    required String title,
+    required String message,
+    required bool isTimeRestriction,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: isTimeRestriction
+                      ? const Color(0xFFFEF3C7)
+                      : const Color(0xFFFEE2E2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isTimeRestriction
+                      ? Icons.access_time_filled_rounded
+                      : Icons.location_off_rounded,
+                  size: 40,
+                  color: isTimeRestriction
+                      ? const Color(0xFFD97706)
+                      : const Color(0xFFDC2626),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.45,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Get.back();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isTimeRestriction
+                        ? const Color(0xFFD97706)
+                        : const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Understood',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -298,13 +466,14 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
   }
 
   String _getActionTitle() {
+    final sessionSuffix = _session != null ? ' (Section $_session)' : '';
     switch (_action) {
       case 'register':
         return 'Register Face';
       case 'check_in':
-        return 'Check In';
+        return 'Check In$sessionSuffix';
       case 'check_out':
-        return 'Check Out';
+        return 'Check Out$sessionSuffix';
       default:
         return 'Face Attendance';
     }
@@ -312,7 +481,8 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isCameraReady = _cameraController != null && _cameraController!.value.isInitialized;
+    final isCameraReady =
+        _cameraController != null && _cameraController!.value.isInitialized;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -331,7 +501,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
               ),
             )
           else
-            const Center(child: CircularProgressIndicator(color: RequestColors.primary)),
+            const Center(
+              child: CircularProgressIndicator(color: RequestColors.primary),
+            ),
 
           // 2. Face Scanner Overlay
           if (isCameraReady) const FaceScannerOverlay(),
@@ -348,7 +520,10 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                      ),
                       onPressed: () => Get.back(),
                     ),
                   ),
@@ -366,7 +541,10 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                   // GPS Status Badge
                   if (_action != 'register')
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: _currentPosition != null
                             ? Colors.green.withValues(alpha: 0.85)
@@ -377,14 +555,22 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            _currentPosition != null ? Icons.location_on : Icons.location_searching,
+                            _currentPosition != null
+                                ? Icons.location_on
+                                : Icons.location_searching,
                             color: Colors.white,
                             size: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _currentPosition != null ? 'GPS Ready' : 'Locating...',
-                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            _currentPosition != null
+                                ? 'GPS Ready'
+                                : 'Locating...',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -402,11 +588,16 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
               right: 20,
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black87,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.6)),
+                    border: Border.all(
+                      color: Colors.blueAccent.withValues(alpha: 0.6),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -417,13 +608,20 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                           child: SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       Flexible(
                         child: Text(
                           _statusText,
-                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),

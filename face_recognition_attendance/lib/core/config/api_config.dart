@@ -8,7 +8,8 @@ class ApiConfig {
   static int serverPort = 8000;
 
   /// Returns the base URL for the Django REST API (v1).
-  static String get baseUrl => 'http://$serverHost:$serverPort/api/v1';
+  //static String get baseUrl => 'http://$serverHost:$serverPort/api/v1';
+  static String get baseUrl => 'https://role-greatest-station-ranked.trycloudflare.com/api/v1';
 
   /// Request timeout
   static const Duration timeoutDuration = Duration(seconds: 30);

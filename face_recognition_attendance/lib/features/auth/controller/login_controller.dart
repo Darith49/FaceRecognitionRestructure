@@ -2,6 +2,7 @@ import 'package:face_recognition_attendance/config/navigation/navigation_control
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/service/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
+import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:get/get.dart';
 
 class LoginController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
+  final SecureStorageService _secureStorage = SecureStorageService();
 
   final Rx<UserModel?> currentuser = Rx<UserModel?>(null);
   final RxBool hasFaceRegistered = false.obs;
@@ -20,6 +22,7 @@ class LoginController extends GetxController {
   final RxBool isPasswordHidden = true.obs;
   final RxBool rememberMe = false.obs;
   final RxBool isLoading = false.obs;
+  final RxBool isCheckingSession = false.obs;
   final RxString errorMessage = ''.obs;
 
   bool get isLoggedIn => currentuser.value != null;
@@ -28,6 +31,12 @@ class LoginController extends GetxController {
   void onInit() {
     super.onInit();
     _checkCurrentUser();
+  }
+
+  void clearInputs() {
+    emailController.clear();
+    passwordController.clear();
+    rememberMe.value = false;
   }
 
   Future<void> checkFaceStatus() async {
@@ -42,14 +51,67 @@ class LoginController extends GetxController {
     }
   }
 
-  Future<void> _checkCurrentUser() async {
-    final firebaseUser = _firebaseService.getCurrentUser();
-    if (firebaseUser != null) {
-      final user = await _firebaseService.getUserByUid(firebaseUser.uid);
-      if (user != null) {
-        currentuser.value = user;
-        await checkFaceStatus();
+  void _persistSessionInBackground(UserModel user) {
+    _firebaseService.getIdToken().then((idToken) {
+      if (idToken != null) {
+        final refreshToken = _firebaseService.getCurrentUser()?.refreshToken;
+        _secureStorage.saveUserSession(
+          uid: user.uid,
+          email: user.email,
+          accessToken: idToken,
+          refreshToken: refreshToken,
+          userData: user.toJson(),
+        );
       }
+    }).catchError((e) {
+      debugPrint('Error saving session in background: $e');
+    });
+    checkFaceStatus();
+  }
+
+  Future<void> _checkCurrentUser() async {
+    try {
+      // 1. If user is already loaded via initialUser, just sync in background
+      if (currentuser.value != null) {
+        final firebaseUser = _firebaseService.getCurrentUser();
+        if (firebaseUser != null) {
+          _firebaseService.getUserByUid(firebaseUser.uid).then((freshUser) {
+            if (freshUser != null) {
+              currentuser.value = freshUser;
+              _persistSessionInBackground(freshUser);
+            }
+          });
+        }
+        return;
+      }
+
+      // 2. Otherwise load cached user from secure storage
+      final cachedData = await _secureStorage.getCachedUserData();
+      if (cachedData != null) {
+        try {
+          final cachedUser = UserModel.fromJson(cachedData);
+          currentuser.value = cachedUser;
+          _persistSessionInBackground(cachedUser);
+          _navigationBasedOnRole(cachedUser.role);
+          return;
+        } catch (e) {
+          debugPrint('Failed to parse cached user: $e');
+        }
+      }
+
+      // 3. Fallback check for active Firebase auth user
+      final firebaseUser = _firebaseService.getCurrentUser();
+      if (firebaseUser != null) {
+        final user = await _firebaseService.getUserByUid(firebaseUser.uid);
+        if (user != null) {
+          currentuser.value = user;
+          _persistSessionInBackground(user);
+          _navigationBasedOnRole(user.role);
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error in auto-login check: $e');
     }
   }
 
@@ -64,13 +126,15 @@ class LoginController extends GetxController {
       );
 
       if (user != null) {
-        currentuser.value = user; // 1. Save user state
-        await checkFaceStatus();
+        currentuser.value = user;
+        _persistSessionInBackground(user);
+        clearInputs();
         _navigationBasedOnRole(user.role);
         return true;
       } else {
-        // 2. User exists in Auth, but NO document found in Firestore
-        await _firebaseService.logout(); // Clean up auth session so they aren't stuck in a half-logged-in state
+        // User exists in Auth, but NO document found in Firestore
+        await _firebaseService.logout();
+        await _secureStorage.clearAll();
 
         errorMessage.value = "User profile not found in database. Please contact an administrator.";
 
@@ -123,6 +187,7 @@ class LoginController extends GetxController {
 
       if (user == null) {
         await _firebaseService.logout();
+        await _secureStorage.clearAll();
 
         errorMessage.value =
             'User profile not found. Please contact an administrator.';
@@ -140,7 +205,8 @@ class LoginController extends GetxController {
         return;
       }
       currentuser.value = user;
-      await checkFaceStatus();
+      _persistSessionInBackground(user);
+      clearInputs();
 
       _navigationBasedOnRole(user.role);
     } catch (e) {
@@ -168,13 +234,14 @@ class LoginController extends GetxController {
   Future<void> logOut() async {
     try {
       await _firebaseService.logout();
+      await _secureStorage.clearAll();
     } catch (e) {
-      debugPrint('Logout service error: $e');
+      debugPrint('Logout error: $e');
     } finally {
       currentuser.value = null;
       hasFaceRegistered.value = false;
-      emailController.clear();
-      passwordController.clear();
+      clearInputs();
+      errorMessage.value = '';
       if (Get.isRegistered<NavigationController>()) {
         Get.find<NavigationController>().changePage(0);
       }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:face_recognition_attendance/core/config/api_config.dart';
 import 'package:face_recognition_attendance/core/service/firebase_service.dart';
+import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
 import 'package:http/http.dart' as http;
 
 class ApiException implements Exception {
@@ -22,6 +23,7 @@ class ApiException implements Exception {
 
 class ApiService {
   final FirebaseService _firebaseService = FirebaseService();
+  final SecureStorageService _secureStorage = SecureStorageService();
 
   Future<Map<String, String>> _buildHeaders({bool isJson = true}) async {
     final headers = <String, String>{};
@@ -30,14 +32,25 @@ class ApiService {
       headers['Accept'] = 'application/json';
     }
 
-    // Attach Firebase ID Token
+    // Attach Token (check Firebase first, fallback to SecureStorage, keep synced)
     try {
-      final token = await _firebaseService.getIdToken();
+      String? token = await _firebaseService.getIdToken();
+      if (token != null && token.isNotEmpty) {
+        _secureStorage.saveTokens(accessToken: token);
+      } else {
+        token = await _secureStorage.getAccessToken();
+      }
+
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
     } catch (_) {
-      // Continue without token if not logged in
+      try {
+        final token = await _secureStorage.getAccessToken();
+        if (token != null && token.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $token';
+        }
+      } catch (_) {}
     }
 
     return headers;

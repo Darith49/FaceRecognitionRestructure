@@ -112,6 +112,11 @@ def employee_list_create(request):
             branch=branch,
             department=department,
             status='pending',
+            section1_start=data.get('section1_start', '07:00:00'),
+            section1_end=data.get('section1_end', '11:00:00'),
+            section2_start=data.get('section2_start', '13:00:00'),
+            section2_end=data.get('section2_end', '17:00:00'),
+            work_days=data.get('work_days', 'mon,tue,wed,thu,fri'),
             created_by=request.user.firebase_uid,
         )
 
@@ -123,6 +128,11 @@ def employee_list_create(request):
             'role': target_role,
             'branchId': str(branch.id) if branch else '',
             'departmentId': str(department.id) if department else '',
+            'section1Start': str(employee.section1_start),
+            'section1End': str(employee.section1_end),
+            'section2Start': str(employee.section2_start),
+            'section2End': str(employee.section2_end),
+            'workDays': employee.work_days,
             'status': 'pending',
             'createdBy': request.user.firebase_uid,
             'createdAt': timezone.now(),
@@ -175,6 +185,11 @@ def employee_detail(request, pk):
                 'branchId': str(updated_emp.branch.id) if updated_emp.branch else '',
                 'departmentId': str(updated_emp.department.id) if updated_emp.department else '',
                 'employeeId': updated_emp.employee_id,
+                'section1Start': str(updated_emp.section1_start),
+                'section1End': str(updated_emp.section1_end),
+                'section2Start': str(updated_emp.section2_start),
+                'section2End': str(updated_emp.section2_end),
+                'workDays': updated_emp.work_days,
             }
             sync_firestore_user_profile(updated_emp.firebase_uid, firestore_payload)
             return Response(EmployeeSerializer(updated_emp).data)

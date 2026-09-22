@@ -186,4 +186,194 @@ class ModelAndServiceTests(TestCase):
         self.assertEqual(reverse('attendance_status'), '/api/v1/attendance/status/')
         self.assertEqual(reverse('attendance_records'), '/api/v1/attendance/records/')
 
+    def test_employee_work_sections_and_days(self):
+        from .serializers import EmployeeSerializer
+        emp = Employee.objects.create(
+            firebase_uid="test-emp-sections",
+            employee_id="EMP-SECTION-1",
+            fullname="Section Worker",
+            email="worker@company.com",
+            role="employee",
+            branch=self.branch,
+            department=self.department,
+            status="active",
+            section1_start="07:00:00",
+            section1_end="11:00:00",
+            section2_start="13:00:00",
+            section2_end="17:00:00",
+            work_days="mon,tue,wed,thu,fri",
+        )
+        data = EmployeeSerializer(emp).data
+        self.assertEqual(data["section1_start"], "07:00:00")
+        self.assertEqual(data["section1_end"], "11:00:00")
+        self.assertEqual(data["section2_start"], "13:00:00")
+        self.assertEqual(data["section2_end"], "17:00:00")
+        self.assertEqual(data["work_days"], "mon,tue,wed,thu,fri")
+
+    def test_check_in_time_window_validation(self):
+        from rest_framework.exceptions import ValidationError
+        from django.utils import timezone
+        import datetime
+
+        # Configure employee with shift 07:00 - 11:00 and 13:00 - 17:00, but day off today
+        today = timezone.localdate()
+        weekday_names = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+        today_code = weekday_names[today.weekday()]
+        other_day = 'sun' if today_code != 'sun' else 'mon'
+
+        self.employee.work_days = other_day
+        self.employee.save()
+
+        # Check-in on day off should fail
+        with self.assertRaises(ValidationError) as ctx:
+            AttendanceService.process_check_in(self.employee, None, 11.5564, 104.9282)
+        self.assertIn("day off", str(ctx.exception).lower())
+
+        # Reset workday to include today, but set shifts far away from current time
+        self.employee.work_days = today_code
+        now_time = timezone.localtime().time()
+        # Create non-overlapping window
+        far_hour_start = (now_time.hour + 5) % 24
+        far_hour_end = (far_hour_start + 1) % 24
+        self.employee.section1_start = datetime.time(far_hour_start, 0)
+        self.employee.section1_end = datetime.time(far_hour_end, 0)
+        self.employee.section2_start = datetime.time((far_hour_end + 1) % 24, 0)
+        self.employee.section2_end = datetime.time((far_hour_end + 2) % 24, 0)
+        self.employee.save()
+
+        with self.assertRaises(ValidationError) as ctx:
+            AttendanceService.process_check_in(self.employee, None, 11.5564, 104.9282)
+        self.assertIn("scheduled work sections", str(ctx.exception).lower())
+
+    def test_attendance_status_absence_and_sessions(self):
+        from rest_framework.test import APIRequestFactory, force_authenticate
+        from api.attendance.views import attendance_status
+        from django.utils import timezone
+        import datetime
+
+        factory = APIRequestFactory()
+        request = factory.get('/api/v1/attendance/status/')
+        force_authenticate(request, user=self.employee)
+
+        # Set shift so section1_end is in the past
+        now_time = timezone.localtime().time()
+        past_start = (now_time.hour - 3) % 24
+        past_end = (now_time.hour - 1) % 24
+        # Ensure it is in the past and doesn't cross midnight
+        if now_time.hour >= 2:
+            self.employee.section1_start = datetime.time(past_start, 0)
+            self.employee.section1_end = datetime.time(past_end, 0)
+            self.employee.work_days = "mon,tue,wed,thu,fri,sat,sun"
+            self.employee.save()
+
+            response = attendance_status(request)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("session1", response.data)
+            self.assertIn("session2", response.data)
+            self.assertIn("schedule", response.data)
+            self.assertEqual(response.data["session1"]["status"], "absent")
+
+    def test_two_section_check_in_and_check_out_flow(self):
+        from unittest.mock import patch
+        from django.utils import timezone
+        import datetime
+
+        # Ensure employee is configured for today with shifts spanning around now
+        today = timezone.localdate()
+        weekday_names = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+        self.employee.work_days = weekday_names[today.weekday()]
+        now_time = timezone.localtime().time()
+
+        # Set section 1 and 2 windows
+        self.employee.section1_start = datetime.time(0, 1)
+        self.employee.section1_end = datetime.time(23, 58)
+        self.employee.section2_start = datetime.time(0, 1)
+        self.employee.section2_end = datetime.time(23, 59)
+        self.employee.save()
+
+        FaceRegistration.objects.create(
+            employee=self.employee,
+            embedding=[0.1] * 512,
+        )
+
+        with patch('api.attendance.services.FaceService.save_temp_file', return_value=('mock.jpg', '/tmp/mock.jpg')), \
+             patch('api.attendance.services.FaceService.extract_embedding', return_value=[0.1] * 512), \
+             patch('api.attendance.services.FaceService.compare_embeddings', return_value=(0.0, 99.0, True)), \
+             patch('api.attendance.services.FaceService.cleanup_file'):
+
+            # 1. Check in Section 1
+            res1 = AttendanceService.process_check_in(self.employee, "fake_img", 11.5564, 104.9282, session=1)
+            self.assertTrue(res1["success"])
+            self.assertEqual(res1["session"], 1)
+
+            # 2. Check out Section 1
+            res1_out = AttendanceService.process_check_out(self.employee, "fake_img", 11.5564, 104.9282, session=1)
+            self.assertTrue(res1_out["success"])
+            self.assertEqual(res1_out["session"], 1)
+
+            # 2b. Attempting to check in to Section 1 again should be rejected
+            from rest_framework.exceptions import ValidationError
+            with self.assertRaises(ValidationError) as ctx_dup1:
+                AttendanceService.process_check_in(self.employee, "fake_img", 11.5564, 104.9282, session=1)
+            self.assertIn("already checked in for section 1", str(ctx_dup1.exception).lower())
+
+            # 3. Check in Section 2 (auto-progresses to session 2 or with session=2)
+            res2 = AttendanceService.process_check_in(self.employee, "fake_img", 11.5564, 104.9282, session=2)
+            self.assertTrue(res2["success"])
+            self.assertEqual(res2["session"], 2)
+
+            # 4. Check out Section 2
+            res2_out = AttendanceService.process_check_out(self.employee, "fake_img", 11.5564, 104.9282, session=2)
+            self.assertTrue(res2_out["success"])
+            self.assertEqual(res2_out["session"], 2)
+
+            # 4b. Attempting to check in after both sections are complete should be rejected
+            with self.assertRaises(ValidationError) as ctx_dup2:
+                AttendanceService.process_check_in(self.employee, "fake_img", 11.5564, 104.9282)
+            self.assertIn("already checked in for section 2", str(ctx_dup2.exception).lower())
+
+    def test_attendance_status_latest_record_ordering(self):
+        from rest_framework.test import APIRequestFactory, force_authenticate
+        from api.attendance.views import attendance_status
+        from django.utils import timezone
+
+        factory = APIRequestFactory()
+        request = factory.get('/api/v1/attendance/status/')
+        force_authenticate(request, user=self.employee)
+
+        # Create an older checked_out record for session 1
+        t1 = timezone.now() - timezone.timedelta(hours=2)
+        Attendance.objects.create(
+            employee=self.employee,
+            branch=self.branch,
+            check_in_latitude=11.5564,
+            check_in_longitude=104.9282,
+            check_out_latitude=11.5564,
+            check_out_longitude=104.9282,
+            check_out_time=t1 + timezone.timedelta(minutes=30),
+            status="checked_out",
+            session=1,
+            date=timezone.localdate(),
+        )
+
+        # Create a newer record for session 1 that is checked_in
+        t2 = timezone.now() - timezone.timedelta(minutes=10)
+        Attendance.objects.create(
+            employee=self.employee,
+            branch=self.branch,
+            check_in_latitude=11.5564,
+            check_in_longitude=104.9282,
+            status="checked_in",
+            session=1,
+            date=timezone.localdate(),
+        )
+
+        # attendance_status should pick the NEWEST record for session 1, which is checked_in
+        response = attendance_status(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["is_checked_in"])
+        self.assertEqual(response.data["session1"]["status"], "checked_in")
+
+
+
 

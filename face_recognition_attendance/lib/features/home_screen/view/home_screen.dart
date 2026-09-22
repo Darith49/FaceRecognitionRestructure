@@ -100,10 +100,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 animation: _entranceController,
                 builder: (_, child) => Transform.translate(
                   offset: Offset(0, _greetingSlide.value),
-                  child: Opacity(
-                    opacity: _greetingFade.value,
-                    child: child,
-                  ),
+                  child: Opacity(opacity: _greetingFade.value, child: child),
                 ),
                 child: _GreetingHeader(controller: controller),
               ),
@@ -116,10 +113,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     animation: _entranceController,
                     builder: (_, child) => Transform.translate(
                       offset: Offset(0, _cardSlide.value),
-                      child: Opacity(
-                        opacity: _cardFade.value,
-                        child: child,
-                      ),
+                      child: Opacity(opacity: _cardFade.value, child: child),
                     ),
                     child: _CeoActionPanel(controller: controller),
                   );
@@ -131,10 +125,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       animation: _entranceController,
                       builder: (_, child) => Transform.translate(
                         offset: Offset(0, _cardSlide.value),
-                        child: Opacity(
-                          opacity: _cardFade.value,
-                          child: child,
-                        ),
+                        child: Opacity(opacity: _cardFade.value, child: child),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -214,123 +205,126 @@ class _GreetingHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      child: Obx(
-        () {
-          final loginController = Get.isRegistered<LoginController>()
-              ? Get.find<LoginController>()
-              : null;
-          final user = loginController?.currentuser.value;
-          final role = user?.role.name ?? 'Employee';
+      child: Obx(() {
+        final loginController = Get.isRegistered<LoginController>()
+            ? Get.find<LoginController>()
+            : null;
+        final user = loginController?.currentuser.value;
+        final role = user?.role.name ?? 'Employee';
 
-          return Row(
-            children: [
-              // Avatar with online dot
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: RequestColors.primary.withValues(alpha: 0.10),
-                      border: Border.all(
-                        color: RequestColors.primary.withValues(alpha: 0.20),
-                        width: 2,
-                      ),
+        return Row(
+          children: [
+            // Avatar with online dot
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: RequestColors.primary.withValues(alpha: 0.10),
+                    border: Border.all(
+                      color: RequestColors.primary.withValues(alpha: 0.20),
+                      width: 2,
                     ),
-                    child: Center(
-                      child: Text(
-                        _initials(controller.userName),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: RequestColors.primary,
-                        ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _initials(controller.userName),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: RequestColors.primary,
                       ),
                     ),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    child: Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: RequestColors.approvedStatus,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: RequestColors.approvedStatus,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          controller.userName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: RequestColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: RequestColors.approvedStatus.withValues(
+                            alpha: 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          role,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: RequestColors.approvedStatus,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${controller.greeting} • Have a productive day',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: RequestColors.textSecondary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            controller.userName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: RequestColors.textPrimary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: RequestColors.approvedStatus.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            role,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: RequestColors.approvedStatus,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${controller.greeting} • Have a productive day',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: RequestColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+            // Notification bell
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
               ),
-              // Notification bell
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
-                ),
-                child: const Icon(
-                  Icons.notifications_none_rounded,
-                  size: 20,
-                  color: RequestColors.textSecondary,
-                ),
+              child: const Icon(
+                Icons.notifications_none_rounded,
+                size: 20,
+                color: RequestColors.textSecondary,
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ],
+        );
+      }),
     );
   }
 
@@ -379,10 +373,8 @@ class _AttendanceCard extends StatelessWidget {
                     children: [
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 400),
-                        transitionBuilder: (child, anim) => FadeTransition(
-                          opacity: anim,
-                          child: child,
-                        ),
+                        transitionBuilder: (child, anim) =>
+                            FadeTransition(opacity: anim, child: child),
                         child: Text(
                           DateText.clock(controller.now.value),
                           key: ValueKey(DateText.clock(controller.now.value)),
@@ -425,8 +417,8 @@ class _AttendanceCard extends StatelessWidget {
                   iconColor: const Color(0xFFF59E0B),
                   checkInTime: controller.session1CheckInText,
                   checkOutTime: controller.session1CheckOutText,
-                  scheduledIn: HomeController.session1SchedIn,
-                  scheduledOut: HomeController.session1SchedOut,
+                  scheduledIn: controller.session1SchedIn.value,
+                  scheduledOut: controller.session1SchedOut.value,
                   statusText: controller.session1StatusText,
                   isActive: controller.isSession1Active,
                   isDone: controller.isSession1Done,
@@ -442,8 +434,8 @@ class _AttendanceCard extends StatelessWidget {
                   iconColor: const Color(0xFF6366F1),
                   checkInTime: controller.session2CheckInText,
                   checkOutTime: controller.session2CheckOutText,
-                  scheduledIn: HomeController.session2SchedIn,
-                  scheduledOut: HomeController.session2SchedOut,
+                  scheduledIn: controller.session2SchedIn.value,
+                  scheduledOut: controller.session2SchedOut.value,
                   statusText: controller.session2StatusText,
                   isActive: controller.isSession2Active,
                   isDone: controller.isSession2Done,
@@ -453,7 +445,10 @@ class _AttendanceCard extends StatelessWidget {
 
                 // Total Hours Summary Banner with Progress Bar
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: controller.goalProgress >= 1.0
                         ? RequestColors.approvedStatus.withValues(alpha: 0.08)
@@ -648,6 +643,9 @@ class _SessionTile extends StatelessWidget {
     if (isDone) {
       badgeBg = RequestColors.approvedStatus.withValues(alpha: 0.12);
       badgeText = RequestColors.approvedStatus;
+    } else if (statusText == 'Absent') {
+      badgeBg = RequestColors.danger.withValues(alpha: 0.12);
+      badgeText = RequestColors.danger;
     } else if (isActive && checkInTime != '-- : --') {
       badgeBg = RequestColors.primary.withValues(alpha: 0.12);
       badgeText = RequestColors.primary;
@@ -693,7 +691,9 @@ class _SessionTile extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: isActive
                           ? RequestColors.primary
-                          : (isDark ? AppColors.darkText : RequestColors.textPrimary),
+                          : (isDark
+                                ? AppColors.darkText
+                                : RequestColors.textPrimary),
                       letterSpacing: 0.4,
                     ),
                   ),
@@ -880,9 +880,10 @@ class _CheckInButtonState extends State<_CheckInButton>
       duration: const Duration(milliseconds: 120),
     );
 
-    _tapScale = Tween<double>(begin: 1.0, end: 0.92).animate(
-      CurvedAnimation(parent: _tapController, curve: Curves.easeInOut),
-    );
+    _tapScale = Tween<double>(
+      begin: 1.0,
+      end: 0.92,
+    ).animate(CurvedAnimation(parent: _tapController, curve: Curves.easeInOut));
   }
 
   @override
@@ -930,12 +931,12 @@ class _CheckInButtonState extends State<_CheckInButton>
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final state = widget.controller.state.value;
-      final done = state == CheckState.completed || state == CheckState.checkedOut;
+      final done =
+          state == CheckState.completed || state == CheckState.checkedOut;
       final buttonColor = _buttonColor(state);
 
       if (done && _pulseController.isAnimating) {
@@ -970,7 +971,9 @@ class _CheckInButtonState extends State<_CheckInButton>
                     CustomPaint(
                       size: const Size(240, 240),
                       painter: _DashedCirclePainter(
-                        color: buttonColor.withValues(alpha: 0.15 + pulseValue * 0.10),
+                        color: buttonColor.withValues(
+                          alpha: 0.15 + pulseValue * 0.10,
+                        ),
                         strokeWidth: 1.5,
                         dashWidth: 6,
                         dashSpace: 4,
@@ -985,7 +988,9 @@ class _CheckInButtonState extends State<_CheckInButton>
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: buttonColor.withValues(alpha: done ? 0.0 : 0.08 + pulseValue * 0.12),
+                            color: buttonColor.withValues(
+                              alpha: done ? 0.0 : 0.08 + pulseValue * 0.12,
+                            ),
                             blurRadius: 20 + pulseValue * 10,
                             spreadRadius: 2 + pulseValue * 4,
                           ),
@@ -1115,33 +1120,39 @@ class _CeoActionPanel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Obx(() => _CeoStatCard(
-                      icon: Icons.business_rounded,
-                      color: const Color(0xFF0F766E),
-                      label: 'Branches',
-                      count: controller.branchController.branches.length,
-                      onTap: () => Get.toNamed(AppRoutes.branchList),
-                    )),
+                child: Obx(
+                  () => _CeoStatCard(
+                    icon: Icons.business_rounded,
+                    color: const Color(0xFF0F766E),
+                    label: 'Branches',
+                    count: controller.branchController.branches.length,
+                    onTap: () => Get.toNamed(AppRoutes.branchList),
+                  ),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Obx(() => _CeoStatCard(
-                      icon: Icons.apartment_rounded,
-                      color: const Color(0xFF1D4ED8),
-                      label: 'Departments',
-                      count: controller.departmentController.departments.length,
-                      onTap: () => Get.toNamed(AppRoutes.departmentList),
-                    )),
+                child: Obx(
+                  () => _CeoStatCard(
+                    icon: Icons.apartment_rounded,
+                    color: const Color(0xFF1D4ED8),
+                    label: 'Departments',
+                    count: controller.departmentController.departments.length,
+                    onTap: () => Get.toNamed(AppRoutes.departmentList),
+                  ),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Obx(() => _CeoStatCard(
-                      icon: Icons.people_alt_rounded,
-                      color: const Color(0xFFB45309),
-                      label: 'Employees',
-                      count: controller.employeeController.employees.length,
-                      onTap: () => Get.toNamed(AppRoutes.employeeList),
-                    )),
+                child: Obx(
+                  () => _CeoStatCard(
+                    icon: Icons.people_alt_rounded,
+                    color: const Color(0xFFB45309),
+                    label: 'Employees',
+                    count: controller.employeeController.employees.length,
+                    onTap: () => Get.toNamed(AppRoutes.employeeList),
+                  ),
+                ),
               ),
             ],
           ),
@@ -1231,7 +1242,9 @@ class _CeoActionPanel extends StatelessWidget {
                   title: 'Create Department',
                   subtitle: 'Add department to an existing branch',
                   onTap: () async {
-                    final result = await Get.toNamed(AppRoutes.createDepartment);
+                    final result = await Get.toNamed(
+                      AppRoutes.createDepartment,
+                    );
                     if (result == true) {
                       controller.refreshAdminOverview();
                     }
@@ -1449,7 +1462,11 @@ class _RecentCreatedOverview extends StatelessWidget {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.business_rounded, size: 20, color: Color(0xFF0F766E)),
+                        Icon(
+                          Icons.business_rounded,
+                          size: 20,
+                          color: Color(0xFF0F766E),
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Created Branches',
@@ -1475,49 +1492,61 @@ class _RecentCreatedOverview extends StatelessWidget {
                   ],
                 ),
                 const Divider(height: 8),
-                ...branches.take(3).map((b) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F766E).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
+                ...branches
+                    .take(3)
+                    .map(
+                      (b) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F766E)
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.location_on_rounded,
+                                size: 18,
+                                color: Color(0xFF0F766E),
+                              ),
                             ),
-                            child: const Icon(Icons.location_on_rounded, size: 18, color: Color(0xFF0F766E)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  b.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: RequestColors.textPrimary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    b.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: RequestColors.textPrimary,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  'Radius: ${b.radius.toInt()}m geofence',
-                                  style: const TextStyle(fontSize: 12, color: RequestColors.textSecondary),
-                                ),
-                              ],
+                                  Text(
+                                    'Radius: ${b.radius.toInt()}m geofence',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: RequestColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${b.employeeCount} staff',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: RequestColors.textSecondary,
+                            Text(
+                              '${b.employeeCount} staff',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: RequestColors.textSecondary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    )),
+                    ),
               ],
             ),
           );
@@ -1550,7 +1579,11 @@ class _RecentCreatedOverview extends StatelessWidget {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.domain_rounded, size: 20, color: Color(0xFF1D4ED8)),
+                        Icon(
+                          Icons.domain_rounded,
+                          size: 20,
+                          color: Color(0xFF1D4ED8),
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Created Departments',
@@ -1576,49 +1609,63 @@ class _RecentCreatedOverview extends StatelessWidget {
                   ],
                 ),
                 const Divider(height: 8),
-                ...departments.take(3).map((d) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1D4ED8).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
+                ...departments
+                    .take(3)
+                    .map(
+                      (d) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1D4ED8)
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.corporate_fare_rounded,
+                                size: 18,
+                                color: Color(0xFF1D4ED8),
+                              ),
                             ),
-                            child: const Icon(Icons.corporate_fare_rounded, size: 18, color: Color(0xFF1D4ED8)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  d.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: RequestColors.textPrimary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    d.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: RequestColors.textPrimary,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  d.branchName.isNotEmpty ? d.branchName : 'Branch #${d.branchId}',
-                                  style: const TextStyle(fontSize: 12, color: RequestColors.textSecondary),
-                                ),
-                              ],
+                                  Text(
+                                    d.branchName.isNotEmpty
+                                        ? d.branchName
+                                        : 'Branch #${d.branchId}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: RequestColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${d.employeeCount} staff',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: RequestColors.textSecondary,
+                            Text(
+                              '${d.employeeCount} staff',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: RequestColors.textSecondary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    )),
+                    ),
               ],
             ),
           );
@@ -1651,7 +1698,11 @@ class _RecentCreatedOverview extends StatelessWidget {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.people_alt_rounded, size: 20, color: Color(0xFFB45309)),
+                        Icon(
+                          Icons.people_alt_rounded,
+                          size: 20,
+                          color: Color(0xFFB45309),
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Invited Users',
@@ -1677,60 +1728,76 @@ class _RecentCreatedOverview extends StatelessWidget {
                   ],
                 ),
                 const Divider(height: 8),
-                ...employees.take(3).map((e) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 18,
-                            backgroundColor: RequestColors.primary.withValues(alpha: 0.1),
-                            child: Text(
-                              e.fullname.isNotEmpty ? e.fullname[0].toUpperCase() : '?',
-                              style: const TextStyle(
-                                color: RequestColors.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                ...employees
+                    .take(3)
+                    .map(
+                      (e) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: RequestColors.primary.withValues(
+                                alpha: 0.1,
+                              ),
+                              child: Text(
+                                e.fullname.isNotEmpty
+                                    ? e.fullname[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  color: RequestColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  e.fullname,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: RequestColors.textPrimary,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    e.fullname,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: RequestColors.textPrimary,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  e.email,
-                                  style: const TextStyle(fontSize: 12, color: RequestColors.textSecondary),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: RequestColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              e.role.name.toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: RequestColors.primary,
+                                  Text(
+                                    e.email,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: RequestColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: RequestColors.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                e.role.name.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: RequestColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    )),
+                    ),
               ],
             ),
           );

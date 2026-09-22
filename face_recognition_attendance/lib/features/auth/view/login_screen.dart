@@ -93,14 +93,9 @@ class LoginScreen extends GetView<LoginController> {
                           fontSize: 16,
                           color: isDark ? AppColors.darkText : AppColors.ink,
                         ),
-                        decoration: InputDecoration(
-                          hintText: 'example@gmail.com',
-                          hintStyle: TextStyle(
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
-                            fontSize: 16,
-                          ),
+                        decoration: const InputDecoration(
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
+                          contentPadding: EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 14,
                           ),
@@ -138,11 +133,6 @@ class LoginScreen extends GetView<LoginController> {
                             color: isDark ? AppColors.darkText : AppColors.ink,
                           ),
                           decoration: InputDecoration(
-                            hintText: '••••••••',
-                            hintStyle: TextStyle(
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
-                              fontSize: 16,
-                            ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,

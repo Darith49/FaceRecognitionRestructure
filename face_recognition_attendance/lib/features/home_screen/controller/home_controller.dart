@@ -14,11 +14,10 @@ import 'package:get/get.dart';
 enum CheckState {
   // 2-Session states
   session1NotCheckedIn, // Morning: awaiting Session 1 Check In
-  session1CheckedIn,    // Morning: Session 1 active, awaiting Check Out
+  session1CheckedIn, // Morning: Session 1 active, awaiting Check Out
   session2NotCheckedIn, // Afternoon: Session 1 done, awaiting Session 2 Check In
-  session2CheckedIn,    // Afternoon: Session 2 active, awaiting Check Out
-  completed,            // Both sessions finished for the day
-
+  session2CheckedIn, // Afternoon: Session 2 active, awaiting Check Out
+  completed, // Both sessions finished for the day
   // Backward compatibility aliases
   notCheckedIn,
   checkedIn,
@@ -41,11 +40,14 @@ class HomeController extends GetxController {
   final Rx<DateTime?> session2CheckIn = Rx<DateTime?>(null);
   final Rx<DateTime?> session2CheckOut = Rx<DateTime?>(null);
 
-  // Standard schedules
-  static const String session1SchedIn = '08:00';
-  static const String session1SchedOut = '12:00';
-  static const String session2SchedIn = '13:00';
-  static const String session2SchedOut = '17:00';
+  // Dynamic schedules
+  final RxString session1SchedIn = '07:00'.obs;
+  final RxString session1SchedOut = '11:00'.obs;
+  final RxString session2SchedIn = '13:00'.obs;
+  final RxString session2SchedOut = '17:00'.obs;
+  final RxString session1ApiStatus = ''.obs;
+  final RxString session2ApiStatus = ''.obs;
+  final RxBool isWorkDayToday = true.obs;
 
   final double goalHours = 8.0;
 
@@ -71,20 +73,82 @@ class HomeController extends GetxController {
     if (isCeo) return;
     try {
       final res = await _apiService.get('/attendance/status/');
-      if (res is Map && res['record'] != null) {
-        final record = res['record'] as Map;
-        final checkInStr = record['check_in_time']?.toString();
-        final checkOutStr = record['check_out_time']?.toString();
-        final isCheckedIn = res['is_checked_in'] == true;
+      if (res is Map) {
+        // 1. Read schedule
+        if (res['schedule'] is Map) {
+          final sched = res['schedule'] as Map;
+          final s1Start = sched['section1_start']?.toString();
+          final s1End = sched['section1_end']?.toString();
+          final s2Start = sched['section2_start']?.toString();
+          final s2End = sched['section2_end']?.toString();
 
-        if (checkInStr != null && checkInStr.isNotEmpty) {
-          session1CheckIn.value = DateText.parseCambodia(checkInStr);
-          if (isCheckedIn) {
-            state.value = CheckState.session1CheckedIn;
-          } else if (checkOutStr != null && checkOutStr.isNotEmpty) {
-            session1CheckOut.value = DateText.parseCambodia(checkOutStr);
+          if (s1Start != null && s1Start.length >= 5) {
+            session1SchedIn.value = s1Start.substring(0, 5);
+          }
+          if (s1End != null && s1End.length >= 5) {
+            session1SchedOut.value = s1End.substring(0, 5);
+          }
+          if (s2Start != null && s2Start.length >= 5) {
+            session2SchedIn.value = s2Start.substring(0, 5);
+          }
+          if (s2End != null && s2End.length >= 5) {
+            session2SchedOut.value = s2End.substring(0, 5);
+          }
+          if (sched['is_work_day_today'] is bool) {
+            isWorkDayToday.value = sched['is_work_day_today'] as bool;
+          }
+        }
+
+        // 2. Read Session 1
+        if (res['session1'] is Map) {
+          final s1 = res['session1'] as Map;
+          session1ApiStatus.value = s1['status']?.toString() ?? '';
+          if (s1['record'] is Map) {
+            final rec1 = s1['record'] as Map;
+            final inTime = rec1['check_in_time']?.toString();
+            final outTime = rec1['check_out_time']?.toString();
+            if (inTime != null && inTime.isNotEmpty) {
+              session1CheckIn.value = DateText.parseCambodia(inTime);
+            }
+            if (outTime != null && outTime.isNotEmpty) {
+              session1CheckOut.value = DateText.parseCambodia(outTime);
+            }
+          }
+        }
+
+        // 3. Read Session 2
+        if (res['session2'] is Map) {
+          final s2 = res['session2'] as Map;
+          session2ApiStatus.value = s2['status']?.toString() ?? '';
+          if (s2['record'] is Map) {
+            final rec2 = s2['record'] as Map;
+            final inTime = rec2['check_in_time']?.toString();
+            final outTime = rec2['check_out_time']?.toString();
+            if (inTime != null && inTime.isNotEmpty) {
+              session2CheckIn.value = DateText.parseCambodia(inTime);
+            }
+            if (outTime != null && outTime.isNotEmpty) {
+              session2CheckOut.value = DateText.parseCambodia(outTime);
+            }
+          }
+        }
+
+        // 4. Update overall check state
+        if (session2CheckOut.value != null) {
+          state.value = CheckState.completed;
+        } else if (session2CheckIn.value != null) {
+          state.value = CheckState.session2CheckedIn;
+        } else if (session1CheckOut.value != null ||
+            session1ApiStatus.value == 'absent') {
+          if (session2ApiStatus.value == 'absent') {
+            state.value = CheckState.completed;
+          } else {
             state.value = CheckState.session2NotCheckedIn;
           }
+        } else if (session1CheckIn.value != null) {
+          state.value = CheckState.session1CheckedIn;
+        } else {
+          state.value = CheckState.session1NotCheckedIn;
         }
       }
     } catch (_) {
@@ -106,11 +170,13 @@ class HomeController extends GetxController {
       ? Get.find<BranchController>()
       : Get.put(BranchController());
 
-  DepartmentController get departmentController => Get.isRegistered<DepartmentController>()
+  DepartmentController get departmentController =>
+      Get.isRegistered<DepartmentController>()
       ? Get.find<DepartmentController>()
       : Get.put(DepartmentController());
 
-  EmployeeController get employeeController => Get.isRegistered<EmployeeController>()
+  EmployeeController get employeeController =>
+      Get.isRegistered<EmployeeController>()
       ? Get.find<EmployeeController>()
       : Get.put(EmployeeController());
 
@@ -147,18 +213,25 @@ class HomeController extends GetxController {
   bool get isSession1Done => session1CheckOut.value != null;
   bool get isSession2Done => session2CheckOut.value != null;
   bool get isAllDone =>
-      state.value == CheckState.completed || state.value == CheckState.checkedOut;
+      state.value == CheckState.completed ||
+      state.value == CheckState.checkedOut;
 
   String get session1StatusText {
     if (session1CheckOut.value != null) return 'Completed';
     if (session1CheckIn.value != null) return 'In Progress';
+    if (session1ApiStatus.value == 'absent') return 'Absent';
+    if (session1ApiStatus.value == 'open') return 'Open';
     return 'Upcoming';
   }
 
   String get session2StatusText {
     if (session2CheckOut.value != null) return 'Completed';
     if (session2CheckIn.value != null) return 'In Progress';
-    if (session1CheckOut.value != null) return 'Ready';
+    if (session2ApiStatus.value == 'absent') return 'Absent';
+    if (session2ApiStatus.value == 'open') return 'Open';
+    if (session1CheckOut.value != null || session1ApiStatus.value == 'absent') {
+      return 'Ready';
+    }
     return 'Upcoming';
   }
 
@@ -183,34 +256,35 @@ class HomeController extends GetxController {
   // Backward compatibility getters
   Rx<DateTime?> get checkInTime =>
       (state.value == CheckState.session1NotCheckedIn ||
-              state.value == CheckState.session1CheckedIn ||
-              state.value == CheckState.notCheckedIn)
-          ? session1CheckIn
-          : (session2CheckIn.value != null ? session2CheckIn : session1CheckIn);
+          state.value == CheckState.session1CheckedIn ||
+          state.value == CheckState.notCheckedIn)
+      ? session1CheckIn
+      : (session2CheckIn.value != null ? session2CheckIn : session1CheckIn);
 
   Rx<DateTime?> get checkOutTime =>
       session2CheckOut.value != null ? session2CheckOut : session1CheckOut;
 
   String get checkInText =>
       (state.value == CheckState.session1NotCheckedIn ||
-              state.value == CheckState.session1CheckedIn ||
-              state.value == CheckState.notCheckedIn)
-          ? session1CheckInText
-          : session2CheckInText;
+          state.value == CheckState.session1CheckedIn ||
+          state.value == CheckState.notCheckedIn)
+      ? session1CheckInText
+      : session2CheckInText;
 
   String get checkOutText =>
       (state.value == CheckState.session1NotCheckedIn ||
-              state.value == CheckState.session1CheckedIn ||
-              state.value == CheckState.notCheckedIn)
-          ? session1CheckOutText
-          : session2CheckOutText;
+          state.value == CheckState.session1CheckedIn ||
+          state.value == CheckState.notCheckedIn)
+      ? session1CheckOutText
+      : session2CheckOutText;
 
   // ─── Hours & Progress Calculation ──────────────────────────────────────────
 
   int get session1WorkedMinutes {
     final start = session1CheckIn.value;
     if (start == null) return 0;
-    final end = session1CheckOut.value ??
+    final end =
+        session1CheckOut.value ??
         (state.value == CheckState.session1CheckedIn ||
                 state.value == CheckState.checkedIn
             ? now.value
@@ -222,7 +296,8 @@ class HomeController extends GetxController {
   int get session2WorkedMinutes {
     final start = session2CheckIn.value;
     if (start == null) return 0;
-    final end = session2CheckOut.value ??
+    final end =
+        session2CheckOut.value ??
         (state.value == CheckState.session2CheckedIn ? now.value : start);
     final diff = end.difference(start).inMinutes;
     return diff > 0 ? diff : 0;
@@ -321,7 +396,10 @@ class HomeController extends GetxController {
 
     // Account without registered face -> directly route to face enrollment
     if (!hasFaceRegistered) {
-      final res = await Get.toNamed(AppRoutes.faceCapture, arguments: {'action': 'register'});
+      final res = await Get.toNamed(
+        AppRoutes.faceCapture,
+        arguments: {'action': 'register'},
+      );
       if (res != null) {
         await _authController.checkFaceStatus();
         await fetchTodayAttendanceStatus();
@@ -330,27 +408,35 @@ class HomeController extends GetxController {
     }
 
     String? action;
+    int sessionNum = 1;
     switch (state.value) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
         action = 'check_in';
+        sessionNum = 1;
         break;
       case CheckState.session1CheckedIn:
       case CheckState.checkedIn:
         action = 'check_out';
+        sessionNum = 1;
         break;
       case CheckState.session2NotCheckedIn:
         action = 'check_in';
+        sessionNum = 2;
         break;
       case CheckState.session2CheckedIn:
         action = 'check_out';
+        sessionNum = 2;
         break;
       case CheckState.completed:
       case CheckState.checkedOut:
         return;
     }
 
-    final result = await Get.toNamed(AppRoutes.faceCapture, arguments: {'action': action});
+    final result = await Get.toNamed(
+      AppRoutes.faceCapture,
+      arguments: {'action': action, 'session': sessionNum},
+    );
     if (result != null) {
       if (action == 'check_in') {
         DateTime time = DateText.nowCambodia();

@@ -27,9 +27,14 @@ class EmployeeController extends GetxController {
       if (branchId != null) queryParams['branch'] = branchId;
       if (departmentId != null) queryParams['department'] = departmentId;
 
-      final data = await _apiService.get('/employees/', queryParams: queryParams.isNotEmpty ? queryParams : null);
+      final data = await _apiService.get(
+        '/employees/',
+        queryParams: queryParams.isNotEmpty ? queryParams : null,
+      );
       if (data is List) {
-        employees.assignAll(data.map((item) => EmployeeModel.fromJson(item)).toList());
+        employees.assignAll(
+          data.map((item) => EmployeeModel.fromJson(item)).toList(),
+        );
       }
     } on ApiException catch (e) {
       errorMessage.value = e.message;
@@ -47,6 +52,11 @@ class EmployeeController extends GetxController {
     int? branchId,
     int? departmentId,
     String? employeeId,
+    String? section1Start,
+    String? section1End,
+    String? section2Start,
+    String? section2End,
+    String? workDays,
   }) async {
     // Early guard to prevent duplicate calls / spam clicking
     if (isLoading.value) return false;
@@ -59,15 +69,38 @@ class EmployeeController extends GetxController {
         'role': userRoleToString(role),
       };
 
-      if (branchId != null) payload['branch_id'] = branchId;
-      if (departmentId != null) payload['department_id'] = departmentId;
-      if (employeeId != null && employeeId.isNotEmpty) payload['employee_id'] = employeeId;
+      if (branchId != null) {
+        payload['branch_id'] = branchId;
+      }
+      if (departmentId != null) {
+        payload['department_id'] = departmentId;
+      }
+      if (employeeId != null && employeeId.isNotEmpty) {
+        payload['employee_id'] = employeeId;
+      }
+      if (section1Start != null && section1Start.isNotEmpty) {
+        payload['section1_start'] = section1Start;
+      }
+      if (section1End != null && section1End.isNotEmpty) {
+        payload['section1_end'] = section1End;
+      }
+      if (section2Start != null && section2Start.isNotEmpty) {
+        payload['section2_start'] = section2Start;
+      }
+      if (section2End != null && section2End.isNotEmpty) {
+        payload['section2_end'] = section2End;
+      }
+      if (workDays != null && workDays.isNotEmpty) {
+        payload['work_days'] = workDays;
+      }
 
       final response = await _apiService.post('/employees/', body: payload);
 
       if (response is Map) {
         if (response.containsKey('employee') && response['employee'] is Map) {
-          final newEmp = EmployeeModel.fromJson(Map<String, dynamic>.from(response['employee']));
+          final newEmp = EmployeeModel.fromJson(
+            Map<String, dynamic>.from(response['employee']),
+          );
           employees.insert(0, newEmp);
         }
 
@@ -112,6 +145,11 @@ class EmployeeController extends GetxController {
     int? branchId,
     int? departmentId,
     String? employeeId,
+    String? section1Start,
+    String? section1End,
+    String? section2Start,
+    String? section2End,
+    String? workDays,
   }) async {
     if (isLoading.value) return false;
 
@@ -126,11 +164,21 @@ class EmployeeController extends GetxController {
       payload['branch'] = branchId;
       payload['department'] = departmentId;
       if (employeeId != null) payload['employee_id'] = employeeId;
+      if (section1Start != null) payload['section1_start'] = section1Start;
+      if (section1End != null) payload['section1_end'] = section1End;
+      if (section2Start != null) payload['section2_start'] = section2Start;
+      if (section2End != null) payload['section2_end'] = section2End;
+      if (workDays != null) payload['work_days'] = workDays;
 
-      final response = await _apiService.patch('/employees/$id/', body: payload);
+      final response = await _apiService.patch(
+        '/employees/$id/',
+        body: payload,
+      );
 
       if (response is Map) {
-        final updatedEmp = EmployeeModel.fromJson(Map<String, dynamic>.from(response));
+        final updatedEmp = EmployeeModel.fromJson(
+          Map<String, dynamic>.from(response),
+        );
         final index = employees.indexWhere((e) => e.id == id);
         if (index != -1) {
           employees[index] = updatedEmp;

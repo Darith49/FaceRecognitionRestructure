@@ -9,7 +9,7 @@ class ApiConfig {
 
   /// Returns the base URL for the Django REST API (v1).
   // static String get baseUrl => 'http://$serverHost:$serverPort/api/v1';
-  static String get baseUrl => 'https://copper-manchester-discussions-loop.trycloudflare.com/api/v1';
+  static String get baseUrl => 'https://alive-ultimately-bathroom-forgotten.trycloudflare.com/api/v1';
 
   /// Request timeout
   static const Duration timeoutDuration = Duration(seconds: 30);

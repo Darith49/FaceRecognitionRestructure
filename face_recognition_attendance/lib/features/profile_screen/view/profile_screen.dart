@@ -13,8 +13,8 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final loginController = Get.isRegistered<LoginController>()
         ? Get.find<LoginController>()
-        : null;
-    loginController?.checkFaceStatus();
+        : Get.put(LoginController(), permanent: true);
+    loginController.checkFaceStatus();
 
     return Scaffold(
       backgroundColor: RequestColors.background,
@@ -69,7 +69,7 @@ class ProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(18),
                   decoration: appleCardDecoration(radius: 20),
                   child: Obx(() {
-                    final user = loginController?.currentuser.value;
+                    final user = loginController.currentuser.value;
                     return Row(
                       children: [
                         // Avatar with online dot
@@ -156,7 +156,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Obx(() {
-                                final isRegistered = loginController?.hasFaceRegistered.value ?? false;
+                                final isRegistered = loginController.hasFaceRegistered.value;
                                 return Row(
                                   children: [
                                     Container(
@@ -202,7 +202,7 @@ class ProfileScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Obx(() {
-                  final isRegistered = loginController?.hasFaceRegistered.value ?? false;
+                  final isRegistered = loginController.hasFaceRegistered.value;
                   return _SettingsTile(
                     icon: Icons.face_retouching_natural_rounded,
                     iconColor: const Color(0xFF7C3AED),
@@ -213,7 +213,7 @@ class ProfileScreen extends StatelessWidget {
                     onTap: () async {
                       final res = await Get.toNamed(AppRoutes.faceCapture, arguments: {'action': 'register'});
                       if (res != null) {
-                        await loginController?.checkFaceStatus();
+                        await loginController.checkFaceStatus();
                       }
                     },
                   );
@@ -351,7 +351,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _confirmLogout(BuildContext context, LoginController? loginController) {
+  void _confirmLogout(BuildContext context, LoginController loginController) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -377,7 +377,7 @@ class ProfileScreen extends StatelessWidget {
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.of(ctx).pop(),
             child: const Text(
               'Cancel',
               style: TextStyle(
@@ -387,9 +387,9 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              loginController?.logOut();
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await loginController.logOut();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: RequestColors.danger,

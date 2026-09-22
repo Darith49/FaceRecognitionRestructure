@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/service/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
@@ -165,10 +166,20 @@ class LoginController extends GetxController {
   }
 
   Future<void> logOut() async {
-    await _firebaseService.logout();
-    currentuser.value = null;
-    hasFaceRegistered.value = false;
-    Get.offAllNamed(AppRoutes.login);
+    try {
+      await _firebaseService.logout();
+    } catch (e) {
+      debugPrint('Logout service error: $e');
+    } finally {
+      currentuser.value = null;
+      hasFaceRegistered.value = false;
+      emailController.clear();
+      passwordController.clear();
+      if (Get.isRegistered<NavigationController>()) {
+        Get.find<NavigationController>().changePage(0);
+      }
+      Get.offAllNamed(AppRoutes.login);
+    }
   }
 
   void _navigationBasedOnRole(UserRole role) {

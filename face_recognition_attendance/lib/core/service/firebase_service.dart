@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseService {
@@ -31,8 +32,16 @@ class FirebaseService {
 
   //it void because logout we don't need anydata just signOut
   Future<void> logout() async {
-    await _auth.signOut();
-    await _googleSignIn.signOut();
+    try {
+      await _auth.signOut().timeout(const Duration(seconds: 4));
+    } catch (e) {
+      debugPrint('Error signing out from FirebaseAuth: $e');
+    }
+    try {
+      await _googleSignIn.signOut().timeout(const Duration(seconds: 4));
+    } catch (e) {
+      debugPrint('Error signing out from GoogleSignIn: $e');
+    }
   }
 
   //Forgot Passwrod

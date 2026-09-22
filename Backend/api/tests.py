@@ -466,3 +466,22 @@ class ModelAndServiceTests(TestCase):
         mgrs_tab_filtered = next(t for t in res_search.data['tabs'] if t['key'] == 'managers')
         self.assertEqual(len(mgrs_tab_filtered['items']), 1)
         self.assertEqual(mgrs_tab_filtered['items'][0]['fullname'], 'Alice Manager')
+
+
+class HealthCheckTests(TestCase):
+    def test_root_health_check_endpoint(self):
+        response = self.client.get('/health/')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get('status'), 'ok')
+        self.assertEqual(data.get('database'), 'healthy')
+        self.assertEqual(data.get('service'), 'attendance-backend-api')
+
+    def test_api_v1_health_check_endpoint(self):
+        response = self.client.get('/api/v1/health/')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get('status'), 'ok')
+        self.assertEqual(data.get('database'), 'healthy')
+        self.assertEqual(data.get('service'), 'attendance-backend-api')
+

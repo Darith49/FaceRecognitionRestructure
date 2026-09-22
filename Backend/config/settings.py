@@ -14,7 +14,11 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get('ALLOWED_HOSTS', '*').split(',')
+    if h.strip()
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -41,9 +45,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.trycloudflare.com',
-]
+csrf_trusted_env = os.environ.get('CSRF_TRUSTED_ORIGINS')
+if csrf_trusted_env:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_trusted_env.split(',') if o.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        'https://*.trycloudflare.com',
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]
+
 
 ROOT_URLCONF = 'config.urls'
 
@@ -67,12 +78,26 @@ WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
 # Database: SQLite for Year 3 University MVP
+sqlite_db_env = os.environ.get('SQLITE_DB_PATH')
+if sqlite_db_env:
+    SQLITE_DB_PATH = Path(sqlite_db_env)
+    if not SQLITE_DB_PATH.is_absolute():
+        SQLITE_DB_PATH = BASE_DIR / SQLITE_DB_PATH
+elif (BASE_DIR / 'data' / 'db.sqlite3').exists():
+    SQLITE_DB_PATH = BASE_DIR / 'data' / 'db.sqlite3'
+else:
+    SQLITE_DB_PATH = BASE_DIR / 'db.sqlite3'
+
+# Ensure directory for SQLite DB exists
+SQLITE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': SQLITE_DB_PATH,
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -117,9 +142,23 @@ REST_FRAMEWORK = {
 FIREBASE_CREDENTIALS_PATH = os.environ.get('FIREBASE_CREDENTIALS_PATH', '')
 if not FIREBASE_CREDENTIALS_PATH:
     default_cred = BASE_DIR / 'face-recognition-attenda-230d3-firebase-adminsdk-fbsvc-255c00d255.json'
+    data_cred_1 = BASE_DIR / 'data' / 'face-recognition-attenda-230d3-firebase-adminsdk-fbsvc-255c00d255.json'
+    data_cred_2 = BASE_DIR / 'data' / 'firebase-credentials.json'
     if default_cred.exists():
         FIREBASE_CREDENTIALS_PATH = str(default_cred)
+    elif data_cred_1.exists():
+        FIREBASE_CREDENTIALS_PATH = str(data_cred_1)
+    elif data_cred_2.exists():
+        FIREBASE_CREDENTIALS_PATH = str(data_cred_2)
 elif not os.path.isabs(FIREBASE_CREDENTIALS_PATH):
-    FIREBASE_CREDENTIALS_PATH = str(BASE_DIR / FIREBASE_CREDENTIALS_PATH)
+    # Check direct relative path, then data/ relative path
+    candidate_1 = BASE_DIR / FIREBASE_CREDENTIALS_PATH
+    candidate_2 = BASE_DIR / 'data' / FIREBASE_CREDENTIALS_PATH
+    if candidate_1.exists():
+        FIREBASE_CREDENTIALS_PATH = str(candidate_1)
+    elif candidate_2.exists():
+        FIREBASE_CREDENTIALS_PATH = str(candidate_2)
+    else:
+        FIREBASE_CREDENTIALS_PATH = str(candidate_1)
 FIREBASE_PROJECT_ID = os.environ.get('FIREBASE_PROJECT_ID', 'face-recognition-attenda-230d3')
 

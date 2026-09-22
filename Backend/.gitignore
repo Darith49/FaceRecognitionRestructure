@@ -9,7 +9,13 @@ firebase-credentials.json
 
 # Database
 *.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
 db.sqlite3
+data/
+.deepface/
+
 
 # Python cache & build
 __pycache__/

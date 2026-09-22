@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
+import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
@@ -218,26 +219,13 @@ class _GreetingHeader extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: RequestColors.primary.withValues(alpha: 0.10),
-                    border: Border.all(
-                      color: RequestColors.primary.withValues(alpha: 0.20),
-                      width: 2,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _initials(controller.userName),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: RequestColors.primary,
-                      ),
-                    ),
+                AppAvatar(
+                  profileUrl: user?.profileUrl,
+                  name: controller.userName,
+                  size: 50,
+                  border: Border.all(
+                    color: RequestColors.primary.withValues(alpha: 0.20),
+                    width: 2,
                   ),
                 ),
                 Positioned(
@@ -326,13 +314,6 @@ class _GreetingHeader extends StatelessWidget {
         );
       }),
     );
-  }
-
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty || parts.first.isEmpty) return '?';
-    if (parts.length == 1) return parts.first[0].toUpperCase();
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 }
 

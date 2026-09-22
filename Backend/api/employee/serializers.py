@@ -31,7 +31,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'phone_number', 'reporting_to', 'reporting_to_name',
             'role', 'branch', 'branch_name', 'department', 'department_name',
             'status', 'section1_start', 'section1_end', 'section2_start', 'section2_end',
-            'work_days', 'has_face_registered', 'created_by', 'created_at'
+            'work_days', 'profile_url', 'has_face_registered', 'created_by', 'created_at'
         ]
         read_only_fields = [
             'id', 'firebase_uid', 'created_by', 'created_at',

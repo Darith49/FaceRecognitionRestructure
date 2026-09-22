@@ -4,6 +4,7 @@ import 'package:face_recognition_attendance/core/service/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
+import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -48,8 +49,20 @@ class LoginController extends GetxController {
       final user = await _firebaseService.getUserByUid(firebaseUser.uid);
       if (user != null) {
         currentuser.value = user;
+        if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
+          _syncProfileToBackend(user.profileUrl!);
+        }
         await checkFaceStatus();
       }
+    }
+  }
+
+  Future<void> _syncProfileToBackend(String profileUrl) async {
+    try {
+      final api = ApiService();
+      await api.patch('/employees/me/', body: {'profile_url': profileUrl});
+    } catch (_) {
+      // Graceful fallback if backend is offline or unauthenticated yet
     }
   }
 
@@ -65,6 +78,9 @@ class LoginController extends GetxController {
 
       if (user != null) {
         currentuser.value = user; // 1. Save user state
+        if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
+          _syncProfileToBackend(user.profileUrl!);
+        }
         await checkFaceStatus();
         _navigationBasedOnRole(user.role);
         return true;
@@ -153,6 +169,9 @@ class LoginController extends GetxController {
         return;
       }
       currentuser.value = user;
+      if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
+        _syncProfileToBackend(user.profileUrl!);
+      }
       await checkFaceStatus();
 
       _navigationBasedOnRole(user.role);
@@ -187,6 +206,12 @@ class LoginController extends GetxController {
         await _firebaseService.updateProfilePicture(user.uid, profileUrl);
       } catch (e) {
         debugPrint('Error updating profile picture in Firestore: $e');
+      }
+      await _syncProfileToBackend(profileUrl);
+
+      // Auto-refresh MyTeam tab so it reflects the updated picture immediately
+      if (Get.isRegistered<MyTeamController>()) {
+        Get.find<MyTeamController>().fetchMyTeam(refresh: true);
       }
     }
   }

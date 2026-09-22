@@ -55,6 +55,7 @@ class Employee(models.Model):
     section2_start = models.TimeField(default='13:00:00')
     section2_end = models.TimeField(default='17:00:00')
     work_days = models.CharField(max_length=100, default='mon,tue,wed,thu,fri')
+    profile_url = models.TextField(blank=True, default='')
     created_by = models.CharField(max_length=200, blank=True)  # Firebase UID of creator
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -147,11 +147,20 @@ def employee_list_create(request):
         }, status=status.HTTP_201_CREATED)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PATCH'])
 def employee_me(request):
-    """Returns the current authenticated employee's profile."""
-    serializer = EmployeeSerializer(request.user)
-    return Response(serializer.data)
+    """Returns or updates the current authenticated employee's profile."""
+    if request.method == 'GET':
+        serializer = EmployeeSerializer(request.user)
+        return Response(serializer.data)
+    elif request.method == 'PATCH':
+        serializer = EmployeeSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated = serializer.save()
+            if 'profile_url' in request.data:
+                sync_firestore_user_profile(updated.firebase_uid, {'profileUrl': updated.profile_url})
+            return Response(EmployeeSerializer(updated).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
@@ -378,6 +387,7 @@ def employee_detail(request, pk):
                 'section2Start': str(updated_emp.section2_start),
                 'section2End': str(updated_emp.section2_end),
                 'workDays': updated_emp.work_days,
+                'profileUrl': updated_emp.profile_url,
             }
             sync_firestore_user_profile(updated_emp.firebase_uid, firestore_payload)
             return Response(EmployeeSerializer(updated_emp).data)

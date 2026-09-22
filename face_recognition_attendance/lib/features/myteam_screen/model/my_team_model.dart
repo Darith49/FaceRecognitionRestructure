@@ -22,6 +22,7 @@ class MyTeamMember {
   final String? section2Start;
   final String? section2End;
   final String? workDays;
+  final String? profileUrl;
 
   const MyTeamMember({
     required this.id,
@@ -44,6 +45,7 @@ class MyTeamMember {
     this.section2Start,
     this.section2End,
     this.workDays,
+    this.profileUrl,
   });
 
   factory MyTeamMember.fromJson(Map<String, dynamic> json) {
@@ -68,6 +70,7 @@ class MyTeamMember {
       section2Start: json['section2_start']?.toString(),
       section2End: json['section2_end']?.toString(),
       workDays: json['work_days']?.toString(),
+      profileUrl: json['profile_url']?.toString() ?? json['profileUrl']?.toString(),
     );
   }
 

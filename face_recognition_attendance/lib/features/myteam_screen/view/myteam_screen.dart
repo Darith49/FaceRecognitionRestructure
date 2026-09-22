@@ -1,4 +1,6 @@
+import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/model/my_team_model.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/view/widgets/change_session_time_dialog.dart';
@@ -323,25 +325,23 @@ class _MyteamScreenState extends State<MyteamScreen> {
   // ---------------------------------------------------------------------------
 
   Widget _buildFeaturedCard(MyTeamMember member, {required bool isPinned}) {
-    final avatar = Container(
-      width: 54,
-      height: 54,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.45),
-          width: 3,
-        ),
-      ),
-      child: Text(
-        member.initials,
-        style: const TextStyle(
-          color: RequestColors.primary,
-          fontWeight: FontWeight.w800,
-          fontSize: 18,
-        ),
+    final loginController = Get.isRegistered<LoginController>() ? Get.find<LoginController>() : null;
+    final currentUser = loginController?.currentuser.value;
+    final isSelf = currentUser != null && (
+      (member.firebaseUid.isNotEmpty && member.firebaseUid == currentUser.uid) ||
+      (member.email.isNotEmpty && member.email.toLowerCase() == currentUser.email.toLowerCase())
+    );
+    final effectiveProfileUrl = isSelf ? (currentUser.profileUrl ?? member.profileUrl) : member.profileUrl;
+
+    final avatar = AppAvatar(
+      profileUrl: effectiveProfileUrl,
+      name: member.fullname,
+      size: 54,
+      backgroundColor: Colors.white,
+      textColor: RequestColors.primary,
+      border: Border.all(
+        color: Colors.white.withValues(alpha: 0.45),
+        width: 3,
       ),
     );
 
@@ -471,26 +471,19 @@ class _MyteamScreenState extends State<MyteamScreen> {
   Widget _buildMemberCard(MyTeamMember member, {required bool isPinned}) {
     final color = member.roleColor;
 
-    final avatar = Container(
-      width: 50,
-      height: 50,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color, Color.lerp(color, Colors.black, 0.25)!],
-        ),
-      ),
-      child: Text(
-        member.initials,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-          fontSize: 16,
-        ),
-      ),
+    final loginController = Get.isRegistered<LoginController>() ? Get.find<LoginController>() : null;
+    final currentUser = loginController?.currentuser.value;
+    final isSelf = currentUser != null && (
+      (member.firebaseUid.isNotEmpty && member.firebaseUid == currentUser.uid) ||
+      (member.email.isNotEmpty && member.email.toLowerCase() == currentUser.email.toLowerCase())
+    );
+    final effectiveProfileUrl = isSelf ? (currentUser.profileUrl ?? member.profileUrl) : member.profileUrl;
+
+    final avatar = AppAvatar(
+      profileUrl: effectiveProfileUrl,
+      name: member.fullname,
+      size: 50,
+      gradientColors: [color, Color.lerp(color, Colors.black, 0.25)!],
     );
 
     return Container(

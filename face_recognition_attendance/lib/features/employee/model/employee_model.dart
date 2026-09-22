@@ -19,6 +19,7 @@ class EmployeeModel {
   final String workDays;
   final String createdBy;
   final DateTime? createdAt;
+  final String? profileUrl;
 
   EmployeeModel({
     required this.id,
@@ -39,6 +40,7 @@ class EmployeeModel {
     this.workDays = 'mon,tue,wed,thu,fri',
     this.createdBy = '',
     this.createdAt,
+    this.profileUrl,
   });
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json) {
@@ -69,6 +71,7 @@ class EmployeeModel {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
+      profileUrl: json['profile_url']?.toString() ?? json['profileUrl']?.toString(),
     );
   }
 

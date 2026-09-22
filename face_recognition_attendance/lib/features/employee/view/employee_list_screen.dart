@@ -2,6 +2,7 @@ import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/permissions/app_permissions.dart';
 import 'package:face_recognition_attendance/core/permissions/permission_service.dart';
 import 'package:face_recognition_attendance/core/permissions/widgets/permission_view.dart';
+import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/branch/controller/branch_controller.dart';
@@ -240,17 +241,10 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: RequestColors.primary.withValues(alpha: 0.1),
-              child: Text(
-                e.fullname.isNotEmpty ? e.fullname[0].toUpperCase() : '?',
-                style: const TextStyle(
-                  color: RequestColors.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
+            AppAvatar(
+              profileUrl: e.profileUrl,
+              name: e.fullname,
+              size: 44,
             ),
             const SizedBox(width: 12),
             Expanded(

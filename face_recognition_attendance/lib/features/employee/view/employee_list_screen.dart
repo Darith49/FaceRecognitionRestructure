@@ -8,6 +8,7 @@ import 'package:face_recognition_attendance/features/branch/controller/branch_co
 import 'package:face_recognition_attendance/features/department/controller/department_controller.dart';
 import 'package:face_recognition_attendance/features/employee/controller/employee_controller.dart';
 import 'package:face_recognition_attendance/features/employee/model/employee_model.dart';
+import 'package:face_recognition_attendance/features/myteam_screen/view/widgets/change_session_time_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -298,11 +299,37 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                       ],
                     ],
                   ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: RequestColors.softSurface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.schedule_rounded, size: 12, color: RequestColors.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${_formatTime(e.section1Start)} - ${_formatTime(e.section1End)} • ${_formatTime(e.section2Start)} - ${_formatTime(e.section2End)} (${e.workDays.toUpperCase()})',
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: RequestColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
             Column(
               children: [
+                IconButton(
+                  icon: const Icon(Icons.schedule_rounded, size: 20, color: Color(0xFFD97706)),
+                  tooltip: 'Change Session Time',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _openChangeSessionTimeDialog(context, e),
+                ),
                 IconButton(
                   icon: const Icon(Icons.mark_email_read_outlined, size: 20, color: Colors.indigo),
                   tooltip: 'Resend Invitation',
@@ -323,6 +350,57 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
     );
   }
 
+  String _formatTime(String? timeStr) {
+    if (timeStr == null || timeStr.trim().isEmpty) return '--:--';
+    final parts = timeStr.trim().split(':');
+    if (parts.length >= 2) {
+      return '${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
+    }
+    return timeStr;
+  }
+
+  void _openChangeSessionTimeDialog(BuildContext context, EmployeeModel employee) {
+    showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => ChangeSessionTimeDialog(
+        memberId: employee.id,
+        memberName: employee.fullname,
+        memberRole: employee.role.name.toUpperCase(),
+        memberSubtitle: employee.departmentName.isNotEmpty ? employee.departmentName : employee.branchName,
+        initialSection1Start: employee.section1Start,
+        initialSection1End: employee.section1End,
+        initialSection2Start: employee.section2Start,
+        initialSection2End: employee.section2End,
+        initialWorkDays: employee.workDays,
+        onSave: ({
+          required int memberId,
+          required String section1Start,
+          required String section1End,
+          required String section2Start,
+          required String section2End,
+          required String workDays,
+        }) async {
+          return await _controller.updateEmployee(
+            id: memberId,
+            fullname: employee.fullname,
+            email: employee.email,
+            role: employee.role,
+            branchId: employee.branchId,
+            departmentId: employee.departmentId,
+            employeeId: employee.employeeId,
+            section1Start: section1Start,
+            section1End: section1End,
+            section2Start: section2Start,
+            section2End: section2End,
+            workDays: workDays,
+          );
+        },
+      ),
+    );
+  }
+
   void _showEditEmployeeBottomSheet(BuildContext context, EmployeeModel employee) {
     final formKey = GlobalKey<FormState>();
     final fullnameController = TextEditingController(text: employee.fullname);
@@ -332,6 +410,40 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
     UserRole selectedRole = employee.role;
     int? selectedBranchId = employee.branchId;
     int? selectedDeptId = employee.departmentId;
+
+    TimeOfDay parseTime(String? timeStr, TimeOfDay fallback) {
+      if (timeStr == null || timeStr.trim().isEmpty) return fallback;
+      try {
+        final parts = timeStr.trim().split(':');
+        if (parts.length >= 2) {
+          return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+        }
+      } catch (_) {}
+      return fallback;
+    }
+
+    String formatTimeOfDay(TimeOfDay tod) {
+      return '${tod.hour.toString().padLeft(2, '0')}:${tod.minute.toString().padLeft(2, '0')}:00';
+    }
+
+    String formatDisplay(TimeOfDay tod) {
+      return '${tod.hour.toString().padLeft(2, '0')}:${tod.minute.toString().padLeft(2, '0')}';
+    }
+
+    TimeOfDay s1Start = parseTime(employee.section1Start, const TimeOfDay(hour: 7, minute: 0));
+    TimeOfDay s1End = parseTime(employee.section1End, const TimeOfDay(hour: 11, minute: 0));
+    TimeOfDay s2Start = parseTime(employee.section2Start, const TimeOfDay(hour: 13, minute: 0));
+    TimeOfDay s2End = parseTime(employee.section2End, const TimeOfDay(hour: 17, minute: 0));
+
+    Set<String> selectedWorkDays = (employee.workDays.isNotEmpty ? employee.workDays : 'mon,tue,wed,thu,fri')
+        .toLowerCase()
+        .split(',')
+        .map((d) => d.trim())
+        .where((d) => d.isNotEmpty)
+        .toSet();
+    if (selectedWorkDays.isEmpty) {
+      selectedWorkDays = {'mon', 'tue', 'wed', 'thu', 'fri'};
+    }
 
     final departmentController = Get.isRegistered<DepartmentController>()
         ? Get.find<DepartmentController>()
@@ -485,6 +597,149 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         prefixIcon: const Icon(Icons.badge_outlined, color: RequestColors.primary),
                       ),
                     ),
+                    const SizedBox(height: 18),
+                    // ─── Work Shift & Session Times Section ───
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: RequestColors.softSurface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.schedule_rounded, size: 16, color: RequestColors.primary),
+                              SizedBox(width: 6),
+                              Text('Work Shift Schedule', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: RequestColors.textPrimary)),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Text('Session 1 (Morning):', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: RequestColors.textSecondary)),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () async {
+                                    final t = await showTimePicker(context: context, initialTime: s1Start);
+                                    if (t != null) setSheetState(() => s1Start = t);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.access_time_rounded, size: 14, color: RequestColors.primary),
+                                        const SizedBox(width: 4),
+                                        Text('In: ${formatDisplay(s1Start)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () async {
+                                    final t = await showTimePicker(context: context, initialTime: s1End);
+                                    if (t != null) setSheetState(() => s1End = t);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.access_time_rounded, size: 14, color: RequestColors.primary),
+                                        const SizedBox(width: 4),
+                                        Text('Out: ${formatDisplay(s1End)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          const Text('Session 2 (Afternoon):', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: RequestColors.textSecondary)),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () async {
+                                    final t = await showTimePicker(context: context, initialTime: s2Start);
+                                    if (t != null) setSheetState(() => s2Start = t);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.access_time_rounded, size: 14, color: RequestColors.primary),
+                                        const SizedBox(width: 4),
+                                        Text('In: ${formatDisplay(s2Start)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () async {
+                                    final t = await showTimePicker(context: context, initialTime: s2End);
+                                    if (t != null) setSheetState(() => s2End = t);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.access_time_rounded, size: 14, color: RequestColors.primary),
+                                        const SizedBox(width: 4),
+                                        Text('Out: ${formatDisplay(s2End)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          const Text('Active Days:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: RequestColors.textSecondary)),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((d) {
+                              final sel = selectedWorkDays.contains(d);
+                              return ChoiceChip(
+                                label: Text(d.toUpperCase()),
+                                selected: sel,
+                                onSelected: (b) {
+                                  setSheetState(() {
+                                    if (b) {
+                                      selectedWorkDays.add(d);
+                                    } else if (selectedWorkDays.length > 1) {
+                                      selectedWorkDays.remove(d);
+                                    }
+                                  });
+                                },
+                                selectedColor: RequestColors.primary,
+                                labelStyle: TextStyle(
+                                  color: sel ? Colors.white : RequestColors.textPrimary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     Obx(() => OutlinedButton.icon(
                           onPressed: isResending.value
@@ -533,6 +788,11 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                       branchId: selectedBranchId,
                                       departmentId: selectedDeptId,
                                       employeeId: empId,
+                                      section1Start: formatTimeOfDay(s1Start),
+                                      section1End: formatTimeOfDay(s1End),
+                                      section2Start: formatTimeOfDay(s2Start),
+                                      section2End: formatTimeOfDay(s2End),
+                                      workDays: selectedWorkDays.join(','),
                                     );
 
                                     if (success) {

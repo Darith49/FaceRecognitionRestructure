@@ -135,6 +135,35 @@ class MyTeamController extends GetxController {
     }
   }
 
+  Future<bool> updateMemberSessionTime({
+    required int memberId,
+    required String section1Start,
+    required String section1End,
+    required String section2Start,
+    required String section2End,
+    required String workDays,
+  }) async {
+    try {
+      final res = await _apiService.patch('/employees/$memberId/', body: {
+        'section1_start': section1Start,
+        'section1_end': section1End,
+        'section2_start': section2Start,
+        'section2_end': section2End,
+        'work_days': workDays,
+      });
+      if (res is Map) {
+        await fetchMyTeam(refresh: true);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      if (e is ApiException) {
+        throw Exception(e.message);
+      }
+      throw Exception('Failed to update session time: $e');
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------

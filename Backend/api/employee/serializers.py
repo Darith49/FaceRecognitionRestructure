@@ -1,5 +1,21 @@
+import datetime
 from rest_framework import serializers
 from .models import Employee
+
+
+def _to_time(val):
+    if val is None:
+        return None
+    if isinstance(val, datetime.time):
+        return val
+    if isinstance(val, str):
+        val = val.strip()
+        try:
+            return datetime.time.fromisoformat(val)
+        except ValueError:
+            parts = [int(p) for p in val.split(':')]
+            return datetime.time(*parts)
+    return None
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
@@ -24,6 +40,22 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     def get_has_face_registered(self, obj):
         return hasattr(obj, 'face_registration') and obj.face_registration is not None
+
+    def validate(self, data):
+        instance = getattr(self, 'instance', None)
+        s1_start = _to_time(data.get('section1_start', getattr(instance, 'section1_start', None)))
+        s1_end = _to_time(data.get('section1_end', getattr(instance, 'section1_end', None)))
+        s2_start = _to_time(data.get('section2_start', getattr(instance, 'section2_start', None)))
+        s2_end = _to_time(data.get('section2_end', getattr(instance, 'section2_end', None)))
+
+        if s1_start and s1_end and s1_start >= s1_end:
+            raise serializers.ValidationError({"section1_end": "Section 1 end time must be after start time."})
+        if s2_start and s2_end and s2_start >= s2_end:
+            raise serializers.ValidationError({"section2_end": "Section 2 end time must be after start time."})
+        if s1_end and s2_start and s1_end > s2_start:
+            raise serializers.ValidationError({"section2_start": "Section 2 cannot start before Section 1 ends."})
+
+        return data
 
 
 class CreateEmployeeSerializer(serializers.Serializer):

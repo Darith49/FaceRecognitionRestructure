@@ -349,6 +349,12 @@ def employee_detail(request, pk):
         return Response(serializer.data)
 
     elif request.method == 'PATCH':
+        updater_role = getattr(request.user, 'role', 'employee').lower()
+        shift_fields = {'section1_start', 'section1_end', 'section2_start', 'section2_end', 'work_days', 'role', 'status'}
+        if any(f in request.data for f in shift_fields):
+            if updater_role not in ['ceo', 'manager', 'leader']:
+                return Response({"error": "Only CEO or administrators can update session times and shift schedules."}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = EmployeeSerializer(employee, data=request.data, partial=True)
         if serializer.is_valid():
             updated_emp = serializer.save()

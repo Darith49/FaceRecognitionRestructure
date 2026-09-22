@@ -28,13 +28,13 @@ class NavigationScreen extends GetView<NavigationController> {
       edgeFade: true,
       body: Obx(() {
         final role = loginController?.currentuser.value?.role;
-        final isManagerOrLeader = role == UserRole.manager || role == UserRole.leader;
+        final isManagement = role == UserRole.ceo || role == UserRole.manager || role == UserRole.leader;
 
         return IndexedStack(
           index: controller.currentIndex.value,
           children: [
             const HomeScreen(),
-            if (isManagerOrLeader) const CreateHubScreen() else const ScheduleScreen(),
+            if (isManagement) const CreateHubScreen() else const ScheduleScreen(),
             const MyteamScreen(),
             const RequestScreen(),
             const ProfileScreen(),
@@ -45,7 +45,7 @@ class NavigationScreen extends GetView<NavigationController> {
         final currentIndex = controller.currentIndex.value;
         final isProfileSelected = currentIndex == 4;
         final role = loginController?.currentuser.value?.role;
-        final isManagerOrLeader = role == UserRole.manager || role == UserRole.leader;
+        final isManagement = role == UserRole.ceo || role == UserRole.manager || role == UserRole.leader;
 
         return Material(
           type: MaterialType.transparency,
@@ -64,7 +64,7 @@ class NavigationScreen extends GetView<NavigationController> {
                   activeIcon: const Icon(Icons.home_rounded),
                   label: 'nav_home'.tr,
                 ),
-                if (isManagerOrLeader)
+                if (isManagement)
                   GlassTab(
                     icon: const Icon(Icons.add_circle_outline_rounded),
                     activeIcon: const Icon(Icons.add_circle_rounded),

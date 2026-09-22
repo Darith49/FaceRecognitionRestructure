@@ -17,6 +17,11 @@ class MyTeamMember {
   final String? departmentName;
   final String status;
   final bool hasFaceRegistered;
+  final String? section1Start;
+  final String? section1End;
+  final String? section2Start;
+  final String? section2End;
+  final String? workDays;
 
   const MyTeamMember({
     required this.id,
@@ -34,6 +39,11 @@ class MyTeamMember {
     this.departmentName,
     required this.status,
     required this.hasFaceRegistered,
+    this.section1Start,
+    this.section1End,
+    this.section2Start,
+    this.section2End,
+    this.workDays,
   });
 
   factory MyTeamMember.fromJson(Map<String, dynamic> json) {
@@ -53,6 +63,11 @@ class MyTeamMember {
       departmentName: json['department_name']?.toString(),
       status: json['status']?.toString() ?? 'active',
       hasFaceRegistered: json['has_face_registered'] == true,
+      section1Start: json['section1_start']?.toString(),
+      section1End: json['section1_end']?.toString(),
+      section2Start: json['section2_start']?.toString(),
+      section2End: json['section2_end']?.toString(),
+      workDays: json['work_days']?.toString(),
     );
   }
 
@@ -107,6 +122,35 @@ class MyTeamMember {
       parts.add(branchName!);
     }
     return parts.isEmpty ? 'Organization Member' : parts.join(' • ');
+  }
+
+  static String _formatTime(String? timeStr) {
+    if (timeStr == null || timeStr.trim().isEmpty) return '--:--';
+    final parts = timeStr.trim().split(':');
+    if (parts.length >= 2) {
+      return '${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
+    }
+    return timeStr;
+  }
+
+  bool get hasShiftConfigured => section1Start != null && section1Start!.isNotEmpty;
+
+  String get formattedShiftSummary {
+    if (!hasShiftConfigured) return '07:00 - 11:00 • 13:00 - 17:00';
+    final s1 = '${_formatTime(section1Start)} - ${_formatTime(section1End)}';
+    final s2 = '${_formatTime(section2Start)} - ${_formatTime(section2End)}';
+    return '$s1 • $s2';
+  }
+
+  String get formattedWorkDays {
+    if (workDays == null || workDays!.trim().isEmpty) return 'Mon - Fri';
+    final raw = workDays!.toLowerCase().split(',').map((d) => d.trim()).toList();
+    if (raw.contains('mon') && raw.contains('tue') && raw.contains('wed') && raw.contains('thu') && raw.contains('fri')) {
+      if (raw.contains('sat') && raw.contains('sun')) return 'Every Day';
+      if (raw.contains('sat')) return 'Mon - Sat';
+      return 'Mon - Fri';
+    }
+    return raw.map((d) => d.isNotEmpty ? '${d[0].toUpperCase()}${d.substring(1)}' : '').join(', ');
   }
 }
 

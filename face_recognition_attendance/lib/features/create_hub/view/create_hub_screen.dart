@@ -15,6 +15,7 @@ class CreateHubScreen extends StatelessWidget {
         : null;
 
     final role = loginController?.currentuser.value?.role ?? UserRole.employee;
+    final isCeo = role == UserRole.ceo;
     final isManager = role == UserRole.manager;
     final isLeader = role == UserRole.leader;
 
@@ -33,16 +34,20 @@ class CreateHubScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: isManager
-                        ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)]
-                        : [const Color(0xFFB45309), const Color(0xFFF59E0B)],
+                    colors: isCeo
+                        ? [const Color(0xFF0F172A), const Color(0xFF1E3A8A)]
+                        : (isManager
+                            ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)]
+                            : [const Color(0xFFB45309), const Color(0xFFF59E0B)]),
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: (isManager ? const Color(0xFF1E3A8A) : const Color(0xFFB45309))
+                      color: (isCeo
+                              ? const Color(0xFF0F172A)
+                              : (isManager ? const Color(0xFF1E3A8A) : const Color(0xFFB45309)))
                           .withValues(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
@@ -61,7 +66,11 @@ class CreateHubScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            isManager ? Icons.admin_panel_settings_rounded : Icons.groups_rounded,
+                            isCeo
+                                ? Icons.domain_rounded
+                                : (isManager
+                                    ? Icons.admin_panel_settings_rounded
+                                    : Icons.groups_rounded),
                             color: Colors.white,
                             size: 24,
                           ),
@@ -71,7 +80,9 @@ class CreateHubScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isManager ? 'Manager Hub' : 'Leader Hub',
+                              isCeo
+                                  ? 'CEO Hub'
+                                  : (isManager ? 'Manager Hub' : 'Leader Hub'),
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
@@ -81,7 +92,11 @@ class CreateHubScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              isManager ? 'Organization & Team Actions' : 'Team Growth & Invites',
+                              isCeo
+                                  ? 'Executive Administration & Shifts'
+                                  : (isManager
+                                      ? 'Organization & Team Actions'
+                                      : 'Team Growth & Invites'),
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -94,9 +109,11 @@ class CreateHubScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      isManager
-                          ? 'Create departments and invite Leaders or Employees to your organization.'
-                          : 'Invite new Employees to join your operational team.',
+                      isCeo
+                          ? 'Manage organizational departments, change user session times, and coordinate staff.'
+                          : (isManager
+                              ? 'Create departments and invite Leaders or Employees to your organization.'
+                              : 'Invite new Employees to join your operational team.'),
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white.withValues(alpha: 0.9),
@@ -121,8 +138,7 @@ class CreateHubScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              // Manager Actions
-              if (isManager) ...[
+              if (isCeo || isManager) ...[
                 _HubActionTile(
                   icon: Icons.domain_add_rounded,
                   iconBg: const Color(0xFF1D4ED8),
@@ -134,8 +150,10 @@ class CreateHubScreen extends StatelessWidget {
                 _HubActionTile(
                   icon: Icons.person_add_alt_1_rounded,
                   iconBg: const Color(0xFFB45309),
-                  title: 'Invite User',
-                  subtitle: 'Invite a Leader or Employee to join',
+                  title: isCeo ? 'Invite Staff / Manager' : 'Invite User',
+                  subtitle: isCeo
+                      ? 'Invite a Manager, Leader, or Employee'
+                      : 'Invite a Leader or Employee to join',
                   onTap: () => Get.toNamed(AppRoutes.createEmployee),
                 ),
               ] else if (isLeader) ...[
@@ -162,7 +180,7 @@ class CreateHubScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              if (isManager) ...[
+              if (isCeo || isManager) ...[
                 _HubActionTile(
                   icon: Icons.apartment_rounded,
                   iconBg: const Color(0xFF4F46E5),
@@ -176,8 +194,12 @@ class CreateHubScreen extends StatelessWidget {
               _HubActionTile(
                 icon: Icons.badge_outlined,
                 iconBg: const Color(0xFF0F766E),
-                title: isManager ? 'Staff & Users Directory' : 'Team Directory',
-                subtitle: 'View staff, resend invitations, and manage members',
+                title: isCeo
+                    ? 'Staff & Session Schedules'
+                    : (isManager ? 'Staff & Users Directory' : 'Team Directory'),
+                subtitle: isCeo
+                    ? 'View staff profiles, change session times, and manage users'
+                    : 'View staff, resend invitations, and manage members',
                 onTap: () => Get.toNamed(AppRoutes.employeeList),
               ),
             ],

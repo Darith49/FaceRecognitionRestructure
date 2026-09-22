@@ -1,6 +1,7 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/model/my_team_model.dart';
+import 'package:face_recognition_attendance/features/myteam_screen/view/widgets/change_session_time_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -37,6 +38,30 @@ class _MyteamScreenState extends State<MyteamScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openChangeSessionTimeDialog(MyTeamMember member) async {
+    await ChangeSessionTimeDialog.showForMember(
+      context,
+      member: member,
+      onSave: ({
+        required int memberId,
+        required String section1Start,
+        required String section1End,
+        required String section2Start,
+        required String section2End,
+        required String workDays,
+      }) async {
+        return await _controller.updateMemberSessionTime(
+          memberId: memberId,
+          section1Start: section1Start,
+          section1End: section1End,
+          section2Start: section2Start,
+          section2End: section2End,
+          workDays: workDays,
+        );
+      },
+    );
   }
 
   @override
@@ -400,6 +425,35 @@ class _MyteamScreenState extends State<MyteamScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                if (!member.isCeo) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.schedule_rounded, size: 12, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            '${member.formattedShiftSummary} • ${member.formattedWorkDays}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -511,6 +565,34 @@ class _MyteamScreenState extends State<MyteamScreen> {
                     fontSize: 12,
                     color: RequestColors.textSecondary,
                     fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: RequestColors.softSurface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.schedule_rounded, size: 12, color: RequestColors.primary),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          '${member.formattedShiftSummary} • ${member.formattedWorkDays}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: RequestColors.textPrimary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -676,6 +758,18 @@ class _MyteamScreenState extends State<MyteamScreen> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (_controller.isCeo && !member.isCeo) ...[
+          _circleButton(
+            icon: Icons.schedule_rounded,
+            tooltip: 'Change Session Time',
+            background: onDark
+                ? Colors.white.withValues(alpha: 0.25)
+                : RequestColors.primary.withValues(alpha: 0.12),
+            iconColor: onDark ? Colors.white : RequestColors.primary,
+            onTap: () => _openChangeSessionTimeDialog(member),
+          ),
+          const SizedBox(width: 8),
+        ],
         _circleButton(
           icon: isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
           tooltip: isPinned ? 'Unpin' : 'Pin',

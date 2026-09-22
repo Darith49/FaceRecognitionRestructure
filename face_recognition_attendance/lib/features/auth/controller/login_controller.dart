@@ -73,15 +73,20 @@ class LoginController extends GetxController {
     try {
       // 1. If user is already loaded via initialUser, just sync in background
       if (currentuser.value != null) {
-        final firebaseUser = _firebaseService.getCurrentUser();
-        if (firebaseUser != null) {
-          _firebaseService.getUserByUid(firebaseUser.uid).then((freshUser) {
-            if (freshUser != null) {
-              currentuser.value = freshUser;
-              _persistSessionInBackground(freshUser);
-            }
-          });
-        }
+        _firebaseService.getIdToken().then((token) {
+          if (token != null) {
+            _secureStorage.saveTokens(accessToken: token);
+          }
+          final firebaseUser = _firebaseService.getCurrentUser();
+          if (firebaseUser != null) {
+            _firebaseService.getUserByUid(firebaseUser.uid).then((freshUser) {
+              if (freshUser != null) {
+                currentuser.value = freshUser;
+                _persistSessionInBackground(freshUser);
+              }
+            });
+          }
+        });
         return;
       }
 
@@ -127,9 +132,20 @@ class LoginController extends GetxController {
 
       if (user != null) {
         currentuser.value = user;
-        _persistSessionInBackground(user);
+        final idToken = await _firebaseService.getIdToken(forceRefresh: true);
+        if (idToken != null) {
+          final refreshToken = _firebaseService.getCurrentUser()?.refreshToken;
+          await _secureStorage.saveUserSession(
+            uid: user.uid,
+            email: user.email,
+            accessToken: idToken,
+            refreshToken: refreshToken,
+            userData: user.toJson(),
+          );
+        }
         clearInputs();
         _navigationBasedOnRole(user.role);
+        checkFaceStatus();
         return true;
       } else {
         // User exists in Auth, but NO document found in Firestore
@@ -205,10 +221,20 @@ class LoginController extends GetxController {
         return;
       }
       currentuser.value = user;
-      _persistSessionInBackground(user);
+      final idToken = await _firebaseService.getIdToken(forceRefresh: true);
+      if (idToken != null) {
+        final refreshToken = _firebaseService.getCurrentUser()?.refreshToken;
+        await _secureStorage.saveUserSession(
+          uid: user.uid,
+          email: user.email,
+          accessToken: idToken,
+          refreshToken: refreshToken,
+          userData: user.toJson(),
+        );
+      }
       clearInputs();
-
       _navigationBasedOnRole(user.role);
+      checkFaceStatus();
     } catch (e) {
       final msg = e.toString().replaceFirst('Exception: ', '').trim();
       errorMessage.value = msg;

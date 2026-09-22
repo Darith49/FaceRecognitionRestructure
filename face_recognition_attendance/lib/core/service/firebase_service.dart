@@ -88,11 +88,29 @@ class FirebaseService {
   }
 
   // Get Firebase ID Token for Django API authentication
-  Future<String?> getIdToken() async {
-    final user = _auth.currentUser;
+  Future<String?> getIdToken({bool forceRefresh = false}) async {
+    User? user = _auth.currentUser;
+    if (user == null) {
+      // Firebase Auth restores state asynchronously upon app launch.
+      // Wait briefly for authStateChanges if a user session exists.
+      try {
+        user = await _auth
+            .authStateChanges()
+            .firstWhere((u) => u != null)
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {
+        user = _auth.currentUser;
+      }
+    }
     if (user == null) return null;
-    return await user.getIdToken();
+    try {
+      return await user.getIdToken(forceRefresh);
+    } catch (e) {
+      debugPrint('getIdToken error: $e');
+      return null;
+    }
   }
+
 
   //Find User in Firestore by uid
   Future<UserModel?> getUserByUid(String uid) async {

@@ -1,8 +1,11 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
+import 'package:face_recognition_attendance/features/myteam_screen/model/my_team_model.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 // ---------------------------------------------------------------------------
-// Local design tokens (only used by this screen)
+// Local design tokens
 // ---------------------------------------------------------------------------
 
 const Color _primaryDark = Color(0xFF2456C7);
@@ -10,42 +13,6 @@ const Color _primaryDark = Color(0xFF2456C7);
 const List<BoxShadow> _softShadow = [
   BoxShadow(color: Color(0x0F1B2437), blurRadius: 14, offset: Offset(0, 4)),
 ];
-
-/// The most profiles a user can pin at the same time.
-const int _maxPins = 3;
-
-// ---------------------------------------------------------------------------
-// Data model
-// ---------------------------------------------------------------------------
-
-class _TeamMember {
-  final String name;
-  final String role;
-  final Color avatarColor;
-  final bool isManager;
-
-  /// Only the starting value. The live pin state is kept in the screen state.
-  final bool pinnedByDefault;
-
-  const _TeamMember(
-    this.name,
-    this.role,
-    this.avatarColor, {
-    this.isManager = false,
-    this.pinnedByDefault = false,
-  });
-}
-
-String _initials(String name) {
-  final parts = name.trim().split(RegExp(r'\s+'));
-  if (parts.isEmpty || parts.first.isEmpty) return '?';
-  if (parts.length == 1) return parts.first[0].toUpperCase();
-  return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-}
-
-// ---------------------------------------------------------------------------
-// Screen
-// ---------------------------------------------------------------------------
 
 class MyteamScreen extends StatefulWidget {
   const MyteamScreen({super.key});
@@ -56,28 +23,15 @@ class MyteamScreen extends StatefulWidget {
 
 class _MyteamScreenState extends State<MyteamScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _query = '';
+  late final MyTeamController _controller;
 
-  final List<_TeamMember> _people = const [
-    _TeamMember(
-      'Larry Ellison',
-      'Manager',
-      RequestColors.primary,
-      isManager: true,
-      pinnedByDefault: true,
-    ),
-    _TeamMember('Ava Thompson', 'UX UI', RequestColors.approvedStatus),
-    _TeamMember('Ben Carter', 'Mobile App', RequestColors.gold),
-    _TeamMember('Chloe Nguyen', 'Backend', RequestColors.teal),
-  ];
-
-  /// Names of the pinned profiles (at most [_maxPins]).
-  /// TODO: save this per user (for example in Firestore) so the pins are
-  /// still there after the app is restarted.
-  late final Set<String> _pinned = {
-    for (final p in _people)
-      if (p.pinnedByDefault) p.name,
-  };
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.isRegistered<MyTeamController>()
+        ? Get.find<MyTeamController>()
+        : Get.put(MyTeamController());
+  }
 
   @override
   void dispose() {
@@ -85,90 +39,106 @@ class _MyteamScreenState extends State<MyteamScreen> {
     super.dispose();
   }
 
-  bool _matches(_TeamMember m) {
-    final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return true;
-    return m.name.toLowerCase().contains(q) || m.role.toLowerCase().contains(q);
-  }
-
-  void _togglePin(_TeamMember member) {
-    if (_pinned.contains(member.name)) {
-      setState(() => _pinned.remove(member.name));
-    } else if (_pinned.length >= _maxPins) {
-      RequestSnack.show(
-        ScaffoldMessenger.of(context),
-        'You can pin up to $_maxPins profiles. Unpin one first.',
-      );
-    } else {
-      setState(() => _pinned.add(member.name));
-    }
-  }
-
-  void _onCall(_TeamMember member) {
-    // TODO: open the phone dialer once phone numbers are stored for members.
-    RequestSnack.show(
-      ScaffoldMessenger.of(context),
-      'Calling ${member.name} is coming soon.',
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final visible = _people.where(_matches).toList();
-    final pinned = visible.where((m) => _pinned.contains(m.name)).toList();
-    final others = visible.where((m) => !_pinned.contains(m.name)).toList();
-
     return RequestScaffold(
       title: 'My Team',
       showBackButton: false,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: _buildSearchBar(),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: ListView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              // Extra space at the bottom so the floating bar does not cover the last card.
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-              children: [
-                if (pinned.isNotEmpty) ...[
-                  _SectionHeader(
-                    'Pinned',
-                    badge: '${_pinned.length}/$_maxPins',
-                    badgeColor: _pinned.length >= _maxPins
-                        ? RequestColors.gold
-                        : RequestColors.primary,
-                  ),
-                  ...pinned.map(_buildPersonItem),
-                  const SizedBox(height: 12),
-                ],
-                if (others.isNotEmpty) ...[
-                  _SectionHeader('Team Members', badge: '${others.length}'),
-                  ...others.map(_buildPersonItem),
-                ],
-                if (visible.isEmpty) _buildEmptyState(),
+      body: Obx(() {
+        if (_controller.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(color: RequestColors.primary),
+          );
+        }
+
+        if (_controller.errorMessage.value.isNotEmpty && _controller.teamData.value == null) {
+          return _buildErrorState();
+        }
+
+        final tabs = _controller.tabs;
+        final pinned = _controller.pinnedMembers;
+        final currentTab = _controller.currentTab;
+        final filteredItems = _controller.currentFilteredItems;
+
+        return RefreshIndicator(
+          color: RequestColors.primary,
+          onRefresh: () => _controller.fetchMyTeam(refresh: true),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                child: _buildSearchBar(),
+              ),
+
+              // Segmented tabs (e.g. Managers/Branches, My Leaders/Team, etc.)
+              if (tabs.length > 1) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildSegmentedTabs(tabs),
+                ),
+                const SizedBox(height: 14),
               ],
-            ),
+
+              // Content List
+              Expanded(
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+                  children: [
+                    // Pinned Section
+                    if (pinned.isNotEmpty) ...[
+                      _SectionHeader(
+                        'Pinned',
+                        badge: '${pinned.length}/${MyTeamController.maxPins}',
+                        badgeColor: pinned.length >= MyTeamController.maxPins
+                            ? RequestColors.gold
+                            : RequestColors.primary,
+                      ),
+                      ...pinned.map((m) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: (m.isCeo || m.isManager)
+                            ? _buildFeaturedCard(m, isPinned: true)
+                            : _buildMemberCard(m, isPinned: true),
+                      )),
+                      const SizedBox(height: 10),
+                    ],
+
+                    // Current Tab Section
+                    if (currentTab != null) ...[
+                      _SectionHeader(
+                        currentTab.title,
+                        badge: '${filteredItems.length}',
+                      ),
+                      if (filteredItems.isNotEmpty)
+                        ...filteredItems.map((item) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: currentTab.isBranchList
+                                ? _buildBranchCard(item as MyTeamBranch)
+                                : _buildMemberItem(item as MyTeamMember),
+                          );
+                        })
+                      else
+                        _buildEmptyState(),
+                    ] else if (pinned.isEmpty) ...[
+                      _buildEmptyState(),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      }),
     );
   }
 
-  Widget _buildPersonItem(_TeamMember member) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: member.isManager
-          ? _buildManagerCard(member)
-          : _buildMemberCard(member),
-    );
-  }
-
-  // ------------------------------- search bar ------------------------------
+  // ---------------------------------------------------------------------------
+  // Search Bar
+  // ---------------------------------------------------------------------------
 
   Widget _buildSearchBar() {
     return Container(
@@ -178,7 +148,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
       ),
       child: TextField(
         controller: _searchController,
-        onChanged: (v) => setState(() => _query = v),
+        onChanged: _controller.updateSearch,
         textInputAction: TextInputAction.search,
         style: const TextStyle(
           fontSize: 14,
@@ -188,7 +158,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
         decoration: InputDecoration(
           filled: true,
           fillColor: Colors.white,
-          hintText: 'Search by name or role',
+          hintText: 'Search by name, role, or branch',
           hintStyle: const TextStyle(
             color: RequestColors.textSecondary,
             fontSize: 14,
@@ -198,7 +168,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
             color: RequestColors.primary,
             size: 22,
           ),
-          suffixIcon: _query.isNotEmpty
+          suffixIcon: _controller.searchQuery.value.isNotEmpty
               ? IconButton(
                   icon: const Icon(
                     Icons.close_rounded,
@@ -207,7 +177,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                   ),
                   onPressed: () {
                     _searchController.clear();
-                    setState(() => _query = '');
+                    _controller.clearSearch();
                   },
                 )
               : null,
@@ -231,12 +201,106 @@ class _MyteamScreenState extends State<MyteamScreen> {
     );
   }
 
-  // ------------------------------ manager card -----------------------------
+  // ---------------------------------------------------------------------------
+  // Segmented Tabs
+  // ---------------------------------------------------------------------------
 
-  Widget _buildManagerCard(_TeamMember member) {
+  Widget _buildSegmentedTabs(List<MyTeamTab> tabs) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8E8ED),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: List.generate(tabs.length, (i) {
+          final tab = tabs[i];
+          final selected = i == _controller.selectedTabIndex.value;
+
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => _controller.selectTab(i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      tab.title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                        color: selected
+                            ? RequestColors.textPrimary
+                            : RequestColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? RequestColors.primary.withValues(alpha: 0.12)
+                            : Colors.black.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        tab.badge,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: selected
+                              ? RequestColors.primary
+                              : RequestColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Member item router
+  // ---------------------------------------------------------------------------
+
+  Widget _buildMemberItem(MyTeamMember member) {
+    if (member.isCeo || member.isManager) {
+      return _buildFeaturedCard(member, isPinned: _controller.isPinned(member.id));
+    }
+    return _buildMemberCard(member, isPinned: _controller.isPinned(member.id));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Featured / Gradient Card (CEO & Manager)
+  // ---------------------------------------------------------------------------
+
+  Widget _buildFeaturedCard(MyTeamMember member, {required bool isPinned}) {
     final avatar = Container(
-      width: 58,
-      height: 58,
+      width: 54,
+      height: 54,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -247,11 +311,11 @@ class _MyteamScreenState extends State<MyteamScreen> {
         ),
       ),
       child: Text(
-        _initials(member.name),
+        member.initials,
         style: const TextStyle(
           color: RequestColors.primary,
           fontWeight: FontWeight.w800,
-          fontSize: 19,
+          fontSize: 18,
         ),
       ),
     );
@@ -275,33 +339,46 @@ class _MyteamScreenState extends State<MyteamScreen> {
       ),
       child: Row(
         children: [
-          _withPinBadge(avatar, _pinned.contains(member.name)),
+          _withPinBadge(avatar, isPinned),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.20),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    member.role,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.20),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        member.displayRole,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (member.hasFaceRegistered) ...[
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.verified_rounded,
+                        color: Colors.white.withValues(alpha: 0.85),
+                        size: 15,
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
-                  member.name,
+                  member.fullname,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -310,20 +387,35 @@ class _MyteamScreenState extends State<MyteamScreen> {
                     fontSize: 17,
                   ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  member.branchName != null && member.branchName!.isNotEmpty
+                      ? 'Branch: ${member.branchName}'
+                      : member.organizationSubtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          _buildActions(member, onDark: true),
+          const SizedBox(width: 8),
+          _buildMemberActions(member, isPinned: isPinned, onDark: true),
         ],
       ),
     );
   }
 
-  // ------------------------------ member card ------------------------------
+  // ---------------------------------------------------------------------------
+  // Standard Member Card (Leader & Employee)
+  // ---------------------------------------------------------------------------
 
-  Widget _buildMemberCard(_TeamMember member) {
-    final color = member.avatarColor;
+  Widget _buildMemberCard(MyTeamMember member, {required bool isPinned}) {
+    final color = member.roleColor;
 
     final avatar = Container(
       width: 50,
@@ -338,7 +430,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
         ),
       ),
       child: Text(
-        _initials(member.name),
+        member.initials,
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w800,
@@ -356,54 +448,187 @@ class _MyteamScreenState extends State<MyteamScreen> {
       ),
       child: Row(
         children: [
-          _withPinBadge(avatar, _pinned.contains(member.name)),
+          _withPinBadge(avatar, isPinned),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        member.fullname,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: RequestColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (member.hasFaceRegistered) ...[
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.verified_rounded,
+                        color: RequestColors.primary,
+                        size: 15,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        member.displayRole,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  member.organizationSubtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: RequestColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _buildMemberActions(member, isPinned: isPinned, onDark: false),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Branch Card (For CEO Branches tab)
+  // ---------------------------------------------------------------------------
+
+  Widget _buildBranchCard(MyTeamBranch branch) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: _softShadow,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: RequestColors.primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.business_rounded,
+              color: RequestColors.primary,
+              size: 26,
+            ),
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  member.name,
+                  branch.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                    fontSize: 16,
                     color: RequestColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    member.role,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: color,
-                      fontWeight: FontWeight.w700,
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.person_pin_rounded,
+                      size: 14,
+                      color: RequestColors.textSecondary,
                     ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Manager: ${branch.managerName}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: RequestColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${branch.totalEmployees} Employees • ${branch.totalDepartments} Departments',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: RequestColors.textSecondary.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          _buildActions(member, onDark: false),
+          const SizedBox(width: 8),
+          _circleButton(
+            icon: Icons.call_rounded,
+            tooltip: branch.hasManagerPhone
+                ? 'Call ${branch.managerName}'
+                : 'No phone number available',
+            background: branch.hasManagerPhone
+                ? RequestColors.primary.withValues(alpha: 0.12)
+                : RequestColors.background,
+            iconColor: branch.hasManagerPhone
+                ? RequestColors.primary
+                : RequestColors.textSecondary.withValues(alpha: 0.4),
+            onTap: () {
+              _controller.makePhoneCall(
+                branch.managerPhone,
+                branch.managerName,
+                context,
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  // ------------------------- pin badge + action buttons --------------------
+  // ---------------------------------------------------------------------------
+  // Action Buttons & Pin Badge
+  // ---------------------------------------------------------------------------
 
-  /// Small red pin in the corner of the avatar of every pinned profile.
   Widget _withPinBadge(Widget avatar, bool pinned) {
     if (!pinned) return avatar;
 
@@ -432,38 +657,47 @@ class _MyteamScreenState extends State<MyteamScreen> {
     );
   }
 
-  /// Pin / unpin button + call button shown on the right of every card.
-  Widget _buildActions(_TeamMember member, {required bool onDark}) {
-    final pinned = _pinned.contains(member.name);
-
+  Widget _buildMemberActions(
+    MyTeamMember member, {
+    required bool isPinned,
+    required bool onDark,
+  }) {
     final Color pinBackground = onDark
-        ? Colors.white.withValues(alpha: pinned ? 0.32 : 0.16)
-        : (pinned
-              ? RequestColors.primary.withValues(alpha: 0.12)
-              : RequestColors.background.withValues(alpha: 0.6));
+        ? Colors.white.withValues(alpha: isPinned ? 0.32 : 0.16)
+        : (isPinned
+            ? RequestColors.primary.withValues(alpha: 0.12)
+            : RequestColors.background.withValues(alpha: 0.6));
     final Color pinIconColor = onDark
         ? Colors.white
-        : (pinned ? RequestColors.primary : RequestColors.textSecondary);
+        : (isPinned ? RequestColors.primary : RequestColors.textSecondary);
+
+    final bool hasPhone = member.hasPhoneNumber;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         _circleButton(
-          icon: pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
-          tooltip: pinned ? 'Unpin' : 'Pin',
+          icon: isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+          tooltip: isPinned ? 'Unpin' : 'Pin',
           background: pinBackground,
           iconColor: pinIconColor,
-          onTap: () => _togglePin(member),
+          onTap: () => _controller.togglePin(member, context),
         ),
         const SizedBox(width: 8),
         _circleButton(
           icon: Icons.call_rounded,
-          tooltip: 'Call',
+          tooltip: hasPhone ? 'Call ${member.fullname}' : 'No phone number available',
           background: onDark
               ? Colors.white
-              : RequestColors.primary.withValues(alpha: 0.10),
-          iconColor: RequestColors.primary,
-          onTap: () => _onCall(member),
+              : (hasPhone
+                  ? RequestColors.primary.withValues(alpha: 0.10)
+                  : RequestColors.background),
+          iconColor: onDark
+              ? RequestColors.primary
+              : (hasPhone
+                  ? RequestColors.primary
+                  : RequestColors.textSecondary.withValues(alpha: 0.4)),
+          onTap: () => _controller.makePhoneCall(member.phoneNumber, member.fullname, context),
         ),
       ],
     );
@@ -494,7 +728,9 @@ class _MyteamScreenState extends State<MyteamScreen> {
     );
   }
 
-  // ------------------------------ empty state ------------------------------
+  // ---------------------------------------------------------------------------
+  // Empty & Error States
+  // ---------------------------------------------------------------------------
 
   Widget _buildEmptyState() {
     return Padding(
@@ -504,7 +740,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
           Container(
             width: 72,
             height: 72,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: _softShadow,
@@ -526,17 +762,77 @@ class _MyteamScreenState extends State<MyteamScreen> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Try searching by a different name or role.',
+            'Try searching by a different name, role, or branch.',
+            textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: RequestColors.textSecondary),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: _softShadow,
+              ),
+              child: const Icon(
+                Icons.cloud_off_rounded,
+                size: 32,
+                color: RequestColors.danger,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Failed to load team data',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: RequestColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _controller.errorMessage.value,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: RequestColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () => _controller.fetchMyTeam(),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: RequestColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
-// Small private widgets
+// Section Header
 // ---------------------------------------------------------------------------
 
 class _SectionHeader extends StatelessWidget {

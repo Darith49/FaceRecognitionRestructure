@@ -374,6 +374,95 @@ class ModelAndServiceTests(TestCase):
         self.assertTrue(response.data["is_checked_in"])
         self.assertEqual(response.data["session1"]["status"], "checked_in")
 
+    def test_my_team_hierarchy_all_roles_and_search(self):
+        from rest_framework.test import APIRequestFactory, force_authenticate
+        from api.employee.views import my_team_view
 
+        factory = APIRequestFactory()
 
+        # Setup an organizational hierarchy:
+        manager = Employee.objects.create(
+            firebase_uid="test-mgr-uid",
+            employee_id="MGR-001",
+            fullname="Alice Manager",
+            email="alice.manager@company.com",
+            phone_number="+85512111222",
+            role="manager",
+            branch=self.branch,
+            department=self.department,
+            status="active",
+        )
+        leader = Employee.objects.create(
+            firebase_uid="test-ldr-uid",
+            employee_id="LDR-001",
+            fullname="Bob Leader",
+            email="bob.leader@company.com",
+            phone_number="+85512333444",
+            role="leader",
+            branch=self.branch,
+            department=self.department,
+            reporting_to=manager,
+            status="active",
+        )
+        self.employee.reporting_to = leader
+        self.employee.phone_number = "+85512555666"
+        self.employee.save()
 
+        # 1. CEO view: Pinned CEO, Managers and Branches tabs
+        req_ceo = factory.get('/api/v1/employees/my-team/')
+        force_authenticate(req_ceo, user=self.ceo)
+        res_ceo = my_team_view(req_ceo)
+        self.assertEqual(res_ceo.status_code, 200)
+        self.assertEqual(res_ceo.data['role'], 'ceo')
+        self.assertEqual(len(res_ceo.data['pinned']), 1)
+        self.assertEqual(res_ceo.data['pinned'][0]['fullname'], 'CEO User')
+        tab_keys = [t['key'] for t in res_ceo.data['tabs']]
+        self.assertIn('managers', tab_keys)
+        self.assertIn('branches', tab_keys)
+        mgrs_tab = next(t for t in res_ceo.data['tabs'] if t['key'] == 'managers')
+        self.assertTrue(any(m['fullname'] == 'Alice Manager' for m in mgrs_tab['items']))
+
+        # 2. Manager view: Pinned Manager, My Leaders and Team tabs
+        req_mgr = factory.get('/api/v1/employees/my-team/')
+        force_authenticate(req_mgr, user=manager)
+        res_mgr = my_team_view(req_mgr)
+        self.assertEqual(res_mgr.status_code, 200)
+        self.assertEqual(res_mgr.data['role'], 'manager')
+        self.assertEqual(res_mgr.data['pinned'][0]['fullname'], 'Alice Manager')
+        mgr_tab_keys = [t['key'] for t in res_mgr.data['tabs']]
+        self.assertIn('my_leaders', mgr_tab_keys)
+        self.assertIn('team', mgr_tab_keys)
+        ldr_tab = next(t for t in res_mgr.data['tabs'] if t['key'] == 'my_leaders')
+        self.assertTrue(any(l['fullname'] == 'Bob Leader' for l in ldr_tab['items']))
+
+        # 3. Leader view: Pinned Leader, My Employees and Other Leaders tabs
+        req_ldr = factory.get('/api/v1/employees/my-team/')
+        force_authenticate(req_ldr, user=leader)
+        res_ldr = my_team_view(req_ldr)
+        self.assertEqual(res_ldr.status_code, 200)
+        self.assertEqual(res_ldr.data['role'], 'leader')
+        self.assertEqual(res_ldr.data['pinned'][0]['fullname'], 'Bob Leader')
+        ldr_tab_keys = [t['key'] for t in res_ldr.data['tabs']]
+        self.assertIn('my_employees', ldr_tab_keys)
+        self.assertIn('other_leaders', ldr_tab_keys)
+        emp_tab = next(t for t in res_ldr.data['tabs'] if t['key'] == 'my_employees')
+        self.assertTrue(any(e['fullname'] == 'Employee User' for e in emp_tab['items']))
+
+        # 4. Employee view: Pinned Leader, My Leader and My Department tabs
+        req_emp = factory.get('/api/v1/employees/my-team/')
+        force_authenticate(req_emp, user=self.employee)
+        res_emp = my_team_view(req_emp)
+        self.assertEqual(res_emp.status_code, 200)
+        self.assertEqual(res_emp.data['role'], 'employee')
+        self.assertEqual(res_emp.data['pinned'][0]['fullname'], 'Bob Leader')
+        emp_tab_keys = [t['key'] for t in res_emp.data['tabs']]
+        self.assertIn('my_leader', emp_tab_keys)
+        self.assertIn('my_department', emp_tab_keys)
+
+        # 5. Search query filter
+        req_search = factory.get('/api/v1/employees/my-team/?search=Alice')
+        force_authenticate(req_search, user=self.ceo)
+        res_search = my_team_view(req_search)
+        mgrs_tab_filtered = next(t for t in res_search.data['tabs'] if t['key'] == 'managers')
+        self.assertEqual(len(mgrs_tab_filtered['items']), 1)
+        self.assertEqual(mgrs_tab_filtered['items'][0]['fullname'], 'Alice Manager')

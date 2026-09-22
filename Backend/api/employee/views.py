@@ -154,6 +154,188 @@ def employee_me(request):
     return Response(serializer.data)
 
 
+@api_view(['GET'])
+def my_team_view(request):
+    """
+    Returns the team structure customized for the authenticated user:
+    - CEO: Pinned CEO card, [Managers] and [Branches] tabs
+    - Manager: Pinned Manager card, [My Leaders] and [Team] tabs
+    - Leader: Pinned Leader card, [My Employees] and [Other Leaders] tabs
+    - Employee: Pinned Leader card, [My Leader] and [My Department] tabs
+    """
+    user = request.user
+    role = getattr(user, 'role', 'employee').lower()
+    search = request.query_params.get('search', '').strip().lower()
+
+    pinned_members = []
+    tabs = []
+
+    def filter_emp_data(emp_list):
+        if not search:
+            return emp_list
+        return [
+            e for e in emp_list
+            if search in (e.get('fullname') or '').lower()
+            or search in (e.get('role') or '').lower()
+            or search in (e.get('department_name') or '').lower()
+            or search in (e.get('branch_name') or '').lower()
+        ]
+
+    if role == 'ceo':
+        pinned_members.append(EmployeeSerializer(user).data)
+
+        managers = Employee.objects.filter(role='manager').select_related('branch', 'department').order_by('fullname')
+        managers_data = filter_emp_data(EmployeeSerializer(managers, many=True).data)
+
+        branches = Branch.objects.prefetch_related('employees', 'departments').all().order_by('name')
+        branches_data = []
+        for b in branches:
+            manager = b.employees.filter(role='manager').first()
+            branch_item = {
+                'id': b.id,
+                'name': b.name,
+                'latitude': b.latitude,
+                'longitude': b.longitude,
+                'radius': b.radius,
+                'manager_name': manager.fullname if manager else 'No Manager Assigned',
+                'manager_phone': manager.phone_number if manager else '',
+                'total_employees': b.employees.count(),
+                'total_departments': b.departments.count(),
+            }
+            if not search or search in b.name.lower() or (manager and search in manager.fullname.lower()):
+                branches_data.append(branch_item)
+
+        tabs = [
+            {
+                'key': 'managers',
+                'title': 'Managers',
+                'badge': str(len(managers_data)),
+                'items': managers_data,
+                'is_branch_list': False,
+            },
+            {
+                'key': 'branches',
+                'title': 'Branches',
+                'badge': str(len(branches_data)),
+                'items': branches_data,
+                'is_branch_list': True,
+            }
+        ]
+
+    elif role == 'manager':
+        pinned_members.append(EmployeeSerializer(user).data)
+
+        leaders_qs = Employee.objects.filter(role='leader')
+        if user.branch:
+            leaders_qs = leaders_qs.filter(branch=user.branch)
+        leaders = leaders_qs.select_related('branch', 'department').order_by('fullname')
+        leaders_data = filter_emp_data(EmployeeSerializer(leaders, many=True).data)
+
+        team_qs = Employee.objects.exclude(id=user.id)
+        if user.branch:
+            team_qs = team_qs.filter(branch=user.branch)
+        team = team_qs.select_related('branch', 'department').order_by('role', 'fullname')
+        team_data = filter_emp_data(EmployeeSerializer(team, many=True).data)
+
+        tabs = [
+            {
+                'key': 'my_leaders',
+                'title': 'My Leaders',
+                'badge': str(len(leaders_data)),
+                'items': leaders_data,
+                'is_branch_list': False,
+            },
+            {
+                'key': 'team',
+                'title': 'Team',
+                'badge': str(len(team_data)),
+                'items': team_data,
+                'is_branch_list': False,
+            }
+        ]
+
+    elif role == 'leader':
+        pinned_members.append(EmployeeSerializer(user).data)
+
+        emp_qs = Employee.objects.filter(role='employee')
+        if user.department:
+            emp_qs = emp_qs.filter(department=user.department)
+        elif user.branch:
+            emp_qs = emp_qs.filter(branch=user.branch)
+        employees = emp_qs.select_related('branch', 'department').order_by('fullname')
+        employees_data = filter_emp_data(EmployeeSerializer(employees, many=True).data)
+
+        other_qs = Employee.objects.filter(role='leader').exclude(id=user.id)
+        if user.branch:
+            other_qs = other_qs.filter(branch=user.branch)
+        other_leaders = other_qs.select_related('branch', 'department').order_by('fullname')
+        other_leaders_data = filter_emp_data(EmployeeSerializer(other_leaders, many=True).data)
+
+        tabs = [
+            {
+                'key': 'my_employees',
+                'title': 'My Employees',
+                'badge': str(len(employees_data)),
+                'items': employees_data,
+                'is_branch_list': False,
+            },
+            {
+                'key': 'other_leaders',
+                'title': 'Other Leaders',
+                'badge': str(len(other_leaders_data)),
+                'items': other_leaders_data,
+                'is_branch_list': False,
+            }
+        ]
+
+    else:
+        # role == 'employee'
+        leader = None
+        if user.department:
+            leader = Employee.objects.filter(role='leader', department=user.department).select_related('branch', 'department').first()
+        if not leader and user.branch:
+            leader = Employee.objects.filter(role='manager', branch=user.branch).select_related('branch', 'department').first()
+            if not leader:
+                leader = Employee.objects.filter(role='leader', branch=user.branch).select_related('branch', 'department').first()
+
+        if leader:
+            pinned_members.append(EmployeeSerializer(leader).data)
+
+        leader_list = filter_emp_data([EmployeeSerializer(leader).data]) if leader else []
+
+        colleagues_qs = Employee.objects.filter(role='employee').exclude(id=user.id)
+        if user.department:
+            colleagues_qs = colleagues_qs.filter(department=user.department)
+        elif user.branch:
+            colleagues_qs = colleagues_qs.filter(branch=user.branch)
+        colleagues = colleagues_qs.select_related('branch', 'department').order_by('fullname')
+        colleagues_data = filter_emp_data(EmployeeSerializer(colleagues, many=True).data)
+
+        tabs = [
+            {
+                'key': 'my_leader',
+                'title': 'My Leader',
+                'badge': str(len(leader_list)),
+                'items': leader_list,
+                'is_branch_list': False,
+            },
+            {
+                'key': 'my_department',
+                'title': 'My Department',
+                'badge': str(len(colleagues_data)),
+                'items': colleagues_data,
+                'is_branch_list': False,
+            }
+        ]
+
+    return Response({
+        'role': role,
+        'user': EmployeeSerializer(user).data,
+        'pinned': pinned_members,
+        'tabs': tabs,
+    }, status=status.HTTP_200_OK)
+
+
 @api_view(['GET', 'PATCH'])
 def employee_detail(request, pk):
     """Retrieve or update employee info."""

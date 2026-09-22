@@ -25,7 +25,7 @@ class ApiService {
   final FirebaseService _firebaseService = FirebaseService();
   final SecureStorageService _secureStorage = SecureStorageService();
 
-  Future<Map<String, String>> _buildHeaders({bool isJson = true}) async {
+  Future<Map<String, String>> _buildHeaders({bool isJson = true, bool forceRefresh = false}) async {
     final headers = <String, String>{};
     if (isJson) {
       headers['Content-Type'] = 'application/json';
@@ -33,27 +33,46 @@ class ApiService {
     }
 
     // Attach Token (check Firebase first, fallback to SecureStorage, keep synced)
+    String? token;
     try {
-      String? token = await _firebaseService.getIdToken();
+      token = await _firebaseService.getIdToken(forceRefresh: forceRefresh);
       if (token != null && token.isNotEmpty) {
-        _secureStorage.saveTokens(accessToken: token);
+        await _secureStorage.saveTokens(accessToken: token);
       } else {
         token = await _secureStorage.getAccessToken();
       }
-
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
-      }
     } catch (_) {
       try {
-        final token = await _secureStorage.getAccessToken();
-        if (token != null && token.isNotEmpty) {
-          headers['Authorization'] = 'Bearer $token';
+        token = await _secureStorage.getAccessToken();
+      } catch (_) {}
+    }
+
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    return headers;
+  }
+
+  /// Sends an HTTP request and automatically attempts token refresh and retry once if 401/403 occurs.
+  Future<http.Response> _sendWithRetry(
+    Future<http.Response> Function(Map<String, String> headers) requestFn, {
+    bool isJson = true,
+  }) async {
+    var headers = await _buildHeaders(isJson: isJson);
+    var response = await requestFn(headers).timeout(ApiConfig.timeoutDuration);
+
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      // Force token refresh from Firebase and retry request once
+      try {
+        final retryHeaders = await _buildHeaders(isJson: isJson, forceRefresh: true);
+        if (retryHeaders.containsKey('Authorization')) {
+          response = await requestFn(retryHeaders).timeout(ApiConfig.timeoutDuration);
         }
       } catch (_) {}
     }
 
-    return headers;
+    return response;
   }
 
   /// GET request
@@ -65,8 +84,10 @@ class ApiService {
         uri = uri.replace(queryParameters: stringParams);
       }
 
-      final headers = await _buildHeaders();
-      final response = await http.get(uri, headers: headers).timeout(ApiConfig.timeoutDuration);
+      final response = await _sendWithRetry(
+        (headers) => http.get(uri, headers: headers),
+        isJson: true,
+      );
       return _handleResponse(response);
     } on SocketException {
       throw ApiException(statusCode: 0, message: 'Cannot connect to server. Please check your network connection.');
@@ -82,14 +103,12 @@ class ApiService {
   Future<dynamic> post(String endpoint, {Map<String, dynamic>? body}) async {
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
-      final headers = await _buildHeaders(isJson: true);
-      final response = await http
-          .post(
-            uri,
-            headers: headers,
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(ApiConfig.timeoutDuration);
+      final encodedBody = body != null ? jsonEncode(body) : null;
+
+      final response = await _sendWithRetry(
+        (headers) => http.post(uri, headers: headers, body: encodedBody),
+        isJson: true,
+      );
 
       return _handleResponse(response);
     } on SocketException {
@@ -106,14 +125,12 @@ class ApiService {
   Future<dynamic> patch(String endpoint, {Map<String, dynamic>? body}) async {
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
-      final headers = await _buildHeaders(isJson: true);
-      final response = await http
-          .patch(
-            uri,
-            headers: headers,
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(ApiConfig.timeoutDuration);
+      final encodedBody = body != null ? jsonEncode(body) : null;
+
+      final response = await _sendWithRetry(
+        (headers) => http.patch(uri, headers: headers, body: encodedBody),
+        isJson: true,
+      );
 
       return _handleResponse(response);
     } on SocketException {
@@ -130,8 +147,10 @@ class ApiService {
   Future<dynamic> delete(String endpoint) async {
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
-      final headers = await _buildHeaders(isJson: true);
-      final response = await http.delete(uri, headers: headers).timeout(ApiConfig.timeoutDuration);
+      final response = await _sendWithRetry(
+        (headers) => http.delete(uri, headers: headers),
+        isJson: true,
+      );
 
       return _handleResponse(response);
     } on SocketException {
@@ -144,6 +163,7 @@ class ApiService {
     }
   }
 
+
   /// Multipart POST request (for image uploads like face registration and attendance)
   Future<dynamic> postMultipart(
     String endpoint, {
@@ -153,26 +173,32 @@ class ApiService {
   }) async {
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
-      final request = http.MultipartRequest('POST', uri);
 
-      // Attach headers (Authorization)
-      final headers = await _buildHeaders(isJson: false);
-      request.headers.addAll(headers);
-
-      // Add text fields
-      if (fields != null) {
-        request.fields.addAll(fields);
+      Future<http.Response> executeMultipart(Map<String, String> hdrs) async {
+        final request = http.MultipartRequest('POST', uri);
+        request.headers.addAll(hdrs);
+        if (fields != null) request.fields.addAll(fields);
+        final multipartFile = await http.MultipartFile.fromPath(fileField, file.path);
+        request.files.add(multipartFile);
+        final streamed = await request.send().timeout(const Duration(seconds: 45));
+        return await http.Response.fromStream(streamed);
       }
 
-      // Add file
-      final multipartFile = await http.MultipartFile.fromPath(fileField, file.path);
-      request.files.add(multipartFile);
+      var headers = await _buildHeaders(isJson: false);
+      var response = await executeMultipart(headers);
 
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 45));
-      final response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        try {
+          final retryHeaders = await _buildHeaders(isJson: false, forceRefresh: true);
+          if (retryHeaders.containsKey('Authorization')) {
+            response = await executeMultipart(retryHeaders);
+          }
+        } catch (_) {}
+      }
 
       return _handleResponse(response);
     } on SocketException {
+
       throw ApiException(statusCode: 0, message: 'Cannot connect to server. Please check your network connection.');
     } on TimeoutException {
       throw ApiException(statusCode: 408, message: 'Server request timed out. Please try again.');

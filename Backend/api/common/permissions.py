@@ -16,6 +16,9 @@ class FirebaseAuthentication(BaseAuthentication):
     Validates token and maps to an Employee in SQLite.
     """
 
+    def authenticate_header(self, request):
+        return 'Bearer realm="api"'
+
     def authenticate(self, request):
         auth_header = get_authorization_header(request).decode('utf-8')
         if not auth_header:
@@ -30,6 +33,7 @@ class FirebaseAuthentication(BaseAuthentication):
         try:
             decoded = verify_id_token(id_token)
         except Exception as e:
+            logger.warning("[AUTH] Token verification failed for %s: %s", request.path, e)
             raise AuthenticationFailed(str(e))
 
         firebase_uid = decoded.get('uid')
@@ -59,6 +63,16 @@ class FirebaseAuthentication(BaseAuthentication):
             firebase_uid=firebase_uid
         ).first()
 
+        if not employee and email:
+            # Check if employee with matching email already exists (e.g. invited or pre-seeded)
+            employee = Employee.objects.select_related('branch', 'department').filter(
+                email__iexact=email
+            ).first()
+            if employee:
+                employee.firebase_uid = firebase_uid
+                employee.save(update_fields=['firebase_uid'])
+                logger.info("Associated existing employee %s with Firebase UID %s", email, firebase_uid)
+
         if not employee:
             # Bootstrap: use Firestore role if set, otherwise first user is CEO
             is_first_user = not Employee.objects.exists()
@@ -84,6 +98,7 @@ class FirebaseAuthentication(BaseAuthentication):
         request.employee = employee
         # request.user is set to employee for DRF compatibility
         return (employee, id_token)
+
 
 
 class IsCEO(BasePermission):

@@ -115,6 +115,11 @@ REST_FRAMEWORK = {
 
 # Firebase Configuration
 FIREBASE_CREDENTIALS_PATH = os.environ.get('FIREBASE_CREDENTIALS_PATH', '')
-if FIREBASE_CREDENTIALS_PATH and not os.path.isabs(FIREBASE_CREDENTIALS_PATH):
+if not FIREBASE_CREDENTIALS_PATH:
+    default_cred = BASE_DIR / 'face-recognition-attenda-230d3-firebase-adminsdk-fbsvc-255c00d255.json'
+    if default_cred.exists():
+        FIREBASE_CREDENTIALS_PATH = str(default_cred)
+elif not os.path.isabs(FIREBASE_CREDENTIALS_PATH):
     FIREBASE_CREDENTIALS_PATH = str(BASE_DIR / FIREBASE_CREDENTIALS_PATH)
 FIREBASE_PROJECT_ID = os.environ.get('FIREBASE_PROJECT_ID', 'face-recognition-attenda-230d3')
+

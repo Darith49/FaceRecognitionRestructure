@@ -40,6 +40,14 @@ class Employee(models.Model):
         on_delete=models.SET_NULL,
         related_name='employees',
     )
+    phone_number = models.CharField(max_length=30, blank=True, default='')
+    reporting_to = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='subordinates',
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     # Scheduled Work Sections and Work Days
     section1_start = models.TimeField(default='07:00:00')

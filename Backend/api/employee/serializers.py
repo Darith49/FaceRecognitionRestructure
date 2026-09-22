@@ -5,19 +5,21 @@ from .models import Employee
 class EmployeeSerializer(serializers.ModelSerializer):
     branch_name = serializers.CharField(source='branch.name', read_only=True, allow_null=True)
     department_name = serializers.CharField(source='department.name', read_only=True, allow_null=True)
+    reporting_to_name = serializers.CharField(source='reporting_to.fullname', read_only=True, allow_null=True)
     has_face_registered = serializers.SerializerMethodField()
 
     class Meta:
         model = Employee
         fields = [
             'id', 'firebase_uid', 'employee_id', 'fullname', 'email',
+            'phone_number', 'reporting_to', 'reporting_to_name',
             'role', 'branch', 'branch_name', 'department', 'department_name',
             'status', 'section1_start', 'section1_end', 'section2_start', 'section2_end',
             'work_days', 'has_face_registered', 'created_by', 'created_at'
         ]
         read_only_fields = [
             'id', 'firebase_uid', 'created_by', 'created_at',
-            'branch_name', 'department_name', 'has_face_registered'
+            'branch_name', 'department_name', 'reporting_to_name', 'has_face_registered'
         ]
 
     def get_has_face_registered(self, obj):
@@ -28,9 +30,11 @@ class CreateEmployeeSerializer(serializers.Serializer):
     """Payload for inviting/creating an employee via Firebase Admin + SQLite."""
     fullname = serializers.CharField(max_length=200)
     email = serializers.EmailField()
+    phone_number = serializers.CharField(max_length=30, required=False, allow_blank=True)
     role = serializers.ChoiceField(choices=Employee.ROLE_CHOICES, default='employee')
     branch_id = serializers.IntegerField(required=False, allow_null=True)
     department_id = serializers.IntegerField(required=False, allow_null=True)
+    reporting_to_id = serializers.IntegerField(required=False, allow_null=True)
     employee_id = serializers.CharField(max_length=50, required=False, allow_blank=True)
     section1_start = serializers.TimeField(required=False, default='07:00:00')
     section1_end = serializers.TimeField(required=False, default='11:00:00')

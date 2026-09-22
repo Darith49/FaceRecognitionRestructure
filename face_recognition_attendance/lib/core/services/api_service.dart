@@ -89,13 +89,8 @@ class ApiService {
         isJson: true,
       );
       return _handleResponse(response);
-    } on SocketException {
-      throw ApiException(statusCode: 0, message: 'Cannot connect to server. Please check your network connection.');
-    } on TimeoutException {
-      throw ApiException(statusCode: 408, message: 'Server request timed out. Please try again.');
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(statusCode: 0, message: 'An unexpected error occurred: ${e.toString()}');
+      throw _wrapException(e);
     }
   }
 
@@ -111,13 +106,8 @@ class ApiService {
       );
 
       return _handleResponse(response);
-    } on SocketException {
-      throw ApiException(statusCode: 0, message: 'Cannot connect to server. Please check your network connection.');
-    } on TimeoutException {
-      throw ApiException(statusCode: 408, message: 'Server request timed out. Please try again.');
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(statusCode: 0, message: 'An unexpected error occurred: ${e.toString()}');
+      throw _wrapException(e);
     }
   }
 
@@ -133,13 +123,8 @@ class ApiService {
       );
 
       return _handleResponse(response);
-    } on SocketException {
-      throw ApiException(statusCode: 0, message: 'Cannot connect to server. Please check your network connection.');
-    } on TimeoutException {
-      throw ApiException(statusCode: 408, message: 'Server request timed out. Please try again.');
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(statusCode: 0, message: 'An unexpected error occurred: ${e.toString()}');
+      throw _wrapException(e);
     }
   }
 
@@ -153,21 +138,19 @@ class ApiService {
       );
 
       return _handleResponse(response);
-    } on SocketException {
-      throw ApiException(statusCode: 0, message: 'Cannot connect to server. Please check your network connection.');
-    } on TimeoutException {
-      throw ApiException(statusCode: 408, message: 'Server request timed out. Please try again.');
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(statusCode: 0, message: 'An unexpected error occurred: ${e.toString()}');
+      throw _wrapException(e);
     }
   }
 
 
-  /// Multipart POST request (for image uploads like face registration and attendance)
+  /// Multipart POST request (for image/document uploads like face registration and attendance)
+  /// Supports [bytes] and [filename] (universal for Web and Mobile) or [file].
   Future<dynamic> postMultipart(
     String endpoint, {
-    required File file,
+    File? file,
+    List<int>? bytes,
+    String? filename,
     required String fileField,
     Map<String, String>? fields,
   }) async {
@@ -178,8 +161,21 @@ class ApiService {
         final request = http.MultipartRequest('POST', uri);
         request.headers.addAll(hdrs);
         if (fields != null) request.fields.addAll(fields);
-        final multipartFile = await http.MultipartFile.fromPath(fileField, file.path);
-        request.files.add(multipartFile);
+
+        if (bytes != null) {
+          final multipartFile = http.MultipartFile.fromBytes(
+            fileField,
+            bytes,
+            filename: filename ?? 'upload.jpg',
+          );
+          request.files.add(multipartFile);
+        } else if (file != null) {
+          final multipartFile = await http.MultipartFile.fromPath(fileField, file.path);
+          request.files.add(multipartFile);
+        } else {
+          throw ApiException(statusCode: 400, message: 'No file data provided for upload.');
+        }
+
         final streamed = await request.send().timeout(const Duration(seconds: 45));
         return await http.Response.fromStream(streamed);
       }
@@ -197,15 +193,29 @@ class ApiService {
       }
 
       return _handleResponse(response);
-    } on SocketException {
-
-      throw ApiException(statusCode: 0, message: 'Cannot connect to server. Please check your network connection.');
-    } on TimeoutException {
-      throw ApiException(statusCode: 408, message: 'Server request timed out. Please try again.');
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(statusCode: 0, message: 'Upload error: ${e.toString()}');
+      throw _wrapException(e);
     }
+  }
+
+  ApiException _wrapException(dynamic e) {
+    if (e is ApiException) return e;
+    if (e is TimeoutException) {
+      return ApiException(statusCode: 408, message: 'Server request timed out. Please try again.');
+    }
+    final msg = e.toString().toLowerCase();
+    if (e is SocketException ||
+        msg.contains('socketexception') ||
+        msg.contains('clientexception') ||
+        msg.contains('failed to fetch') ||
+        msg.contains('xmlhttprequest error') ||
+        msg.contains('connection refused')) {
+      return ApiException(
+        statusCode: 0,
+        message: 'Cannot connect to server. Please check your network connection.',
+      );
+    }
+    return ApiException(statusCode: 0, message: 'An unexpected error occurred: ${e.toString()}');
   }
 
   /// Unified response processor and error extractor

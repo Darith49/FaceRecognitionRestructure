@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class ApiConfig {
   // Set your computer's LAN IP address when testing on a physical mobile device.
@@ -16,7 +17,7 @@ class ApiConfig {
 
   /// Helper to auto-configure localhost based on platform if needed
   static void useLocalhost() {
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       serverHost = '10.0.2.2';
     } else {
       serverHost = '127.0.0.1';

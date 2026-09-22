@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:face_recognition_attendance/core/utils/file_picker_helper.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
@@ -37,6 +39,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
   DateTime? _fromTime;
   DateTime? _toTime;
   bool _hasAttachment = false;
+  String? _attachmentName;
+  Uint8List? _attachmentBytes;
+  int? _attachmentSize;
+  String? _attachmentPath;
   String? _editId;
 
   bool get _isEditing => _editId != null;
@@ -69,6 +75,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
         _fromTime = existing.fromTime;
         _toTime = existing.toTime;
         _hasAttachment = existing.hasAttachment;
+        _attachmentName = existing.attachmentName;
+        _attachmentBytes = existing.attachmentBytes;
+        _attachmentSize = existing.attachmentSize;
+        _attachmentPath = existing.attachmentPath;
         _reasonController.text = existing.reason;
         _tabIndex = 0; // Force to form when editing
       }
@@ -230,6 +240,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
         fromTime: _fromTime,
         toTime: _toTime,
         hasAttachment: _hasAttachment,
+        attachmentName: _attachmentName,
+        attachmentBytes: _attachmentBytes,
+        attachmentSize: _attachmentSize,
+        attachmentPath: _attachmentPath,
       );
       if (ok) {
         RequestSnack.show(messenger, 'Leave request updated.');
@@ -247,14 +261,66 @@ class _LeaveScreenState extends State<LeaveScreen> {
         fromTime: _fromTime,
         toTime: _toTime,
         hasAttachment: _hasAttachment,
+        attachmentName: _attachmentName,
+        attachmentBytes: _attachmentBytes,
+        attachmentSize: _attachmentSize,
+        attachmentPath: _attachmentPath,
       );
       RequestSnack.show(messenger, 'Leave request submitted.');
       _reasonController.clear();
       setState(() {
         _hasAttachment = false;
+        _attachmentName = null;
+        _attachmentBytes = null;
+        _attachmentSize = null;
+        _attachmentPath = null;
         _tabIndex = 1;
       });
     }
+  }
+
+  Future<void> _pickAttachment() async {
+    try {
+      final file = await AppFilePicker.pickFile(
+        allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'webp'],
+      );
+      if (file != null) {
+        setState(() {
+          _hasAttachment = true;
+          _attachmentName = file.name;
+          _attachmentBytes = file.bytes;
+          _attachmentSize = file.size;
+          _attachmentPath = file.path ?? file.name;
+        });
+        if (mounted) {
+          RequestSnack.show(
+            ScaffoldMessenger.of(context),
+            'Attached: ${file.name}',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        RequestSnack.show(
+          ScaffoldMessenger.of(context),
+          'Could not select file: $e',
+        );
+      }
+    }
+  }
+
+  void _removeAttachment() {
+    setState(() {
+      _hasAttachment = false;
+      _attachmentName = null;
+      _attachmentBytes = null;
+      _attachmentSize = null;
+      _attachmentPath = null;
+    });
+    RequestSnack.show(
+      ScaffoldMessenger.of(context),
+      'Attachment removed.',
+    );
   }
 
   @override
@@ -577,61 +643,129 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
         const SizedBox(height: 16),
 
-        // Attach Document or Image
-        InkWell(
-          onTap: () {
-            setState(() => _hasAttachment = !_hasAttachment);
-            RequestSnack.show(
-              ScaffoldMessenger.of(context),
-              _hasAttachment ? 'Document attached.' : 'Attachment removed.',
-            );
-          },
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
+        // Attach Document or Image Section
+        if (_hasAttachment && _attachmentName != null)
+          Container(
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: _hasAttachment
-                  ? RequestColors.approvedStatus.withValues(alpha: 0.08)
-                  : Colors.white,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: _hasAttachment
-                    ? RequestColors.approvedStatus
-                    : const Color(0xFFD0D0D5),
-                style: BorderStyle.solid,
+                color: RequestColors.primary.withValues(alpha: 0.35),
                 width: 1.5,
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  _hasAttachment
-                      ? Icons.check_circle_rounded
-                      : Icons.attach_file_rounded,
-                  size: 20,
-                  color: _hasAttachment
-                      ? RequestColors.approvedStatus
-                      : RequestColors.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _hasAttachment
-                      ? 'Document Attached'
-                      : 'Attach Document or Image',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _hasAttachment
-                        ? RequestColors.approvedStatus
-                        : RequestColors.primary,
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: RequestColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _attachmentName!.toLowerCase().endsWith('.pdf')
+                        ? Icons.picture_as_pdf_rounded
+                        : (_attachmentName!.toLowerCase().endsWith('.png') ||
+                                _attachmentName!.toLowerCase().endsWith('.jpg') ||
+                                _attachmentName!.toLowerCase().endsWith('.jpeg') ||
+                                _attachmentName!.toLowerCase().endsWith('.webp'))
+                            ? Icons.image_rounded
+                            : Icons.description_rounded,
+                    color: RequestColors.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _attachmentName!,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: RequestColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _attachmentSize != null
+                            ? '${(_attachmentSize! / 1024).toStringAsFixed(1)} KB • Tap Change to replace'
+                            : 'Document Attached',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: RequestColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: _pickAttachment,
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: RequestColors.primary,
+                  ),
+                  child: const Text('Change', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                IconButton(
+                  onPressed: _removeAttachment,
+                  icon: const Icon(Icons.close_rounded, size: 20, color: RequestColors.danger),
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Remove',
+                ),
+              ],
+            ),
+          )
+        else
+          InkWell(
+            onTap: _pickAttachment,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFFD0D0D5),
+                  style: BorderStyle.solid,
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(
+                    Icons.upload_file_rounded,
+                    size: 22,
+                    color: RequestColors.primary,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Attach Document or Image (PDF, JPG, PNG)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: RequestColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
 
         const SizedBox(height: 24),
 

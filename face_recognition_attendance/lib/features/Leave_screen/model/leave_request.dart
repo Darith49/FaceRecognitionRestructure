@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 
 /// Pending = shown in "Pending", Approved = shown in "History".
@@ -32,6 +33,10 @@ class LeaveRequest {
     this.fromTime,
     this.toTime,
     this.hasAttachment = false,
+    this.attachmentName,
+    this.attachmentBytes,
+    this.attachmentSize,
+    this.attachmentPath,
   });
 
   final String id;
@@ -50,6 +55,10 @@ class LeaveRequest {
   final DateTime? toTime;
 
   final bool hasAttachment;
+  final String? attachmentName;
+  final Uint8List? attachmentBytes;
+  final int? attachmentSize;
+  final String? attachmentPath;
 
   /// Inclusive number of calendar days covered by this request.
   int get dayCount => toDate.difference(fromDate).inDays + 1;

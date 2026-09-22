@@ -2,7 +2,6 @@ import 'package:face_recognition_attendance/config/navigation/navigation_control
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/service/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
-import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import 'package:get/get.dart';
 
 class LoginController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
-  final SecureStorageService _secureStorage = SecureStorageService();
 
   final Rx<UserModel?> currentuser = Rx<UserModel?>(null);
   final RxBool hasFaceRegistered = false.obs;
@@ -22,7 +20,6 @@ class LoginController extends GetxController {
   final RxBool isPasswordHidden = true.obs;
   final RxBool rememberMe = false.obs;
   final RxBool isLoading = false.obs;
-  final RxBool isCheckingSession = false.obs;
   final RxString errorMessage = ''.obs;
 
   bool get isLoggedIn => currentuser.value != null;
@@ -31,12 +28,6 @@ class LoginController extends GetxController {
   void onInit() {
     super.onInit();
     _checkCurrentUser();
-  }
-
-  void clearInputs() {
-    emailController.clear();
-    passwordController.clear();
-    rememberMe.value = false;
   }
 
   Future<void> checkFaceStatus() async {
@@ -51,72 +42,14 @@ class LoginController extends GetxController {
     }
   }
 
-  void _persistSessionInBackground(UserModel user) {
-    _firebaseService.getIdToken().then((idToken) {
-      if (idToken != null) {
-        final refreshToken = _firebaseService.getCurrentUser()?.refreshToken;
-        _secureStorage.saveUserSession(
-          uid: user.uid,
-          email: user.email,
-          accessToken: idToken,
-          refreshToken: refreshToken,
-          userData: user.toJson(),
-        );
-      }
-    }).catchError((e) {
-      debugPrint('Error saving session in background: $e');
-    });
-    checkFaceStatus();
-  }
-
   Future<void> _checkCurrentUser() async {
-    try {
-      // 1. If user is already loaded via initialUser, just sync in background
-      if (currentuser.value != null) {
-        _firebaseService.getIdToken().then((token) {
-          if (token != null) {
-            _secureStorage.saveTokens(accessToken: token);
-          }
-          final firebaseUser = _firebaseService.getCurrentUser();
-          if (firebaseUser != null) {
-            _firebaseService.getUserByUid(firebaseUser.uid).then((freshUser) {
-              if (freshUser != null) {
-                currentuser.value = freshUser;
-                _persistSessionInBackground(freshUser);
-              }
-            });
-          }
-        });
-        return;
+    final firebaseUser = _firebaseService.getCurrentUser();
+    if (firebaseUser != null) {
+      final user = await _firebaseService.getUserByUid(firebaseUser.uid);
+      if (user != null) {
+        currentuser.value = user;
+        await checkFaceStatus();
       }
-
-      // 2. Otherwise load cached user from secure storage
-      final cachedData = await _secureStorage.getCachedUserData();
-      if (cachedData != null) {
-        try {
-          final cachedUser = UserModel.fromJson(cachedData);
-          currentuser.value = cachedUser;
-          _persistSessionInBackground(cachedUser);
-          _navigationBasedOnRole(cachedUser.role);
-          return;
-        } catch (e) {
-          debugPrint('Failed to parse cached user: $e');
-        }
-      }
-
-      // 3. Fallback check for active Firebase auth user
-      final firebaseUser = _firebaseService.getCurrentUser();
-      if (firebaseUser != null) {
-        final user = await _firebaseService.getUserByUid(firebaseUser.uid);
-        if (user != null) {
-          currentuser.value = user;
-          _persistSessionInBackground(user);
-          _navigationBasedOnRole(user.role);
-          return;
-        }
-      }
-    } catch (e) {
-      debugPrint('Error in auto-login check: $e');
     }
   }
 
@@ -131,26 +64,13 @@ class LoginController extends GetxController {
       );
 
       if (user != null) {
-        currentuser.value = user;
-        final idToken = await _firebaseService.getIdToken(forceRefresh: true);
-        if (idToken != null) {
-          final refreshToken = _firebaseService.getCurrentUser()?.refreshToken;
-          await _secureStorage.saveUserSession(
-            uid: user.uid,
-            email: user.email,
-            accessToken: idToken,
-            refreshToken: refreshToken,
-            userData: user.toJson(),
-          );
-        }
-        clearInputs();
+        currentuser.value = user; // 1. Save user state
+        await checkFaceStatus();
         _navigationBasedOnRole(user.role);
-        checkFaceStatus();
         return true;
       } else {
-        // User exists in Auth, but NO document found in Firestore
-        await _firebaseService.logout();
-        await _secureStorage.clearAll();
+        // 2. User exists in Auth, but NO document found in Firestore
+        await _firebaseService.logout(); // Clean up auth session so they aren't stuck in a half-logged-in state
 
         errorMessage.value = "User profile not found in database. Please contact an administrator.";
 
@@ -199,14 +119,26 @@ class LoginController extends GetxController {
         throw Exception('Google authentication failed.');
       }
 
-      final user = await _firebaseService.getUserByUid(firebaseUser.uid);
+      // 1. Try finding employee by UID
+      var user = await _firebaseService.getUserByUid(firebaseUser.uid);
+
+      // 2. If not found by UID, search by email and link to this UID
+      if (user == null && firebaseUser.email != null) {
+        user = await _firebaseService.getUserByEmail(firebaseUser.email!);
+        if (user != null) {
+          await _firebaseService.linkFirestoreUser(firebaseUser.uid, user);
+          user = user.copyWith(uid: firebaseUser.uid);
+        }
+      }
 
       if (user == null) {
         await _firebaseService.logout();
-        await _secureStorage.clearAll();
 
-        errorMessage.value =
-            'User profile not found. Please contact an administrator.';
+        final email = firebaseUser.email ?? '';
+        errorMessage.value = email.isNotEmpty
+            ? 'No employee profile found for $email. Please contact an administrator.'
+            : 'User profile not found. Please contact an administrator.';
+
         Get.snackbar(
           'Account Not Found',
           errorMessage.value,
@@ -221,20 +153,9 @@ class LoginController extends GetxController {
         return;
       }
       currentuser.value = user;
-      final idToken = await _firebaseService.getIdToken(forceRefresh: true);
-      if (idToken != null) {
-        final refreshToken = _firebaseService.getCurrentUser()?.refreshToken;
-        await _secureStorage.saveUserSession(
-          uid: user.uid,
-          email: user.email,
-          accessToken: idToken,
-          refreshToken: refreshToken,
-          userData: user.toJson(),
-        );
-      }
-      clearInputs();
+      await checkFaceStatus();
+
       _navigationBasedOnRole(user.role);
-      checkFaceStatus();
     } catch (e) {
       final msg = e.toString().replaceFirst('Exception: ', '').trim();
       errorMessage.value = msg;
@@ -257,17 +178,29 @@ class LoginController extends GetxController {
     }
   }
 
+  /// Update the current user's profile picture in state and Firestore
+  Future<void> updateProfilePicture(String profileUrl) async {
+    final user = currentuser.value;
+    if (user != null) {
+      currentuser.value = user.copyWith(profileUrl: profileUrl);
+      try {
+        await _firebaseService.updateProfilePicture(user.uid, profileUrl);
+      } catch (e) {
+        debugPrint('Error updating profile picture in Firestore: $e');
+      }
+    }
+  }
+
   Future<void> logOut() async {
     try {
       await _firebaseService.logout();
-      await _secureStorage.clearAll();
     } catch (e) {
-      debugPrint('Logout error: $e');
+      debugPrint('Logout service error: $e');
     } finally {
       currentuser.value = null;
       hasFaceRegistered.value = false;
-      clearInputs();
-      errorMessage.value = '';
+      emailController.clear();
+      passwordController.clear();
       if (Get.isRegistered<NavigationController>()) {
         Get.find<NavigationController>().changePage(0);
       }

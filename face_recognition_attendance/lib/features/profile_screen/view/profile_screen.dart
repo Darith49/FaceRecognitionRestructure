@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:face_recognition_attendance/core/utils/file_picker_helper.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/permissions/app_permissions.dart';
 import 'package:face_recognition_attendance/core/permissions/widgets/permission_view.dart';
@@ -73,52 +75,67 @@ class ProfileScreen extends StatelessWidget {
                     final user = loginController.currentuser.value;
                     return Row(
                       children: [
-                        // Avatar with online dot
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              width: 64,
-                              height: 64,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    const Color(0xFF7C3AED),
-                                    const Color(0xFF9333EA),
-                                  ],
+                        // Avatar with camera badge (tap to upload)
+                        GestureDetector(
+                          onTap: () => _pickAndUploadProfilePicture(
+                            context,
+                            loginController,
+                          ),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              _buildAvatarImage(
+                                user?.profileUrl,
+                                user?.fullname ?? 'User',
+                              ),
+                              // Online status indicator
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: Container(
+                                  width: 14,
+                                  height: 14,
+                                  decoration: BoxDecoration(
+                                    color: RequestColors.approvedStatus,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              child: Center(
-                                child: Text(
-                                  _initials(user?.fullname ?? 'User'),
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w700,
+                              // Camera Edit Badge
+                              Positioned(
+                                bottom: -2,
+                                right: -2,
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF7C3AED),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.15),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt_rounded,
+                                    size: 13,
                                     color: Colors.white,
                                   ),
                                 ),
                               ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                width: 16,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  color: RequestColors.approvedStatus,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -442,6 +459,105 @@ class ProfileScreen extends StatelessWidget {
     if (parts.isEmpty || parts.first.isEmpty) return '?';
     if (parts.length == 1) return parts.first[0].toUpperCase();
     return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
+  Widget _buildAvatarImage(String? profileUrl, String name) {
+    if (profileUrl != null && profileUrl.isNotEmpty) {
+      if (profileUrl.startsWith('data:image')) {
+        try {
+          final base64Data = profileUrl.split(',').last;
+          final bytes = base64Decode(base64Data);
+          return ClipOval(
+            child: Image.memory(
+              bytes,
+              width: 64,
+              height: 64,
+              fit: BoxFit.cover,
+            ),
+          );
+        } catch (_) {}
+      } else if (profileUrl.startsWith('http')) {
+        return ClipOval(
+          child: Image.network(
+            profileUrl,
+            width: 64,
+            height: 64,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => _fallbackAvatar(name),
+          ),
+        );
+      }
+    }
+    return _fallbackAvatar(name);
+  }
+
+  Widget _fallbackAvatar(String name) {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF7C3AED),
+            Color(0xFF9333EA),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Text(
+          _initials(name),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadProfilePicture(
+    BuildContext context,
+    LoginController controller,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final file = await AppFilePicker.pickFile(
+        isImageOnly: true,
+      );
+      if (file == null) return;
+      final bytes = file.bytes;
+
+      if (bytes.lengthInBytes > 5 * 1024 * 1024) {
+        RequestSnack.show(
+          messenger,
+          'Image is too large. Please select an image under 5MB.',
+        );
+        return;
+      }
+
+      RequestSnack.show(messenger, 'Updating profile picture...');
+
+      final ext = file.extension?.toLowerCase() ?? 'jpeg';
+      final mime = (ext == 'png') ? 'image/png' : 'image/jpeg';
+      final base64String = base64Encode(bytes);
+      final dataUri = 'data:$mime;base64,$base64String';
+
+      await controller.updateProfilePicture(dataUri);
+
+      RequestSnack.show(
+        messenger,
+        'Profile picture updated successfully!',
+      );
+    } catch (e) {
+      RequestSnack.show(
+        messenger,
+        'Failed to update profile picture: $e',
+      );
+    }
   }
 }
 

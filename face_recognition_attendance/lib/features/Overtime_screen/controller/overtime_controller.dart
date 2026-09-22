@@ -43,6 +43,10 @@ class OvertimeController extends GetxController {
     required DateTime toTime,
     required String reason,
     bool hasAttachment = false,
+    String? attachmentName,
+    dynamic attachmentBytes,
+    int? attachmentSize,
+    String? attachmentPath,
   }) {
     final user = _signedInUser;
     _idCounter++;
@@ -59,6 +63,10 @@ class OvertimeController extends GetxController {
         reason: reason,
         status: OvertimeStatus.pending,
         hasAttachment: hasAttachment,
+        attachmentName: attachmentName,
+        attachmentBytes: attachmentBytes,
+        attachmentSize: attachmentSize,
+        attachmentPath: attachmentPath,
       ),
     );
   }
@@ -84,6 +92,10 @@ class OvertimeController extends GetxController {
     required DateTime toTime,
     required String reason,
     bool hasAttachment = false,
+    String? attachmentName,
+    dynamic attachmentBytes,
+    int? attachmentSize,
+    String? attachmentPath,
   }) {
     final index = requests.indexWhere((r) => r.id == id);
     if (index == -1 || requests[index].status != OvertimeStatus.pending) {
@@ -101,6 +113,10 @@ class OvertimeController extends GetxController {
       reason: reason,
       status: old.status,
       hasAttachment: hasAttachment,
+      attachmentName: attachmentName ?? old.attachmentName,
+      attachmentBytes: attachmentBytes ?? old.attachmentBytes,
+      attachmentSize: attachmentSize ?? old.attachmentSize,
+      attachmentPath: attachmentPath ?? old.attachmentPath,
     );
     return true;
   }

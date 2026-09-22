@@ -42,6 +42,15 @@ class LeaveDetailScreen extends GetView<LeaveController> {
           ),
           const SizedBox(height: 14),
           RequestField(label: 'Reason', value: request.reason, multiline: true),
+          if (request.hasAttachment) ...[
+            const SizedBox(height: 14),
+            RequestField(
+              label: 'Supporting Document',
+              value: request.attachmentName ?? 'Document Attached',
+              valueColor: RequestColors.primary,
+              valueWeight: FontWeight.w600,
+            ),
+          ],
           const SizedBox(height: 14),
           RequestField(
             label: 'Status',

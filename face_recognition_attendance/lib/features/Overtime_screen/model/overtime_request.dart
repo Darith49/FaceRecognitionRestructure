@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 
 /// Pending = awaiting approval, Approved = confirmed.
@@ -26,6 +27,10 @@ class OvertimeRequest {
     required this.reason,
     required this.status,
     this.hasAttachment = false,
+    this.attachmentName,
+    this.attachmentBytes,
+    this.attachmentSize,
+    this.attachmentPath,
   });
 
   final String id;
@@ -37,6 +42,10 @@ class OvertimeRequest {
   final String reason;
   final OvertimeStatus status;
   final bool hasAttachment;
+  final String? attachmentName;
+  final Uint8List? attachmentBytes;
+  final int? attachmentSize;
+  final String? attachmentPath;
 
   Duration get duration => toTime.difference(fromTime);
 

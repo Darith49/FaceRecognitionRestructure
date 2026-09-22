@@ -1,11 +1,13 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
+import 'package:face_recognition_attendance/core/utils/file_picker_helper.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/face/view/widgets/face_overlay.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -46,7 +48,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     try {
       _cameras = await availableCameras();
       if (_cameras.isEmpty) {
-        setState(() => _statusText = 'No camera found on this device.');
+        if (mounted) setState(() => _statusText = 'No camera found on this device.');
         return;
       }
 
@@ -58,16 +60,15 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
 
       _cameraController = CameraController(
         frontCamera,
-        ResolutionPreset.high,
+        ResolutionPreset.medium,
         enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
       );
 
       await _cameraController!.initialize();
       if (mounted) setState(() {});
     } catch (e) {
       if (mounted) {
-        setState(() => _statusText = 'Camera initialization error: $e');
+        setState(() => _statusText = 'Camera unavailable or permission required.');
       }
     }
   }
@@ -139,22 +140,63 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       return;
     }
 
+    try {
+      final XFile photo = await _cameraController!.takePicture();
+      final bytes = await photo.readAsBytes();
+      await _processImageBytes(
+        bytes,
+        photo.name.isNotEmpty ? photo.name : 'face_capture.jpg',
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Could not complete face scan: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> _pickAndUploadPhoto() async {
+    if (_isProcessing) return;
+    if (_action == 'register') return;
+
+    if (_action != 'register' && _currentPosition == null) {
+      Get.snackbar(
+        'Location Required',
+        'Waiting for GPS fix. Please ensure location is enabled.',
+      );
+      _getCurrentLocation();
+      return;
+    }
+
+    try {
+      final file = await AppFilePicker.pickFile(
+        isImageOnly: true,
+      );
+      if (file == null) return;
+      await _processImageBytes(file.bytes, file.name);
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to select image: $e');
+    }
+  }
+
+  Future<void> _processImageBytes(Uint8List bytes, String filename) async {
     setState(() {
       _isProcessing = true;
       _statusText = 'Scanning and processing face...';
     });
 
     try {
-      final XFile photo = await _cameraController!.takePicture();
-      final File imageFile = File(photo.path);
-
       dynamic result;
 
       if (_action == 'register') {
         setState(() => _statusText = 'Registering face with ArcFace model...');
         result = await _apiService.postMultipart(
           '/face/register/',
-          file: imageFile,
+          bytes: bytes,
+          filename: filename,
           fileField: 'image',
         );
         if (Get.isRegistered<LoginController>()) {
@@ -163,15 +205,16 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       } else if (_action == 'check_in') {
         setState(() => _statusText = 'Verifying face and geofence distance...');
         final Map<String, String> fields = {
-          'latitude': _currentPosition!.latitude.toString(),
-          'longitude': _currentPosition!.longitude.toString(),
+          'latitude': (_currentPosition?.latitude ?? 0.0).toString(),
+          'longitude': (_currentPosition?.longitude ?? 0.0).toString(),
         };
         if (_session != null) {
           fields['session'] = _session.toString();
         }
         result = await _apiService.postMultipart(
           '/attendance/check-in/',
-          file: imageFile,
+          bytes: bytes,
+          filename: filename,
           fileField: 'image',
           fields: fields,
         );
@@ -180,24 +223,20 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
           () => _statusText = 'Verifying face and check-out geofence...',
         );
         final Map<String, String> fields = {
-          'latitude': _currentPosition!.latitude.toString(),
-          'longitude': _currentPosition!.longitude.toString(),
+          'latitude': (_currentPosition?.latitude ?? 0.0).toString(),
+          'longitude': (_currentPosition?.longitude ?? 0.0).toString(),
         };
         if (_session != null) {
           fields['session'] = _session.toString();
         }
         result = await _apiService.postMultipart(
           '/attendance/check-out/',
-          file: imageFile,
+          bytes: bytes,
+          filename: filename,
           fileField: 'image',
           fields: fields,
         );
       }
-
-      // Cleanup local photo file
-      try {
-        if (await imageFile.exists()) await imageFile.delete();
-      } catch (_) {}
 
       String? timeDisplay;
       if (result is Map) {
@@ -488,7 +527,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 1. Live Camera Preview
+          // 1. Live Camera Preview or Web Fallback
           if (isCameraReady)
             SizedBox.expand(
               child: FittedBox(
@@ -501,8 +540,80 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
               ),
             )
           else
-            const Center(
-              child: CircularProgressIndicator(color: RequestColors.primary),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt_outlined,
+                        size: 40,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      _statusText.isNotEmpty
+                          ? _statusText
+                          : 'Camera loading or permission required',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _action == 'register'
+                          ? 'Please ensure your camera is connected and permitted to enroll your face biometric.'
+                          : 'You can capture using your webcam or upload a clear photo of your face directly from your computer.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (_action != 'register') ...[
+                      ElevatedButton.icon(
+                        onPressed: _pickAndUploadPhoto,
+                        icon: const Icon(Icons.upload_file_rounded),
+                        label: Text('Upload Photo for ${_getActionTitle()}'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: RequestColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    TextButton.icon(
+                      onPressed: _initCamera,
+                      icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white70),
+                      label: const Text(
+                        'Retry Camera Connection',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
 
           // 2. Face Scanner Overlay
@@ -631,37 +742,83 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
               ),
             ),
 
-          // 5. Capture Shutter Button
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 40),
-              child: GestureDetector(
-                onTap: _captureAndProcess,
-                child: Container(
-                  width: 78,
-                  height: 78,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    color: _isProcessing
-                        ? Colors.grey.withValues(alpha: 0.5)
-                        : Colors.white.withValues(alpha: 0.25),
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _isProcessing ? Colors.grey : Colors.white,
+          // 5. Bottom Controls (Camera shutter + Upload photo option)
+          if (isCameraReady)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 36),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Upload photo button option (only for check-in/out, not register)
+                    if (_action != 'register') ...[
+                      TextButton.icon(
+                        onPressed: _pickAndUploadPhoto,
+                        icon: const Icon(
+                          Icons.upload_file_rounded,
+                          color: Colors.white,
+                          size: 17,
+                        ),
+                        label: const Text(
+                          'Upload Photo Instead',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.black54,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: const BorderSide(color: Colors.white30),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    // Shutter button
+                    GestureDetector(
+                      onTap: _captureAndProcess,
+                      child: Container(
+                        width: 76,
+                        height: 76,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          color: _isProcessing
+                              ? Colors.grey.withValues(alpha: 0.5)
+                              : Colors.white.withValues(alpha: 0.25),
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: 58,
+                            height: 58,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _isProcessing ? Colors.grey : Colors.white,
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.camera_alt_rounded,
+                                color: RequestColors.primary,
+                                size: 26,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

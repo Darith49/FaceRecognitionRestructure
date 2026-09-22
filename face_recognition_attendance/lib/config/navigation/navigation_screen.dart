@@ -1,8 +1,5 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
-import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
-import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
-import 'package:face_recognition_attendance/features/create_hub/view/create_hub_screen.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/home_screen.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/view/myteam_screen.dart';
 import 'package:face_recognition_attendance/features/profile_screen/view/profile_screen.dart';
@@ -18,34 +15,26 @@ class NavigationScreen extends GetView<NavigationController> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final loginController = Get.isRegistered<LoginController>()
-        ? Get.find<LoginController>()
-        : null;
 
     return GlassScaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.canvasParchment,
       extendBody: true,
       edgeFade: true,
       body: Obx(() {
-        final role = loginController?.currentuser.value?.role;
-        final isManagerOrLeader = role == UserRole.manager || role == UserRole.leader;
-
         return IndexedStack(
           index: controller.currentIndex.value,
-          children: [
-            const HomeScreen(),
-            if (isManagerOrLeader) const CreateHubScreen() else const ScheduleScreen(),
-            const MyteamScreen(),
-            const RequestScreen(),
-            const ProfileScreen(),
+          children: const [
+            HomeScreen(),
+            ScheduleScreen(),
+            MyteamScreen(),
+            RequestScreen(),
+            ProfileScreen(),
           ],
         );
       }),
       bottomBar: Obx(() {
         final currentIndex = controller.currentIndex.value;
         final isProfileSelected = currentIndex == 4;
-        final role = loginController?.currentuser.value?.role;
-        final isManagerOrLeader = role == UserRole.manager || role == UserRole.leader;
 
         return Material(
           type: MaterialType.transparency,
@@ -64,18 +53,11 @@ class NavigationScreen extends GetView<NavigationController> {
                   activeIcon: const Icon(Icons.home_rounded),
                   label: 'nav_home'.tr,
                 ),
-                if (isManagerOrLeader)
-                  GlassTab(
-                    icon: const Icon(Icons.add_circle_outline_rounded),
-                    activeIcon: const Icon(Icons.add_circle_rounded),
-                    label: 'nav_create'.tr,
-                  )
-                else
-                  GlassTab(
-                    icon: const Icon(Icons.calendar_month_outlined),
-                    activeIcon: const Icon(Icons.calendar_month_rounded),
-                    label: 'nav_schedule'.tr,
-                  ),
+                GlassTab(
+                  icon: const Icon(Icons.calendar_month_outlined),
+                  activeIcon: const Icon(Icons.calendar_month_rounded),
+                  label: 'nav_schedule'.tr,
+                ),
                 GlassTab(
                   icon: const Icon(Icons.people_alt_outlined),
                   activeIcon: const Icon(Icons.people_alt_rounded),

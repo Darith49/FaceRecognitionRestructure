@@ -98,9 +98,13 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
   @override
   Widget build(BuildContext context) {
     final allowedRoles = PermissionService.to.getCreateableRoles();
+    if (allowedRoles.isNotEmpty && !allowedRoles.contains(_selectedRole)) {
+      _selectedRole = allowedRoles.first;
+    }
+    final isSingleRole = allowedRoles.length == 1;
 
     return RequestScaffold(
-      title: 'Create User',
+      title: isSingleRole ? 'Invite Employee' : 'Create User',
       showBackButton: true,
       body: Form(
         key: _formKey,
@@ -198,20 +202,47 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: RequestColors.textPrimary),
             ),
             const SizedBox(height: 8),
-            RequestDropdownField<UserRole>(
-              value: _selectedRole,
-              fillColor: RequestColors.softSurface,
-              icon: Icons.keyboard_arrow_down_rounded,
-              items: allowedRoles
-                  .map((r) => DropdownMenuItem<UserRole>(
-                        value: r,
-                        child: Text(r.name.toUpperCase()),
-                      ))
-                  .toList(),
-              onChanged: (role) {
-                setState(() => _selectedRole = role);
-              },
-            ),
+            isSingleRole
+                ? Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: RequestColors.softSurface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedRole.name.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: RequestColors.textPrimary,
+                          ),
+                        ),
+                        const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 18,
+                          color: RequestColors.textSecondary,
+                        ),
+                      ],
+                    ),
+                  )
+                : RequestDropdownField<UserRole>(
+                    value: _selectedRole,
+                    fillColor: RequestColors.softSurface,
+                    icon: Icons.keyboard_arrow_down_rounded,
+                    items: allowedRoles
+                        .map((r) => DropdownMenuItem<UserRole>(
+                              value: r,
+                              child: Text(r.name.toUpperCase()),
+                            ))
+                        .toList(),
+                    onChanged: (role) {
+                      setState(() => _selectedRole = role);
+                    },
+                  ),
             const SizedBox(height: 16),
 
             // Branch Dropdown

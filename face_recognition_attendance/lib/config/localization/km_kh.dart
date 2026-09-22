@@ -17,6 +17,7 @@ const Map<String, String> kmKH = {
   // ============== NAVIGATION ==============
   'nav_home': 'ទំព័រដើម',
   'nav_schedule': 'កាលវិភាគ',
+  'nav_create': 'បង្កើត',
   'nav_myteam': 'ក្រុមខ្ញុំ',
   'nav_request': 'សំណើ',
   'nav_profile': 'គណនី',

@@ -17,6 +17,7 @@ const Map<String, String> enUS = {
   // ============== NAVIGATION ==============
   'nav_home': 'Home',
   'nav_schedule': 'Schedule',
+  'nav_create': 'Create',
   'nav_myteam': 'MyTeam',
   'nav_request': 'Request',
   'nav_profile': 'Profile',

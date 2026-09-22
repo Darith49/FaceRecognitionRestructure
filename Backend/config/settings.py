@@ -41,6 +41,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.trycloudflare.com',
+]
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [

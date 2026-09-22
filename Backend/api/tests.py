@@ -155,3 +155,35 @@ class ModelAndServiceTests(TestCase):
         self.assertTrue(Employee.objects.filter(email="ceo@company.com").exists())
         self.assertTrue(Employee.objects.filter(employee_id="CEO-001").exists())
 
+    def test_modular_domain_structure_and_urls(self):
+        from django.urls import reverse
+        from api.branch.models import Branch as BranchMod
+        from api.department.models import Department as DeptMod
+        from api.employee.models import Employee as EmpMod
+        from api.face.models import FaceRegistration as FaceMod
+        from api.attendance.models import Attendance as AttMod
+
+        # Models are identical
+        self.assertIs(BranchMod, Branch)
+        self.assertIs(DeptMod, Department)
+        self.assertIs(EmpMod, Employee)
+        self.assertIs(FaceMod, FaceRegistration)
+        self.assertIs(AttMod, Attendance)
+
+        # URL routing matches original API endpoints exactly
+        self.assertEqual(reverse('branch_list_create'), '/api/v1/branches/')
+        self.assertEqual(reverse('branch_detail', args=[1]), '/api/v1/branches/1/')
+        self.assertEqual(reverse('department_list_create'), '/api/v1/departments/')
+        self.assertEqual(reverse('department_detail', args=[1]), '/api/v1/departments/1/')
+        self.assertEqual(reverse('employee_list_create'), '/api/v1/employees/')
+        self.assertEqual(reverse('employee_me'), '/api/v1/employees/me/')
+        self.assertEqual(reverse('employee_detail', args=[1]), '/api/v1/employees/1/')
+        self.assertEqual(reverse('employee_resend_invitation', args=[1]), '/api/v1/employees/1/resend-invitation/')
+        self.assertEqual(reverse('register_face'), '/api/v1/face/register/')
+        self.assertEqual(reverse('face_status'), '/api/v1/face/status/')
+        self.assertEqual(reverse('check_in'), '/api/v1/attendance/check-in/')
+        self.assertEqual(reverse('check_out'), '/api/v1/attendance/check-out/')
+        self.assertEqual(reverse('attendance_status'), '/api/v1/attendance/status/')
+        self.assertEqual(reverse('attendance_records'), '/api/v1/attendance/records/')
+
+

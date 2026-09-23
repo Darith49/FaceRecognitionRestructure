@@ -52,4 +52,7 @@ abstract class AppRoutes {
 
   // Notifications
   static const String notifications = "/notifications";
+
+  // CEO Control Panel
+  static const String ceoPanel = "/ceo-panel";
 }

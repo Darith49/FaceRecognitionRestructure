@@ -319,7 +319,7 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.auto_awesome_rounded,
                     gradient: const [Color(0xFF7C3AED), Color(0xFF9333EA)],
                     badgeText: 'ACTIVE',
-                    onTap: () => Get.snackbar('CEO Action', 'CEO Panel'),
+                    onTap: () => Get.toNamed(AppRoutes.ceoPanel),
                   ),
                 ),
               ),

@@ -654,6 +654,10 @@ class LocalDatabaseService {
     return updated;
   }
 
+  Map<String, dynamic>? updateLeaveStatus(dynamic id, String status) {
+    return updateLeave(id, {'status': status});
+  }
+
   bool deleteLeave(dynamic id) {
     final list = getLeaves();
     final countBefore = list.length;

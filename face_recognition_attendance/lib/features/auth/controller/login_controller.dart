@@ -46,7 +46,12 @@ class LoginController extends GetxController {
       final api = ApiService();
       final res = await api.get('/face/status/');
       if (res is Map && res.containsKey('registered')) {
-        hasFaceRegistered.value = res['registered'] == true;
+        final registered = res['registered'] == true;
+        hasFaceRegistered.value = registered;
+        if (currentuser.value != null && currentuser.value!.hasFaceRegistered != registered) {
+          currentuser.value = currentuser.value!.copyWith(hasFaceRegistered: registered);
+          await SecureStorageService().updateCachedUserData(currentuser.value!.toJson());
+        }
       }
     } catch (_) {
       // Graceful fallback
@@ -66,6 +71,7 @@ class LoginController extends GetxController {
       final user = await _firebaseService.getUserByUid(firebaseUser.uid);
       if (user != null) {
         currentuser.value = user;
+        hasFaceRegistered.value = user.hasFaceRegistered;
         if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
           _syncProfileToBackend(user.profileUrl!);
         }
@@ -90,6 +96,7 @@ class LoginController extends GetxController {
         try {
           final user = UserModel.fromJson(cached);
           currentuser.value = user;
+          hasFaceRegistered.value = user.hasFaceRegistered;
           await checkFaceStatus();
         } catch (_) {}
       }
@@ -117,6 +124,7 @@ class LoginController extends GetxController {
 
       if (user != null) {
         currentuser.value = user; // 1. Save user state
+        hasFaceRegistered.value = user.hasFaceRegistered;
         if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
           _syncProfileToBackend(user.profileUrl!);
         }

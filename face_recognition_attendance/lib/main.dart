@@ -16,8 +16,10 @@ Future<void> main() async {
   // Initialize Liquid Glass Engine (pre-warms fragment shaders)
   await LiquidGlassWidgets.initialize();
 
-  // Initialize GetStorage
+  // Initialize GetStorage with all required containers
   await GetStorage.init();
+  await GetStorage.init('face_attendance_local_db');
+  await GetStorage.init('face_attendance_auth');
 
   // Initialize Core Services
   Get.put<LanguageService>(LanguageService(), permanent: true);
@@ -45,6 +47,7 @@ Future<void> main() async {
     if (cachedData != null) {
       try {
         initialUser = UserModel.fromJson(cachedData);
+        LocalAuthService().setCurrentUserFromModel(initialUser);
       } catch (_) {}
     }
   }

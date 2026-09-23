@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:face_recognition_attendance/core/services/face_recognition_engine.dart';
 import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
+import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/face/model/person_model.dart';
+import 'package:get/get.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -78,9 +82,15 @@ class ApiService {
       final user = _auth.getCurrentUser();
       if (user == null) return {'registered': false};
       final emp = _db.getEmployeeByUid(user.uid) ?? _db.getEmployeeByEmail(user.email);
-      final enrolled = _db.getPersons().any(
-        (p) => p.id == user.uid || (emp != null && p.employeeId == emp['employee_id']) || p.employeeId == user.uid,
-      );
+      final empCode = emp?['employee_id']?.toString() ?? '';
+      final enrolled = (emp != null && emp['has_face_registered'] == true) ||
+          _db.getPersons().any(
+            (p) =>
+                p.id == user.uid ||
+                (empCode.isNotEmpty && p.employeeId == empCode) ||
+                p.employeeId == user.uid ||
+                (emp != null && p.id == emp['firebase_uid']),
+          );
       return {'registered': enrolled};
     }
 
@@ -326,6 +336,21 @@ class ApiService {
 
       _db.savePerson(person);
 
+      // Keep LoginController & session in sync immediately with the saved face
+      if (Get.isRegistered<LoginController>()) {
+        final loginCtrl = Get.find<LoginController>();
+        loginCtrl.hasFaceRegistered.value = true;
+        if (loginCtrl.currentuser.value != null) {
+          final updated = loginCtrl.currentuser.value!.copyWith(
+            hasFaceRegistered: true,
+            faceTemplates: template,
+            faceJpg: base64Encode(bytes),
+          );
+          loginCtrl.currentuser.value = updated;
+          SecureStorageService().updateCachedUserData(updated.toJson());
+        }
+      }
+
       return {
         'status': 'success',
         'message': 'Face biometric profile registered successfully for $personName.',
@@ -350,10 +375,30 @@ class ApiService {
       final enrolledPersons = _db.getPersons();
       Person? enrolledPerson;
       for (final p in enrolledPersons) {
-        if (p.id == user.uid || (empCode.isNotEmpty && p.employeeId == empCode) || p.employeeId == user.uid) {
+        if (p.id == user.uid ||
+            (empCode.isNotEmpty && p.employeeId == empCode) ||
+            p.employeeId == user.uid ||
+            p.id == emp['firebase_uid']) {
           enrolledPerson = p;
           break;
         }
+      }
+
+      // Self-healing fallback: If not in cache but saved in employee account
+      if (enrolledPerson == null &&
+          emp['face_templates'] is List &&
+          (emp['face_templates'] as List).isNotEmpty) {
+        enrolledPerson = Person(
+          id: user.uid,
+          name: empName,
+          employeeId: empCode.isNotEmpty ? empCode : user.uid,
+          faceJpg: emp['face_jpg'] != null ? base64Decode(emp['face_jpg']) : Uint8List(0),
+          templates: (emp['face_templates'] as List).map((e) => (e as num).toDouble()).toList(),
+          enrolledAt: emp['face_registered_at'] != null
+              ? (DateTime.tryParse(emp['face_registered_at']) ?? DateTime.now())
+              : DateTime.now(),
+        );
+        _db.savePerson(enrolledPerson);
       }
 
       if (enrolledPerson == null) {
@@ -419,10 +464,30 @@ class ApiService {
       final enrolledPersons = _db.getPersons();
       Person? enrolledPerson;
       for (final p in enrolledPersons) {
-        if (p.id == user.uid || (empCode.isNotEmpty && p.employeeId == empCode) || p.employeeId == user.uid) {
+        if (p.id == user.uid ||
+            (empCode.isNotEmpty && p.employeeId == empCode) ||
+            p.employeeId == user.uid ||
+            p.id == emp['firebase_uid']) {
           enrolledPerson = p;
           break;
         }
+      }
+
+      // Self-healing fallback: If not in cache but saved in employee account
+      if (enrolledPerson == null &&
+          emp['face_templates'] is List &&
+          (emp['face_templates'] as List).isNotEmpty) {
+        enrolledPerson = Person(
+          id: user.uid,
+          name: empName,
+          employeeId: empCode.isNotEmpty ? empCode : user.uid,
+          faceJpg: emp['face_jpg'] != null ? base64Decode(emp['face_jpg']) : Uint8List(0),
+          templates: (emp['face_templates'] as List).map((e) => (e as num).toDouble()).toList(),
+          enrolledAt: emp['face_registered_at'] != null
+              ? (DateTime.tryParse(emp['face_registered_at']) ?? DateTime.now())
+              : DateTime.now(),
+        );
+        _db.savePerson(enrolledPerson);
       }
 
       if (enrolledPerson == null) {

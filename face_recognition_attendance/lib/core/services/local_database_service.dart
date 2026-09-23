@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:face_recognition_attendance/features/face/model/person_model.dart';
 import 'package:get_storage/get_storage.dart';
@@ -311,11 +312,13 @@ class LocalDatabaseService {
         employees[idx]['role'] = demo['role'];
         employees[idx]['fullname'] = demo['fullname'];
         employees[idx]['employee_id'] = demo['employee_id'];
+        employees[idx]['firebase_uid'] ??= demo['firebase_uid'];
         employees[idx]['branch'] ??= demo['branch'];
         employees[idx]['branch_name'] ??= demo['branch_name'];
         employees[idx]['department'] ??= demo['department'];
         employees[idx]['department_name'] ??= demo['department_name'];
         employees[idx]['status'] = 'active';
+        // Biometrics (has_face_registered, face_templates, face_jpg) are preserved
       } else {
         int nextId = 1;
         if (employees.isNotEmpty) {
@@ -331,6 +334,7 @@ class LocalDatabaseService {
           'created_by': 'system',
           'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
           'profile_picture': null,
+          'has_face_registered': false,
           ...demo,
         });
       }
@@ -345,7 +349,57 @@ class LocalDatabaseService {
   List<Person> getPersons() {
     if (_cachedPersons != null) return _cachedPersons!;
     final raw = _box.read<List>('persons') ?? [];
-    _cachedPersons = raw.map((e) => Person.fromMap(Map<String, dynamic>.from(e))).toList();
+    final persons = raw.map((e) => Person.fromMap(Map<String, dynamic>.from(e))).toList();
+
+    // Two-way self-healing auto-recovery between 'persons' and 'employees'
+    final rawEmp = _box.read<List>('employees') ?? [];
+    final empList = List<Map<String, dynamic>>.from(rawEmp.map((e) => Map<String, dynamic>.from(e as Map)));
+    bool updatedPersons = false;
+    bool updatedEmployees = false;
+
+    for (var i = 0; i < empList.length; i++) {
+      final emp = empList[i];
+      final empCode = emp['employee_id']?.toString() ?? '';
+      final empUid = emp['firebase_uid']?.toString() ?? emp['id']?.toString() ?? '';
+
+      final personIdx = persons.indexWhere((p) =>
+          p.id == empUid ||
+          (empCode.isNotEmpty && p.employeeId == empCode) ||
+          p.employeeId == empUid);
+
+      if (personIdx >= 0) {
+        if (emp['has_face_registered'] != true) {
+          emp['has_face_registered'] = true;
+          emp['face_templates'] ??= persons[personIdx].templates;
+          emp['face_jpg'] ??= base64Encode(persons[personIdx].faceJpg);
+          emp['face_registered_at'] ??= persons[personIdx].enrolledAt.toIso8601String();
+          empList[i] = emp;
+          updatedEmployees = true;
+        }
+      } else if (emp['has_face_registered'] == true &&
+          emp['face_templates'] is List &&
+          (emp['face_templates'] as List).isNotEmpty) {
+        final restored = Person.fromMap({
+          'id': empUid,
+          'name': emp['fullname'] ?? 'User',
+          'employeeId': empCode.isNotEmpty ? empCode : empUid,
+          'faceJpg': emp['face_jpg'] ?? '',
+          'templates': emp['face_templates'],
+          'enrolledAt': emp['face_registered_at'] ?? DateTime.now().toIso8601String(),
+        });
+        persons.add(restored);
+        updatedPersons = true;
+      }
+    }
+
+    if (updatedPersons) {
+      _box.write('persons', persons.map((p) => p.toMap()).toList());
+    }
+    if (updatedEmployees) {
+      _box.write('employees', empList);
+    }
+
+    _cachedPersons = persons;
     return _cachedPersons!;
   }
 
@@ -359,6 +413,22 @@ class LocalDatabaseService {
       list.add(person.toMap());
     }
     _box.write('persons', list);
+
+    // Save directly to the account in 'employees' storage
+    final rawEmp = _box.read<List>('employees') ?? [];
+    final empList = List<Map<String, dynamic>>.from(rawEmp.map((e) => Map<String, dynamic>.from(e as Map)));
+    final empIdx = empList.indexWhere((e) =>
+        e['id']?.toString() == person.id ||
+        e['firebase_uid']?.toString() == person.id ||
+        e['employee_id']?.toString() == person.employeeId ||
+        e['employee_id']?.toString() == person.id);
+    if (empIdx >= 0) {
+      empList[empIdx]['has_face_registered'] = true;
+      empList[empIdx]['face_templates'] = person.templates;
+      empList[empIdx]['face_jpg'] = base64Encode(person.faceJpg);
+      empList[empIdx]['face_registered_at'] = person.enrolledAt.toIso8601String();
+      _box.write('employees', empList);
+    }
   }
 
   void deletePerson(String id) {
@@ -366,12 +436,42 @@ class LocalDatabaseService {
     final list = _box.read<List>('persons') ?? [];
     list.removeWhere((p) => p['id'] == id || p['employeeId'] == id);
     _box.write('persons', list);
+
+    // Clear face biometrics from the employee account
+    final rawEmp = _box.read<List>('employees') ?? [];
+    final empList = List<Map<String, dynamic>>.from(rawEmp.map((e) => Map<String, dynamic>.from(e as Map)));
+    final empIdx = empList.indexWhere((e) =>
+        e['id']?.toString() == id ||
+        e['firebase_uid']?.toString() == id ||
+        e['employee_id']?.toString() == id);
+    if (empIdx >= 0) {
+      empList[empIdx]['has_face_registered'] = false;
+      empList[empIdx]['face_templates'] = null;
+      empList[empIdx]['face_jpg'] = null;
+      empList[empIdx]['face_registered_at'] = null;
+      _box.write('employees', empList);
+    }
   }
 
   // ==================== EMPLOYEES ====================
   List<Map<String, dynamic>> getEmployees() {
     final raw = _box.read<List>('employees') ?? [];
-    return raw.map((e) => Map<String, dynamic>.from(e)).toList();
+    final list = raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    final personList = _cachedPersons ?? (
+      (_box.read<List>('persons') ?? []).map((e) => Person.fromMap(Map<String, dynamic>.from(e as Map))).toList()
+    );
+
+    for (final emp in list) {
+      final empCode = emp['employee_id']?.toString() ?? '';
+      final empUid = emp['firebase_uid']?.toString() ?? emp['id']?.toString() ?? '';
+      final hasFace = emp['has_face_registered'] == true ||
+          personList.any((p) =>
+              p.id == empUid ||
+              (empCode.isNotEmpty && p.employeeId == empCode) ||
+              p.employeeId == empUid);
+      emp['has_face_registered'] = hasFace;
+    }
+    return list;
   }
 
   Map<String, dynamic>? getEmployeeByEmail(String email) {

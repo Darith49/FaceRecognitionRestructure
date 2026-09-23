@@ -118,6 +118,15 @@ class LocalAuthService {
     return null;
   }
 
+  void setCurrentUserFromModel(UserModel user) {
+    _currentUser = LocalUser(
+      uid: user.uid,
+      email: user.email,
+      displayName: user.fullname,
+    );
+    _authBox.write('current_user_uid', user.uid);
+  }
+
   UserModel _createAndCacheUser(Map<String, dynamic> emp) {
     final uid = emp['firebase_uid'] ?? emp['id'].toString();
     _currentUser = LocalUser(
@@ -126,6 +135,19 @@ class LocalAuthService {
       displayName: emp['fullname'],
     );
     _authBox.write('current_user_uid', uid);
+
+    final bool hasFace = emp['has_face_registered'] == true ||
+        _db.getPersons().any((p) =>
+            p.id == uid ||
+            p.employeeId == emp['employee_id'] ||
+            p.employeeId == uid);
+
+    List<double>? templates;
+    if (emp['face_templates'] is List) {
+      templates = (emp['face_templates'] as List)
+          .map((e) => (e as num).toDouble())
+          .toList();
+    }
 
     return UserModel(
       uid: uid,
@@ -141,6 +163,9 @@ class LocalAuthService {
           ? DateTime.tryParse(emp['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
       profileUrl: emp['profile_picture'],
+      hasFaceRegistered: hasFace,
+      faceTemplates: templates,
+      faceJpg: emp['face_jpg']?.toString(),
     );
   }
 

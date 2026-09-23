@@ -15,8 +15,11 @@ class InitialBinding extends Bindings {
   void dependencies() {
     Get.put<SecureStorageService>(SecureStorageService(), permanent: true);
     final loginController = Get.put<LoginController>(LoginController(), permanent: true);
-    if (initialUser != null) {
-      loginController.currentuser.value = initialUser;
+    final user = initialUser;
+    if (user != null) {
+      loginController.currentuser.value = user;
+      loginController.hasFaceRegistered.value = user.hasFaceRegistered;
+      loginController.checkFaceStatus();
     }
     Get.put<PermissionService>(PermissionService(), permanent: true);
     Get.lazyPut<BranchController>(() => BranchController(), fenix: true);

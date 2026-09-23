@@ -92,6 +92,11 @@ class SecureStorageService {
     }
   }
 
+  /// Update cached user data map directly
+  Future<void> updateCachedUserData(Map<String, dynamic> userData) async {
+    await _storage.write(key: _keyUserData, value: jsonEncode(userData));
+  }
+
   /// Check if user has an active saved session
   Future<bool> hasValidSession() async {
     final remember = await getRememberMe();

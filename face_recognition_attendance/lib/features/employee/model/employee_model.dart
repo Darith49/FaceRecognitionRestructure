@@ -20,6 +20,7 @@ class EmployeeModel {
   final String createdBy;
   final DateTime? createdAt;
   final String? profileUrl;
+  final bool hasFaceRegistered;
 
   EmployeeModel({
     required this.id,
@@ -41,6 +42,7 @@ class EmployeeModel {
     this.createdBy = '',
     this.createdAt,
     this.profileUrl,
+    this.hasFaceRegistered = false,
   });
 
   factory EmployeeModel.fromJson(Map<String, dynamic> json) {
@@ -72,6 +74,8 @@ class EmployeeModel {
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
       profileUrl: json['profile_url']?.toString() ?? json['profileUrl']?.toString(),
+      hasFaceRegistered: json['has_face_registered'] == true ||
+          json['hasFaceRegistered'] == true,
     );
   }
 
@@ -91,6 +95,7 @@ class EmployeeModel {
       'section2_start': section2Start,
       'section2_end': section2End,
       'work_days': workDays,
+      'has_face_registered': hasFaceRegistered,
     };
   }
 }

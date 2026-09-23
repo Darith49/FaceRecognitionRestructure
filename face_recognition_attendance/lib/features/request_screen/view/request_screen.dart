@@ -247,44 +247,42 @@ class RequestScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // ─── CLOCK ATTENDANCE (Inline) ───────────────────────────────────
-              Obx(() {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 20, right: 20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'CLOCK ATTENDANCE',
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20, right: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'CLOCK ATTENDANCE',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: RequestColors.textSecondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Get.toNamed(AppRoutes.clock),
+                          child: const Text(
+                            'Full View',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: RequestColors.textSecondary,
-                              letterSpacing: 0.5,
+                              color: RequestColors.primary,
                             ),
                           ),
-                          GestureDetector(
-                            onTap: () => Get.toNamed(AppRoutes.clock),
-                            child: const Text(
-                              'Full View',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: RequestColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                    _RequestClockAttendanceCard(homeCtrl: homeCtrl),
-                    const SizedBox(height: 20),
-                  ],
-                );
-              }),
+                  ),
+                  const SizedBox(height: 10),
+                  _RequestClockAttendanceCard(homeCtrl: homeCtrl),
+                  const SizedBox(height: 20),
+                ],
+              ),
 
               // MANAGEMENT & SERVICES Section
               const Padding(

@@ -843,6 +843,10 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
         bg = Colors.purple.shade50;
         fg = Colors.purple.shade700;
         break;
+      case 'admin':
+        bg = Colors.indigo.shade50;
+        fg = Colors.indigo.shade700;
+        break;
       case 'manager':
         bg = Colors.blue.shade50;
         fg = Colors.blue.shade700;

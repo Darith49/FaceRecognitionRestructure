@@ -47,8 +47,26 @@ class ApiService {
 
     // 3. Employees / My Team
     if (clean.contains('/employees/my-team/')) {
-      final list = _db.getEmployees();
-      return {'results': list, 'count': list.length};
+      final user = _auth.getCurrentUser();
+      final emp = user != null
+          ? (_db.getEmployeeByUid(user.uid) ?? _db.getEmployeeByEmail(user.email))
+          : null;
+      final role = (emp?['role'] ?? 'employee').toString().toLowerCase();
+      final allEmployees = _db.getEmployees();
+      return {
+        'role': role,
+        'user': emp,
+        'pinned': allEmployees.take(2).toList(),
+        'tabs': [
+          {
+            'key': 'all',
+            'title': 'All Members',
+            'badge': allEmployees.length.toString(),
+            'is_branch_list': false,
+            'items': allEmployees,
+          }
+        ],
+      };
     }
     if (clean.contains('/employees/')) {
       final list = _db.getEmployees();

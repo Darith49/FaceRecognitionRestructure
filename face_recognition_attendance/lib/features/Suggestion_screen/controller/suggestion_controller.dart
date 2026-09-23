@@ -58,7 +58,7 @@ class SuggestionController extends GetxController {
   bool get canReview {
     final role = _signedInUser?.role;
     return role != null &&
-        (role == UserRole.ceo || role == UserRole.manager);
+        (role == UserRole.ceo || role == UserRole.admin || role == UserRole.manager);
   }
 
   Future<bool> submit(

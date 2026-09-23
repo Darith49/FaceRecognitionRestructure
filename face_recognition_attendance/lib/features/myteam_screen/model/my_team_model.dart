@@ -74,7 +74,7 @@ class MyTeamMember {
     );
   }
 
-  bool get isCeo => role == 'ceo';
+  bool get isCeo => role == 'ceo' || role == 'admin';
   bool get isManager => role == 'manager';
   bool get isLeader => role == 'leader';
   bool get isEmployee => role == 'employee';
@@ -92,6 +92,8 @@ class MyTeamMember {
     switch (role) {
       case 'ceo':
         return 'CEO';
+      case 'admin':
+        return 'Admin';
       case 'manager':
         return 'Manager';
       case 'leader':
@@ -105,6 +107,7 @@ class MyTeamMember {
   Color get roleColor {
     switch (role) {
       case 'ceo':
+      case 'admin':
         return RequestColors.primary;
       case 'manager':
         return RequestColors.primary;

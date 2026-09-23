@@ -28,6 +28,7 @@ class RequestScreenController extends GetxController {
       final user = Get.find<LoginController>().currentuser.value;
       if (user != null) {
         canApprove.value = user.role == UserRole.ceo ||
+            user.role == UserRole.admin ||
             user.role == UserRole.manager ||
             user.role == UserRole.leader;
       }

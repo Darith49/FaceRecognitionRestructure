@@ -52,20 +52,51 @@ class LocalAuthService {
 
   LocalUser? getCurrentUser() => _currentUser;
 
+  static const Map<String, Map<String, String>> _demoProfiles = {
+    'sonarseang@gmail.com': {'role': 'ceo', 'name': 'Sonar Seang', 'empId': 'EMP-001'},
+    'admin@gmail.com': {'role': 'admin', 'name': 'System Admin', 'empId': 'EMP-002'},
+    'manager@gmail.com': {'role': 'manager', 'name': 'Sarah Manager', 'empId': 'EMP-003'},
+    'leader@gmail.com': {'role': 'leader', 'name': 'David Team Leader', 'empId': 'EMP-004'},
+    'employee@gmail.com': {'role': 'employee', 'name': 'Alex Developer', 'empId': 'EMP-005'},
+  };
+
   /// Authenticate with email & password locally
   Future<UserModel?> login({
     required String email,
     required String password,
   }) async {
     final cleanEmail = email.trim().toLowerCase();
-    final emp = _db.getEmployeeByEmail(cleanEmail);
+    var emp = _db.getEmployeeByEmail(cleanEmail);
+
+    if (_demoProfiles.containsKey(cleanEmail)) {
+      final demo = _demoProfiles[cleanEmail]!;
+      if (emp == null) {
+        emp = _db.saveEmployee({
+          'fullname': demo['name']!,
+          'email': cleanEmail,
+          'role': demo['role']!,
+          'employee_id': demo['empId']!,
+          'branch': 1,
+          'branch_name': 'Phnom Penh Headquarters',
+          'department': cleanEmail == 'manager@gmail.com' ? 2 : 1,
+          'department_name': cleanEmail == 'manager@gmail.com' ? 'Human Resources' : 'Software Engineering',
+          'status': 'active',
+        });
+      } else if (emp['role'] != demo['role'] || emp['fullname'] != demo['name']) {
+        emp = _db.updateEmployee(emp['id'], {
+          'role': demo['role']!,
+          'fullname': demo['name']!,
+        }) ?? emp;
+      }
+      return _createAndCacheUser(emp);
+    }
 
     if (emp == null) {
       // If user not in database, create on the fly as an active employee
       final newEmp = _db.saveEmployee({
         'fullname': cleanEmail.split('@').first.capitalizeFirst,
         'email': cleanEmail,
-        'role': 'Employee',
+        'role': 'employee',
         'branch': 1,
         'branch_name': 'Phnom Penh Headquarters',
         'department': 1,

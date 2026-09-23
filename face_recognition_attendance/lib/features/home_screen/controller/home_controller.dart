@@ -164,7 +164,7 @@ class HomeController extends GetxController {
   }
 
   UserModel? get currentUser => _authController.currentuser.value;
-  bool get isCeo => currentUser?.role == UserRole.ceo;
+  bool get isCeo => currentUser?.role == UserRole.ceo || currentUser?.role == UserRole.admin;
   bool get hasFaceRegistered => _authController.hasFaceRegistered.value;
 
   BranchController get branchController => Get.isRegistered<BranchController>()

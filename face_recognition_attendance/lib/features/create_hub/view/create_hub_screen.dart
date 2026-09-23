@@ -15,7 +15,7 @@ class CreateHubScreen extends StatelessWidget {
         : null;
 
     final role = loginController?.currentuser.value?.role ?? UserRole.employee;
-    final isCeo = role == UserRole.ceo;
+    final isCeo = role == UserRole.ceo || role == UserRole.admin;
     final isManager = role == UserRole.manager;
     final isLeader = role == UserRole.leader;
 

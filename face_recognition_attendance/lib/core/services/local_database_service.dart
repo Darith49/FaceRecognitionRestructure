@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:face_recognition_attendance/features/face/model/person_model.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -18,6 +19,7 @@ class LocalDatabaseService {
     _box = GetStorage('face_attendance_local_db');
     await _box.initStorage;
     _seedDefaultDataIfEmpty();
+    _syncDemoAccounts();
     _isInitialized = true;
   }
 
@@ -77,9 +79,9 @@ class LocalDatabaseService {
           'id': 1,
           'firebase_uid': 'local_uid_ceo_1',
           'employee_id': 'EMP-001',
-          'fullname': 'Darith Admin',
-          'email': 'ceo@company.com',
-          'role': 'CEO',
+          'fullname': 'Sonar Seang',
+          'email': 'sonarseang@gmail.com',
+          'role': 'ceo',
           'branch': 1,
           'branch_name': 'Phnom Penh Headquarters',
           'department': 1,
@@ -96,11 +98,32 @@ class LocalDatabaseService {
         },
         {
           'id': 2,
-          'firebase_uid': 'local_uid_mgr_2',
+          'firebase_uid': 'local_uid_admin_2',
           'employee_id': 'EMP-002',
+          'fullname': 'System Admin',
+          'email': 'admin@gmail.com',
+          'role': 'admin',
+          'branch': 1,
+          'branch_name': 'Phnom Penh Headquarters',
+          'department': 1,
+          'department_name': 'Software Engineering',
+          'status': 'active',
+          'section1_start': '08:00:00',
+          'section1_end': '12:00:00',
+          'section2_start': '13:00:00',
+          'section2_end': '17:00:00',
+          'work_days': 'mon,tue,wed,thu,fri',
+          'created_by': 'EMP-001',
+          'created_at': DateTime.now().subtract(const Duration(days: 75)).toIso8601String(),
+          'profile_picture': null,
+        },
+        {
+          'id': 3,
+          'firebase_uid': 'local_uid_mgr_3',
+          'employee_id': 'EMP-003',
           'fullname': 'Sarah Manager',
-          'email': 'manager@company.com',
-          'role': 'Manager',
+          'email': 'manager@gmail.com',
+          'role': 'manager',
           'branch': 1,
           'branch_name': 'Phnom Penh Headquarters',
           'department': 2,
@@ -116,12 +139,33 @@ class LocalDatabaseService {
           'profile_picture': null,
         },
         {
-          'id': 3,
-          'firebase_uid': 'local_uid_emp_3',
-          'employee_id': 'EMP-003',
+          'id': 4,
+          'firebase_uid': 'local_uid_ldr_4',
+          'employee_id': 'EMP-004',
+          'fullname': 'David Team Leader',
+          'email': 'leader@gmail.com',
+          'role': 'leader',
+          'branch': 1,
+          'branch_name': 'Phnom Penh Headquarters',
+          'department': 1,
+          'department_name': 'Software Engineering',
+          'status': 'active',
+          'section1_start': '08:00:00',
+          'section1_end': '12:00:00',
+          'section2_start': '13:00:00',
+          'section2_end': '17:00:00',
+          'work_days': 'mon,tue,wed,thu,fri',
+          'created_by': 'EMP-001',
+          'created_at': DateTime.now().subtract(const Duration(days: 50)).toIso8601String(),
+          'profile_picture': null,
+        },
+        {
+          'id': 5,
+          'firebase_uid': 'local_uid_emp_5',
+          'employee_id': 'EMP-005',
           'fullname': 'Alex Developer',
-          'email': 'employee@company.com',
-          'role': 'Employee',
+          'email': 'employee@gmail.com',
+          'role': 'employee',
           'branch': 1,
           'branch_name': 'Phnom Penh Headquarters',
           'department': 1,
@@ -187,6 +231,112 @@ class LocalDatabaseService {
         }
       ]);
     }
+  }
+
+  /// Ensures demo accounts always exist and have their exact specified roles,
+  /// even if local storage already has existing/cached entries.
+  void _syncDemoAccounts() {
+    final demoDefs = [
+      {
+        'firebase_uid': 'local_uid_ceo_1',
+        'employee_id': 'EMP-001',
+        'fullname': 'Sonar Seang',
+        'email': 'sonarseang@gmail.com',
+        'role': 'ceo',
+        'branch': 1,
+        'branch_name': 'Phnom Penh Headquarters',
+        'department': 1,
+        'department_name': 'Software Engineering',
+        'status': 'active',
+      },
+      {
+        'firebase_uid': 'local_uid_admin_2',
+        'employee_id': 'EMP-002',
+        'fullname': 'System Admin',
+        'email': 'admin@gmail.com',
+        'role': 'admin',
+        'branch': 1,
+        'branch_name': 'Phnom Penh Headquarters',
+        'department': 1,
+        'department_name': 'Software Engineering',
+        'status': 'active',
+      },
+      {
+        'firebase_uid': 'local_uid_mgr_3',
+        'employee_id': 'EMP-003',
+        'fullname': 'Sarah Manager',
+        'email': 'manager@gmail.com',
+        'role': 'manager',
+        'branch': 1,
+        'branch_name': 'Phnom Penh Headquarters',
+        'department': 2,
+        'department_name': 'Human Resources',
+        'status': 'active',
+      },
+      {
+        'firebase_uid': 'local_uid_ldr_4',
+        'employee_id': 'EMP-004',
+        'fullname': 'David Team Leader',
+        'email': 'leader@gmail.com',
+        'role': 'leader',
+        'branch': 1,
+        'branch_name': 'Phnom Penh Headquarters',
+        'department': 1,
+        'department_name': 'Software Engineering',
+        'status': 'active',
+      },
+      {
+        'firebase_uid': 'local_uid_emp_5',
+        'employee_id': 'EMP-005',
+        'fullname': 'Alex Developer',
+        'email': 'employee@gmail.com',
+        'role': 'employee',
+        'branch': 1,
+        'branch_name': 'Phnom Penh Headquarters',
+        'department': 1,
+        'department_name': 'Software Engineering',
+        'status': 'active',
+      },
+    ];
+
+    final raw = _box.read<List>('employees');
+    final employees = raw != null
+        ? List<Map<String, dynamic>>.from(raw.map((e) => Map<String, dynamic>.from(e as Map)))
+        : <Map<String, dynamic>>[];
+
+    for (final demo in demoDefs) {
+      final idx = employees.indexWhere((e) =>
+          e['email']?.toString().toLowerCase().trim() == demo['email']?.toString().toLowerCase().trim());
+      if (idx != -1) {
+        employees[idx]['role'] = demo['role'];
+        employees[idx]['fullname'] = demo['fullname'];
+        employees[idx]['employee_id'] = demo['employee_id'];
+        employees[idx]['branch'] ??= demo['branch'];
+        employees[idx]['branch_name'] ??= demo['branch_name'];
+        employees[idx]['department'] ??= demo['department'];
+        employees[idx]['department_name'] ??= demo['department_name'];
+        employees[idx]['status'] = 'active';
+      } else {
+        int nextId = 1;
+        if (employees.isNotEmpty) {
+          nextId = employees.map((e) => (e['id'] as num?)?.toInt() ?? 0).reduce(max) + 1;
+        }
+        employees.add({
+          'id': nextId,
+          'section1_start': '08:00:00',
+          'section1_end': '12:00:00',
+          'section2_start': '13:00:00',
+          'section2_end': '17:00:00',
+          'work_days': 'mon,tue,wed,thu,fri',
+          'created_by': 'system',
+          'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+          'profile_picture': null,
+          ...demo,
+        });
+      }
+    }
+
+    _box.write('employees', employees);
   }
 
   // ==================== PERSONS (BIOMETRICS) ====================

@@ -165,7 +165,7 @@ class MyTeamController extends GetxController {
   // ---------------------------------------------------------------------------
 
   String get currentRole => teamData.value?.role ?? 'employee';
-  bool get isCeo => currentRole == 'ceo';
+  bool get isCeo => currentRole == 'ceo' || currentRole == 'admin';
   bool get isManager => currentRole == 'manager';
   bool get isLeader => currentRole == 'leader';
   bool get isEmployee => currentRole == 'employee';

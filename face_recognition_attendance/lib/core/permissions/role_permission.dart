@@ -22,6 +22,24 @@ class RolePermission {
       // Note: CEO does NOT check in
     },
 
+    UserRole.admin: {
+      AppPermission.accessCeoPanel,
+      AppPermission.accessManagerPanel,
+      AppPermission.accessLeaderPanel,
+      AppPermission.accessEmployeePanel,
+      // Organization Management
+      AppPermission.createBranch,
+      AppPermission.editBranch,
+      AppPermission.deleteBranch,
+      AppPermission.createDepartment,
+      AppPermission.editDepartment,
+      AppPermission.deleteDepartment,
+      AppPermission.createEmployee,
+      AppPermission.attendanceCheckIn,
+      AppPermission.attendanceCheckOut,
+      AppPermission.registerFace,
+    },
+
     UserRole.manager: {
       AppPermission.accessManagerPanel,
       AppPermission.accessLeaderPanel,
@@ -63,7 +81,8 @@ class RolePermission {
   static List<UserRole> getCreateableRoles(UserRole currentRole) {
     switch (currentRole) {
       case UserRole.ceo:
-        return [UserRole.manager, UserRole.leader, UserRole.employee];
+      case UserRole.admin:
+        return [UserRole.admin, UserRole.manager, UserRole.leader, UserRole.employee];
       case UserRole.manager:
         return [UserRole.leader, UserRole.employee];
       case UserRole.leader:

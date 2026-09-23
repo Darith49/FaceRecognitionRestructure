@@ -192,7 +192,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       dynamic result;
 
       if (_action == 'register') {
-        setState(() => _statusText = 'Registering face with ArcFace model...');
+        setState(() => _statusText = 'Extracting biometric face features on-device...');
         result = await _apiService.postMultipart(
           '/face/register/',
           bytes: bytes,
@@ -203,7 +203,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
           Get.find<LoginController>().hasFaceRegistered.value = true;
         }
       } else if (_action == 'check_in') {
-        setState(() => _statusText = 'Verifying face and geofence distance...');
+        setState(() => _statusText = 'Matching face biometrics & geofence on-device...');
         final Map<String, String> fields = {
           'latitude': (_currentPosition?.latitude ?? 0.0).toString(),
           'longitude': (_currentPosition?.longitude ?? 0.0).toString(),
@@ -220,7 +220,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
         );
       } else if (_action == 'check_out') {
         setState(
-          () => _statusText = 'Verifying face and check-out geofence...',
+          () => _statusText = 'Matching face biometrics for check-out on-device...',
         );
         final Map<String, String> fields = {
           'latitude': (_currentPosition?.latitude ?? 0.0).toString(),

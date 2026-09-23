@@ -37,22 +37,19 @@ dependencies:
   get: ^4.7.3
   hugeicons: ^1.1.7
   curved_labeled_navigation_bar: ^2.0.6
-  firebase_core: ^4.15.0
-  firebase_auth: ^6.7.0
-  cloud_firestore: ^6.10.0
   pdf: ^3.13.1
   printing: ^5.15.1
   table_calendar: ^3.2.1
-  google_sign_in: ^6.2.2
   get_storage: ^2.1.1
   flutter_secure_storage: ^11.2.0
-  http: ^1.2.0
   camera: ^0.10.5+9
   geolocator: ^13.0.2
   liquid_glass_widgets: ^1.7.1
   url_launcher: ^6.3.2
   file_picker: ^13.1.0
   web: ^1.1.1
+  image: ^4.3.0
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:

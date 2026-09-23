@@ -22,10 +22,6 @@ class OvertimeController extends GetxController {
     fetchRequests();
   }
 
-  UserModel? get _signedInUser => Get.isRegistered<LoginController>()
-      ? Get.find<LoginController>().currentuser.value
-      : null;
-
   /// If another user logs in on the same phone, do not show the old user's requests.
   void _watchSignedInUser() {
     if (!Get.isRegistered<LoginController>()) return;

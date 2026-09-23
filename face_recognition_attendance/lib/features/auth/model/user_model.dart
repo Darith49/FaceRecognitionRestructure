@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_status.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 
@@ -44,7 +43,6 @@ class UserModel {
   });
 
   // Convert Object -> Map
-  // For storing in Firestore
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -52,7 +50,7 @@ class UserModel {
       'email': email,
       'fullname': fullname,
       'gender': gender,
-      'dob': dob == null ? null : Timestamp.fromDate(dob!),
+      'dob': dob?.toIso8601String(),
       'phoneNumber': phoneNumber,
       'profileUrl': profileUrl,
       'role': userRoleToString(role),
@@ -60,39 +58,30 @@ class UserModel {
       'departmentId': departmentId,
       'status': userStatusToString(status),
       'createdBy': createdBy,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
       'invitationStatus': invitationStatus,
     };
   }
 
-  // Convert Firestore Map -> UserModel
+  // Convert Map -> UserModel
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'] ?? '',
       employeeId: map['employeeId'] ?? '',
       email: map['email'] ?? '',
       fullname: map['fullname'] ?? '',
-
       gender: map['gender'],
-
-      dob: map['dob'] != null ? (map['dob'] as Timestamp).toDate() : null,
-
+      dob: map['dob'] != null ? DateTime.tryParse(map['dob'].toString()) : null,
       phoneNumber: map['phoneNumber'],
       profileUrl: map['profileUrl'],
-
       role: stringToUserRole(map['role']),
-
       branchId: map['branchId'] ?? '',
       departmentId: map['departmentId'] ?? '',
-
       status: stringToUserStatus(map['status']),
-
       createdBy: map['createdBy'] ?? '',
-
       createdAt: map['createdAt'] != null
-          ? (map['createdAt'] as Timestamp).toDate()
+          ? (DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now())
           : DateTime.now(),
-
       invitationStatus: map['invitationStatus'] ?? 'accepted',
     );
   }

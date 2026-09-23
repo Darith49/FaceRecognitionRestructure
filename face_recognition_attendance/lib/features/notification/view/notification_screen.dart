@@ -1,6 +1,5 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
-import 'package:face_recognition_attendance/features/notification/model/notification_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

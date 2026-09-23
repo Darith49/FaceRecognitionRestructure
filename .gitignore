@@ -1,0 +1,20 @@
+# Flutter build & tool artifacts
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+**/.pub/
+
+# IDE files
+**/.idea/
+**/.vscode/
+*.iml
+
+# Environment & local secrets
+*.env
+*.sqlite3
+
+# OS generated
+.DS_Store
+Thumbs.db

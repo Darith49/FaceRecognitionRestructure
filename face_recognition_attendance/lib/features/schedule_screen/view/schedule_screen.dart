@@ -65,25 +65,31 @@ class ScheduleScreen extends GetView<ScheduleController> {
 
   Color _statusColor(DayStatus s) => switch (s) {
     DayStatus.worked => RequestColors.approvedStatus,
+    DayStatus.workday => const Color(0xFF2E7D32),
     DayStatus.absent => RequestColors.danger,
     DayStatus.dayOff => RequestColors.teal,
-    DayStatus.overtime => RequestColors.gold,
+    DayStatus.overtime => const Color(0xFF7B1FA2),
+    DayStatus.leave => RequestColors.gold,
     DayStatus.none => RequestColors.primary,
   };
 
   String _statusLabel(DayStatus s) => switch (s) {
     DayStatus.worked => 'Worked',
+    DayStatus.workday => 'Workday',
     DayStatus.absent => 'Absent',
     DayStatus.dayOff => 'Day off',
     DayStatus.overtime => 'Overtime',
+    DayStatus.leave => 'Leave',
     DayStatus.none => 'No record',
   };
 
   IconData _statusIcon(DayStatus s) => switch (s) {
     DayStatus.worked => Icons.check_circle_rounded,
+    DayStatus.workday => Icons.work_outline_rounded,
     DayStatus.absent => Icons.cancel_rounded,
     DayStatus.dayOff => Icons.weekend_rounded,
     DayStatus.overtime => Icons.more_time_rounded,
+    DayStatus.leave => Icons.beach_access_rounded,
     DayStatus.none => Icons.event_rounded,
   };
 
@@ -100,9 +106,13 @@ class ScheduleScreen extends GetView<ScheduleController> {
         children: [
           _buildSummaryCard(),
           const SizedBox(height: 24),
-          _SectionTitle(
-            '${_monthNames[DateTime.now().month - 1]} Performance',
-          ),
+          Obx(() {
+            final monthIndex = controller.focusedDay.value.month - 1;
+            final mName = (monthIndex >= 0 && monthIndex < _monthNames.length)
+                ? _monthNames[monthIndex]
+                : controller.monthName.value;
+            return _SectionTitle('$mName Performance');
+          }),
           _buildStatsGrid(),
           const SizedBox(height: 24),
           _buildCalendarCard(),
@@ -119,129 +129,134 @@ class ScheduleScreen extends GetView<ScheduleController> {
   // ------------------------------ summary card -----------------------------
 
   Widget _buildSummaryCard() {
-    final worked = controller.daysWorked;
-    final goal = controller.daysGoal;
+    return Obx(() {
+      final worked = controller.daysWorked.value;
+      final goal = controller.daysGoal.value;
+      final percent = controller.percentWorked;
+      final remaining = controller.daysRemaining.value;
+      final progressVal = goal > 0 ? (worked / goal).clamp(0.0, 1.0) : 0.0;
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [RequestColors.primary, _primaryDark],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: RequestColors.primary.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+      return Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [RequestColors.primary, _primaryDark],
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            Positioned(top: -36, right: -24, child: _bubble(130, 0.10)),
-            Positioned(bottom: -48, right: 70, child: _bubble(100, 0.07)),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "You're on track",
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.85),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: '$worked',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 34,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: ' / $goal days worked',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.85,
-                                      ),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.18),
-                        ),
-                        child: const Icon(
-                          Icons.emoji_events_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _ProgressBar(
-                    value: worked / goal,
-                    color: Colors.white,
-                    trackColor: Colors.white.withValues(alpha: 0.25),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${controller.percentWorked}% complete',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        '${controller.daysRemaining} days to go',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: RequestColors.primary.withValues(alpha: 0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-      ),
-    );
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              Positioned(top: -36, right: -24, child: _bubble(130, 0.10)),
+              Positioned(bottom: -48, right: 70, child: _bubble(100, 0.07)),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "You're on track",
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: '$worked',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 34,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: ' / $goal days worked',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.85,
+                                        ),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.18),
+                          ),
+                          child: const Icon(
+                            Icons.emoji_events_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _ProgressBar(
+                      value: progressVal,
+                      color: Colors.white,
+                      trackColor: Colors.white.withValues(alpha: 0.25),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '$percent% complete',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '$remaining days to go',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _bubble(double size, double alpha) {
@@ -258,60 +273,68 @@ class ScheduleScreen extends GetView<ScheduleController> {
   // ------------------------------- stats grid ------------------------------
 
   Widget _buildStatsGrid() {
-    return Column(
-      children: [
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _statCard(
-                  label: 'Days Goal',
-                  value: '${controller.daysGoal}',
-                  icon: Icons.flag_rounded,
-                  color: RequestColors.primary,
+    return Obx(() {
+      final daysGoal = controller.daysGoal.value;
+      final daysWorked = controller.daysWorked.value;
+      final daysAbsent = controller.daysAbsent.value;
+      final absenceLimit = controller.absenceLimit.value;
+      final onTimeRate = controller.onTimeRate.value;
+
+      return Column(
+        children: [
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _statCard(
+                    label: 'Days Goal',
+                    value: '$daysGoal',
+                    icon: Icons.flag_rounded,
+                    color: RequestColors.primary,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _statCard(
-                  label: 'Days Worked',
-                  value: '${controller.daysWorked}',
-                  icon: Icons.check_circle_rounded,
-                  color: RequestColors.approvedStatus,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _statCard(
+                    label: 'Days Worked',
+                    value: '$daysWorked',
+                    icon: Icons.check_circle_rounded,
+                    color: RequestColors.approvedStatus,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _statCard(
-                  label: 'Days Absent',
-                  value: '${controller.daysAbsent}',
-                  icon: Icons.event_busy_rounded,
-                  color: RequestColors.danger,
-                  badge: 'Limit ${controller.absenceLimit}',
+          const SizedBox(height: 12),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _statCard(
+                    label: 'Days Absent',
+                    value: '$daysAbsent',
+                    icon: Icons.event_busy_rounded,
+                    color: RequestColors.danger,
+                    badge: 'Limit $absenceLimit',
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _statCard(
-                  label: 'On-Time Rate',
-                  value: '${controller.onTimeRate}%',
-                  icon: Icons.timer_rounded,
-                  color: RequestColors.gold,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _statCard(
+                    label: 'On-Time Rate',
+                    value: '$onTimeRate%',
+                    icon: Icons.timer_rounded,
+                    color: RequestColors.gold,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _statCard({
@@ -693,6 +716,9 @@ class ScheduleScreen extends GetView<ScheduleController> {
       final current = controller.tabIndex.value;
 
       if (current == 0) {
+        if (controller.schedule.isEmpty) {
+          return _buildEmptySchedule('No scheduled shifts found for this period.');
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: controller.schedule
@@ -704,9 +730,225 @@ class ScheduleScreen extends GetView<ScheduleController> {
               )
               .toList(),
         );
+      } else if (current == 1) {
+        if (controller.holidays.isEmpty) {
+          return _buildEmptyTab(isHoliday: true);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: controller.holidays
+              .map(
+                (h) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildHolidayTile(h),
+                ),
+              )
+              .toList(),
+        );
+      } else {
+        if (controller.leaves.isEmpty) {
+          return _buildEmptyTab(isHoliday: false);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: controller.leaves
+              .map(
+                (l) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildLeaveTile(l),
+                ),
+              )
+              .toList(),
+        );
       }
-      return _buildEmptyTab(isHoliday: current == 1);
     });
+  }
+
+  Widget _buildHolidayTile(HolidayItem holiday) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(radius: 18),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: RequestColors.teal.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              holiday.short,
+              style: const TextStyle(
+                color: RequestColors.teal,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  holiday.full,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: RequestColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  holiday.reason,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: RequestColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: RequestColors.teal.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'Day off',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: RequestColors.teal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeaveTile(LeaveItem leave) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(radius: 18),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: RequestColors.gold.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.beach_access_rounded,
+              color: RequestColors.gold,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  leave.leaveType.toUpperCase(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: RequestColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${leave.fromDate}  →  ${leave.toDate}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: RequestColors.textPrimary,
+                  ),
+                ),
+                if (leave.reason.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    leave.reason,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: RequestColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: RequestColors.approvedStatus.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              leave.status.capitalizeFirst ?? 'Approved',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: RequestColors.approvedStatus,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptySchedule(String message) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      decoration: _cardDecoration(),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: RequestColors.primary.withValues(alpha: 0.10),
+            ),
+            child: const Icon(
+              Icons.schedule_rounded,
+              color: RequestColors.primary,
+              size: 26,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'No Shifts Scheduled',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: RequestColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: RequestColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyTab({required bool isHoliday}) {

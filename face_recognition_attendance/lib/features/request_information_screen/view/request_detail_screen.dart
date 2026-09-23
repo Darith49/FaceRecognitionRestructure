@@ -93,7 +93,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       if (confirmed != true) return;
     }
 
-    final error = _controller.updateRequest(
+    final error = await _controller.updateRequest(
       id: request.id,
       date: _date,
       schedule: _schedule,
@@ -142,7 +142,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
 
     if (confirmed != true) return;
 
-    _controller.cancelRequest(request.id);
+    await _controller.cancelRequest(request.id);
     Get.back();
     RequestSnack.show(messenger, 'Your request was cancelled.');
   }

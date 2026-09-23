@@ -83,4 +83,22 @@ class PermissionRequest {
     final today = DateTime(now.year, now.month, now.day);
     return DateTime(date.year, date.month, date.day).isBefore(today);
   }
+
+  factory PermissionRequest.fromJson(Map<String, dynamic> json) {
+    final statusStr = json['status']?.toString() ?? 'pending';
+    final status = statusStr == 'approved' ? RequestStatus.approved : RequestStatus.pending;
+    final parsedDate = DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now();
+    final authAt = json['reviewed_at'] != null ? DateTime.tryParse(json['reviewed_at'].toString()) : null;
+
+    return PermissionRequest(
+      id: json['id']?.toString() ?? '',
+      fullName: json['employee_name']?.toString() ?? '',
+      employeeId: json['employee_code']?.toString() ?? '',
+      date: parsedDate,
+      schedule: json['schedule_time']?.toString() ?? json['schedule']?.toString() ?? 'Section ${json['session'] ?? 1}',
+      reason: json['reason']?.toString() ?? '',
+      status: status,
+      authorizedAt: authAt,
+    );
+  }
 }

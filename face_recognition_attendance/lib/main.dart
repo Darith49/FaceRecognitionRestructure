@@ -28,9 +28,20 @@ Future<void> main() async {
 
   // Fast session check for instant launch
   final secureStorage = SecureStorageService();
+  final rememberMe = await secureStorage.getRememberMe();
+
+  if (!rememberMe) {
+    try {
+      if (FirebaseAuth.instance.currentUser != null) {
+        await FirebaseAuth.instance.signOut();
+      }
+    } catch (_) {}
+    await secureStorage.clearSession();
+  }
+
   final hasSavedSession = await secureStorage.hasValidSession();
   final firebaseUser = FirebaseAuth.instance.currentUser;
-  final bool isLoggedIn = firebaseUser != null || hasSavedSession;
+  final bool isLoggedIn = rememberMe && (firebaseUser != null || hasSavedSession);
 
   UserModel? initialUser;
   if (isLoggedIn) {

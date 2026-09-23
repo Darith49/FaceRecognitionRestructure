@@ -1,55 +1,75 @@
+import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/features/Leave_screen/model/leave_request.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-/// Keeps the leave requests for the Leave feature.
-/// For now the data lives in memory only (it is lost when the app closes).
 class LeaveController extends GetxController {
+  final ApiService _apiService = ApiService();
   final RxList<LeaveRequest> requests = <LeaveRequest>[].obs;
+  final RxBool isLoading = false.obs;
 
   String? _ownerUid;
-  int _idCounter = 0;
 
   @override
   void onInit() {
     super.onInit();
     _watchSignedInUser();
+    fetchRequests();
   }
 
   UserModel? get _signedInUser => Get.isRegistered<LoginController>()
       ? Get.find<LoginController>().currentuser.value
       : null;
 
-  /// If another user logs in on the same phone, do not show the old user's requests.
   void _watchSignedInUser() {
     if (!Get.isRegistered<LoginController>()) return;
 
     final auth = Get.find<LoginController>();
-    _ownerUid = auth.currentuser.value?.uid;
+    _ownerUid = _signedInUser?.uid;
 
     ever(auth.currentuser, (UserModel? user) {
       if (user?.uid == _ownerUid) return;
       _ownerUid = user?.uid;
       requests.clear();
+      fetchRequests();
     });
+  }
+
+  Future<void> fetchRequests() async {
+    try {
+      isLoading.value = true;
+      final res = await _apiService.get('/requests/leave/');
+      if (res is List) {
+        final list = res
+            .map((e) => LeaveRequest.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        requests.assignAll(list);
+      }
+    } catch (e) {
+      debugPrint('Error fetching leave requests: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   List<LeaveRequest> get pending =>
       requests.where((r) => r.status == LeaveStatus.pending).toList();
 
   List<LeaveRequest> get history =>
-      requests.where((r) => r.status == LeaveStatus.approved).toList();
+      requests.where((r) => r.status != LeaveStatus.pending).toList();
 
-  /// Total approved leave days, shown inside the circle at the top of the Leave page.
   int get totalApprovedDays =>
-      history.fold<int>(0, (sum, r) => sum + r.dayCount);
+      requests.where((r) => r.status == LeaveStatus.approved).fold<int>(0, (sum, r) => sum + r.dayCount);
 
-  /// Adds a new leave request as Pending.
-  void addRequest({
+  Future<bool> addRequest({
     required DateTime fromDate,
     required DateTime toDate,
-    required String dayType,
+    int session = 1,
+    String leaveMode = 'full_section',
+    String? earlyLeaveTime,
+    String? dayType,
     required String reason,
     DateTime? fromTime,
     DateTime? toTime,
@@ -58,30 +78,44 @@ class LeaveController extends GetxController {
     dynamic attachmentBytes,
     int? attachmentSize,
     String? attachmentPath,
-  }) {
-    final user = _signedInUser;
-    _idCounter++;
+  }) async {
+    try {
+      final fromStr =
+          "${fromDate.year.toString().padLeft(4, '0')}-${fromDate.month.toString().padLeft(2, '0')}-${fromDate.day.toString().padLeft(2, '0')}";
+      final toStr =
+          "${toDate.year.toString().padLeft(4, '0')}-${toDate.month.toString().padLeft(2, '0')}-${toDate.day.toString().padLeft(2, '0')}";
 
-    requests.insert(
-      0,
-      LeaveRequest(
-        id: '${DateTime.now().microsecondsSinceEpoch}-$_idCounter',
-        fullName: user?.fullname ?? 'Unknown',
-        employeeId: user?.employeeId ?? '-',
-        fromDate: fromDate,
-        toDate: toDate,
-        dayType: dayType,
-        reason: reason,
-        status: LeaveStatus.pending,
-        fromTime: fromTime,
-        toTime: toTime,
-        hasAttachment: hasAttachment,
-        attachmentName: attachmentName,
-        attachmentBytes: attachmentBytes,
-        attachmentSize: attachmentSize,
-        attachmentPath: attachmentPath,
-      ),
-    );
+      final resolvedDayType = dayType ??
+          (session == 1
+              ? 'Section 1 (Morning)'
+              : (session == 2 ? 'Section 2 (Afternoon)' : 'Full Day'));
+
+      final resolvedLeaveType = session == 1
+          ? 'morning_section'
+          : (session == 2 ? 'afternoon_section' : 'full_day');
+
+      final Map<String, dynamic> body = {
+        'session': session,
+        'leave_mode': leaveMode,
+        'early_leave_time': earlyLeaveTime,
+        'leave_type': resolvedLeaveType,
+        'day_type': resolvedDayType,
+        'from_date': fromStr,
+        'to_date': toStr,
+        'reason': reason,
+      };
+
+      if (attachmentPath != null && attachmentPath.isNotEmpty) {
+        body['attachment_url'] = attachmentPath;
+      }
+
+      await _apiService.post('/requests/leave/', body: body);
+      await fetchRequests();
+      return true;
+    } catch (e) {
+      debugPrint('Error adding leave request: $e');
+      return false;
+    }
   }
 
   LeaveRequest? findById(String id) {
@@ -89,13 +123,14 @@ class LeaveController extends GetxController {
     return index == -1 ? null : requests[index];
   }
 
-  /// Only allowed while the request is still Pending.
-  /// Returns false if it was not changed (missing, or already Approved).
-  bool updateRequest(
+  Future<bool> updateRequest(
     String id, {
     required DateTime fromDate,
     required DateTime toDate,
-    required String dayType,
+    int session = 1,
+    String leaveMode = 'full_section',
+    String? earlyLeaveTime,
+    String? dayType,
     required String reason,
     DateTime? fromTime,
     DateTime? toTime,
@@ -104,35 +139,47 @@ class LeaveController extends GetxController {
     dynamic attachmentBytes,
     int? attachmentSize,
     String? attachmentPath,
-  }) {
+  }) async {
     final index = requests.indexWhere((r) => r.id == id);
     if (index == -1 || requests[index].status != LeaveStatus.pending) {
       return false;
     }
 
-    final old = requests[index];
-    requests[index] = LeaveRequest(
-      id: old.id,
-      fullName: old.fullName,
-      employeeId: old.employeeId,
-      fromDate: fromDate,
-      toDate: toDate,
-      dayType: dayType,
-      reason: reason,
-      status: old.status,
-      fromTime: fromTime,
-      toTime: toTime,
-      hasAttachment: hasAttachment,
-      attachmentName: attachmentName ?? old.attachmentName,
-      attachmentBytes: attachmentBytes ?? old.attachmentBytes,
-      attachmentSize: attachmentSize ?? old.attachmentSize,
-      attachmentPath: attachmentPath ?? old.attachmentPath,
-    );
-    return true;
+    try {
+      final fromStr =
+          "${fromDate.year.toString().padLeft(4, '0')}-${fromDate.month.toString().padLeft(2, '0')}-${fromDate.day.toString().padLeft(2, '0')}";
+      final toStr =
+          "${toDate.year.toString().padLeft(4, '0')}-${toDate.month.toString().padLeft(2, '0')}-${toDate.day.toString().padLeft(2, '0')}";
+
+      final Map<String, dynamic> body = {
+        'session': session,
+        'leave_mode': leaveMode,
+        'early_leave_time': earlyLeaveTime,
+        'day_type': dayType ?? (session == 1 ? 'Section 1 (Morning)' : (session == 2 ? 'Section 2 (Afternoon)' : 'Full Day')),
+        'from_date': fromStr,
+        'to_date': toStr,
+        'reason': reason,
+      };
+      if (attachmentPath != null) {
+        body['attachment_url'] = attachmentPath;
+      }
+
+      await _apiService.patch('/requests/leave/$id/', body: body);
+      await fetchRequests();
+      return true;
+    } catch (e) {
+      debugPrint('Error updating leave request: $e');
+      return false;
+    }
   }
 
-  /// Only Pending requests can be cancelled.
-  void cancelRequest(String id) {
+  Future<void> cancelRequest(String id) async {
+    try {
+      await _apiService.delete('/requests/leave/$id/');
+    } catch (e) {
+      debugPrint('Error deleting leave request: $e');
+    }
     requests.removeWhere((r) => r.id == id && r.status == LeaveStatus.pending);
+    await fetchRequests();
   }
 }

@@ -9,6 +9,7 @@ import 'package:face_recognition_attendance/features/auth/model/user_model.dart'
 import 'package:face_recognition_attendance/features/branch/controller/branch_controller.dart';
 import 'package:face_recognition_attendance/features/department/controller/department_controller.dart';
 import 'package:face_recognition_attendance/features/employee/controller/employee_controller.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 enum CheckState {
@@ -433,6 +434,21 @@ class HomeController extends GetxController {
         return;
     }
 
+    if (action == 'check_out') {
+      final scheduledOutStr = sessionNum == 1 ? session1SchedOut.value : session2SchedOut.value;
+      final parts = scheduledOutStr.split(':');
+      if (parts.isNotEmpty) {
+        final targetHour = int.tryParse(parts[0]) ?? (sessionNum == 1 ? 11 : 17);
+        final targetMin = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+        final current = DateText.nowCambodia();
+        final schedTime = DateTime(current.year, current.month, current.day, targetHour, targetMin);
+        if (current.isBefore(schedTime)) {
+          final proceed = await _showEarlyCheckoutDialog(sessionNum, scheduledOutStr);
+          if (proceed != true) return;
+        }
+      }
+    }
+
     final result = await Get.toNamed(
       AppRoutes.faceCapture,
       arguments: {'action': action, 'session': sessionNum},
@@ -481,5 +497,90 @@ class HomeController extends GetxController {
     final hour12 = d.hour % 12 == 0 ? 12 : d.hour % 12;
     final period = d.hour < 12 ? 'AM' : 'PM';
     return '${hour12.toString().padLeft(2, '0')} : ${d.minute.toString().padLeft(2, '0')} $period';
+  }
+
+  /// Shows an alert when the employee attempts to check out before their section end time.
+  /// Offers an immediate button to submit a Leave Request or continue checkout.
+  Future<bool?> _showEarlyCheckoutDialog(int sessionNum, String scheduledOutStr) {
+    return Get.dialog<bool>(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFE65100), size: 28),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Early Check-Out Alert',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your scheduled check-out time for Section $sessionNum is $scheduledOutStr.',
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Checking out early will be recorded on your attendance. If you have personal reasons or permission, please submit a Leave Request.',
+              style: TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    Get.back(result: false);
+                    Get.toNamed(AppRoutes.leave, arguments: {
+                      'tab': 0,
+                      'session': sessionNum,
+                      'leaveMode': 'early_leave',
+                      'earlyLeaveTime': TimeOfDay.now(),
+                      'reason': 'Early departure from Section $sessionNum',
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF1565C0),
+                    side: const BorderSide(color: Color(0xFF1565C0)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('Request Leave', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Get.back(result: true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE65100),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('Check Out Now', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+          Center(
+            child: TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

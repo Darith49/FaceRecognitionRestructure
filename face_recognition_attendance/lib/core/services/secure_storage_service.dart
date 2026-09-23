@@ -20,6 +20,19 @@ class SecureStorageService {
   static const String _keyUserUid = 'sec_user_uid';
   static const String _keyUserEmail = 'sec_user_email';
   static const String _keyUserData = 'sec_user_data';
+  static const String _keyRememberMe = 'sec_remember_me';
+
+  /// Save user's Remember Me preference
+  Future<void> setRememberMe(bool value) async {
+    await _storage.write(key: _keyRememberMe, value: value.toString());
+  }
+
+  /// Retrieve Remember Me preference (defaults to true)
+  Future<bool> getRememberMe() async {
+    final val = await _storage.read(key: _keyRememberMe);
+    if (val == null) return true; // Default is checked
+    return val.toLowerCase() == 'true';
+  }
 
   /// Save access and optional refresh token securely
   Future<void> saveTokens({
@@ -81,17 +94,25 @@ class SecureStorageService {
 
   /// Check if user has an active saved session
   Future<bool> hasValidSession() async {
+    final remember = await getRememberMe();
+    if (!remember) return false;
     final token = await getAccessToken();
     final uid = await getSavedUid();
     return token != null && token.isNotEmpty && uid != null && uid.isNotEmpty;
   }
 
-  /// Clear all stored tokens and session data (used on logout)
-  Future<void> clearAll() async {
+  /// Clear stored session and tokens (leaves rememberMe preference intact)
+  Future<void> clearSession() async {
     await _storage.delete(key: _keyAccessToken);
     await _storage.delete(key: _keyRefreshToken);
     await _storage.delete(key: _keyUserUid);
     await _storage.delete(key: _keyUserEmail);
     await _storage.delete(key: _keyUserData);
+  }
+
+  /// Clear all stored tokens, session data, and preferences (used on complete reset)
+  Future<void> clearAll() async {
+    await clearSession();
+    await _storage.delete(key: _keyRememberMe);
   }
 }

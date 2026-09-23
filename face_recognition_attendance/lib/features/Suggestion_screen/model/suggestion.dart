@@ -52,4 +52,18 @@ class Suggestion {
 
   /// 07:45 AM
   String get timeLabel => DateText.time(submittedAt);
+
+  factory Suggestion.fromJson(Map<String, dynamic> json) {
+    final isRead = json['is_read'] == true;
+    final submitted = DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now();
+
+    return Suggestion(
+      id: json['id']?.toString() ?? '',
+      fullName: json['employee_name']?.toString() ?? 'Anonymous',
+      employeeId: json['employee_code']?.toString() ?? '-',
+      message: json['content']?.toString() ?? json['message']?.toString() ?? '',
+      submittedAt: submitted,
+      status: isRead ? SuggestionStatus.seen : SuggestionStatus.pending,
+    );
+  }
 }

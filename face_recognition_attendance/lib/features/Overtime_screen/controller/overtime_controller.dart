@@ -1,21 +1,25 @@
+import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/core/utils/report_period.dart';
 import 'package:face_recognition_attendance/features/Overtime_screen/model/overtime_request.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 /// Keeps the overtime requests for the Overtime feature.
 /// For now the data lives in memory only (it is lost when the app closes).
 class OvertimeController extends GetxController {
+  final ApiService _apiService = ApiService();
   final RxList<OvertimeRequest> requests = <OvertimeRequest>[].obs;
+  final RxBool isLoading = false.obs;
 
   String? _ownerUid;
-  int _idCounter = 0;
 
   @override
   void onInit() {
     super.onInit();
     _watchSignedInUser();
+    fetchRequests();
   }
 
   UserModel? get _signedInUser => Get.isRegistered<LoginController>()
@@ -33,11 +37,29 @@ class OvertimeController extends GetxController {
       if (user?.uid == _ownerUid) return;
       _ownerUid = user?.uid;
       requests.clear();
+      fetchRequests();
     });
   }
 
+  Future<void> fetchRequests() async {
+    try {
+      isLoading.value = true;
+      final res = await _apiService.get('/requests/overtime/');
+      if (res is List) {
+        final list = res
+            .map((e) => OvertimeRequest.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        requests.assignAll(list);
+      }
+    } catch (e) {
+      debugPrint('Error fetching overtime requests: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   /// Adds a new overtime request as Pending.
-  void addRequest({
+  Future<bool> addRequest({
     required DateTime date,
     required DateTime fromTime,
     required DateTime toTime,
@@ -47,28 +69,29 @@ class OvertimeController extends GetxController {
     dynamic attachmentBytes,
     int? attachmentSize,
     String? attachmentPath,
-  }) {
-    final user = _signedInUser;
-    _idCounter++;
+  }) async {
+    try {
+      final dateStr =
+          "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+      final startStr =
+          "${fromTime.hour.toString().padLeft(2, '0')}:${fromTime.minute.toString().padLeft(2, '0')}:00";
+      final endStr =
+          "${toTime.hour.toString().padLeft(2, '0')}:${toTime.minute.toString().padLeft(2, '0')}:00";
 
-    requests.insert(
-      0,
-      OvertimeRequest(
-        id: '${DateTime.now().microsecondsSinceEpoch}-$_idCounter',
-        fullName: user?.fullname ?? 'Unknown',
-        employeeId: user?.employeeId ?? '-',
-        date: date,
-        fromTime: fromTime,
-        toTime: toTime,
-        reason: reason,
-        status: OvertimeStatus.pending,
-        hasAttachment: hasAttachment,
-        attachmentName: attachmentName,
-        attachmentBytes: attachmentBytes,
-        attachmentSize: attachmentSize,
-        attachmentPath: attachmentPath,
-      ),
-    );
+      final body = {
+        'date': dateStr,
+        'start_time': startStr,
+        'end_time': endStr,
+        'reason': reason,
+      };
+
+      await _apiService.post('/requests/overtime/', body: body);
+      await fetchRequests();
+      return true;
+    } catch (e) {
+      debugPrint('Error adding overtime request: $e');
+      return false;
+    }
   }
 
   /// The requests whose date is inside [period], oldest first (for the PDF report).
@@ -122,7 +145,13 @@ class OvertimeController extends GetxController {
   }
 
   /// Only Pending requests can be cancelled.
-  void cancelRequest(String id) {
+  Future<void> cancelRequest(String id) async {
+    try {
+      await _apiService.delete('/requests/overtime/$id/');
+    } catch (e) {
+      debugPrint('Error deleting overtime request: $e');
+    }
     requests.removeWhere((r) => r.id == id && r.status == OvertimeStatus.pending);
+    await fetchRequests();
   }
 }

@@ -25,20 +25,34 @@ class AttendanceScreen extends GetView<AttendanceController> {
           const SizedBox(height: 10),
           const _Caption('Department'),
           Obx(
-            () => RequestDropdownField<String>(
-              value: controller.department.value,
-              fillColor: RequestColors.softSurface,
-              icon: Icons.keyboard_arrow_down_rounded,
-              items: kDepartments
-                  .map(
-                    (name) => DropdownMenuItem<String>(
-                      value: name,
-                      child: Text(name, overflow: TextOverflow.ellipsis),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (name) => controller.department.value = name,
-            ),
+            () {
+              final deptList = controller.departments.isNotEmpty
+                  ? controller.departments.toList()
+                  : (controller.department.value.isNotEmpty
+                      ? [controller.department.value]
+                      : ['General']);
+              final currentVal = controller.department.value.isNotEmpty &&
+                      deptList.contains(controller.department.value)
+                  ? controller.department.value
+                  : deptList.first;
+              return RequestDropdownField<String>(
+                value: currentVal,
+                fillColor: RequestColors.softSurface,
+                icon: Icons.keyboard_arrow_down_rounded,
+                items: deptList
+                    .map(
+                      (name) => DropdownMenuItem<String>(
+                        value: name,
+                        child: Text(name, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (name) {
+                  controller.department.value = name;
+                  controller.fetchDepartmentSummary();
+                },
+              );
+            },
           ),
           const SizedBox(height: 16),
           const _Caption('Date'),
@@ -64,7 +78,10 @@ class AttendanceScreen extends GetView<AttendanceController> {
                           child: Text(DateText.monthName(m)),
                         ),
                     ],
-                    onChanged: (m) => controller.month.value = m,
+                    onChanged: (m) {
+                      controller.month.value = m;
+                      controller.fetchDepartmentSummary();
+                    },
                   ),
                 ),
               ),
@@ -86,7 +103,10 @@ class AttendanceScreen extends GetView<AttendanceController> {
                       for (final y in controller.years)
                         DropdownMenuItem<int>(value: y, child: Text('$y')),
                     ],
-                    onChanged: (y) => controller.year.value = y,
+                    onChanged: (y) {
+                      controller.year.value = y;
+                      controller.fetchDepartmentSummary();
+                    },
                   ),
                 ),
               ),

@@ -196,3 +196,45 @@ def attendance_records(request):
 
     serializer = AttendanceSerializer(queryset[:100], many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def monthly_summary(request):
+    """
+    Returns monthly attendance metrics, work shifts, holidays, and day-by-day status.
+    Supports query parameters: ?year=YYYY&month=MM&employee_id=ID
+    """
+    target_employee = request.user
+    emp_id = request.query_params.get('employee_id')
+    if emp_id and getattr(request.user, 'role', '') in ('ceo', 'manager', 'leader'):
+        from api.employee.models import Employee
+        found = Employee.objects.filter(id=emp_id).first()
+        if found:
+            target_employee = found
+
+    year = request.query_params.get('year')
+    month = request.query_params.get('month')
+
+    summary = AttendanceService.get_monthly_summary(target_employee, year=year, month=month)
+    return Response(summary, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def department_summary(request):
+    """
+    Returns department attendance breakdown: Absent (A), Waive (W), Absent with Permission (AP).
+    Supports filters: ?department=NAME&month=MM&year=YYYY
+    """
+    dept = request.query_params.get('department')
+    month = request.query_params.get('month')
+    year = request.query_params.get('year')
+
+    summary = AttendanceService.get_department_attendance_summary(
+        request.user,
+        department_query=dept,
+        month=month,
+        year=year,
+    )
+    return Response(summary, status=status.HTTP_200_OK)
+
+

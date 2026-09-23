@@ -7,6 +7,7 @@ import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
+import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -297,17 +298,57 @@ class _GreetingHeader extends StatelessWidget {
               ),
             ),
             // Notification bell
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
-              ),
-              child: const Icon(
-                Icons.notifications_none_rounded,
-                size: 20,
-                color: RequestColors.textSecondary,
+            GestureDetector(
+              onTap: () => Get.toNamed(AppRoutes.notifications),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_none_rounded,
+                      size: 20,
+                      color: RequestColors.textSecondary,
+                    ),
+                  ),
+                  Obx(() {
+                    final notifCtrl = Get.isRegistered<NotificationController>()
+                        ? Get.find<NotificationController>()
+                        : Get.put(NotificationController());
+                    if (notifCtrl.unreadCount.value == 0) {
+                      return const SizedBox.shrink();
+                    }
+                    return Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${notifCtrl.unreadCount.value}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ),
             ),
           ],

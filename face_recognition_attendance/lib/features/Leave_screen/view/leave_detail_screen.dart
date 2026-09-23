@@ -57,9 +57,19 @@ class LeaveDetailScreen extends GetView<LeaveController> {
             value: request.status.label,
             valueColor: isPending
                 ? RequestColors.pendingText
-                : RequestColors.approvedStatus,
+                : (request.status == LeaveStatus.rejected
+                    ? RequestColors.danger
+                    : RequestColors.approvedStatus),
             valueWeight: FontWeight.w600,
           ),
+          if (request.reviewerName != null && request.reviewerName!.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            RequestField(label: 'Reviewed By', value: request.reviewerName!),
+          ],
+          if (request.reviewNotes != null && request.reviewNotes!.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            RequestField(label: 'Review Notes', value: request.reviewNotes!, multiline: true),
+          ],
         ],
       ),
     );

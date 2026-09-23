@@ -23,6 +23,28 @@ class AttendanceRecord {
   final DateTime date;
   final String schedule;
   final AttendanceType type;
+
+  factory AttendanceRecord.fromJson(Map<String, dynamic> json) {
+    AttendanceType type = AttendanceType.absent;
+    final typeStr = (json['type'] ?? '').toString().toLowerCase();
+    if (typeStr.contains('waive')) {
+      type = AttendanceType.waive;
+    } else if (typeStr.contains('permission') || typeStr == 'ap') {
+      type = AttendanceType.absentWithPermission;
+    }
+
+    DateTime d = DateTime.now();
+    if (json['date'] != null) {
+      d = DateTime.tryParse(json['date'].toString()) ?? DateTime.now();
+    }
+
+    return AttendanceRecord(
+      department: json['department']?.toString() ?? '',
+      date: d,
+      schedule: json['schedule']?.toString() ?? '',
+      type: type,
+    );
+  }
 }
 
 /// Departments in the Department dropdown.

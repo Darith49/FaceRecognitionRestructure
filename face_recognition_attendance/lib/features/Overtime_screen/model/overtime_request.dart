@@ -66,4 +66,41 @@ class OvertimeRequest {
 
   String get timeRangeLabel =>
       '${DateText.time(fromTime)} - ${DateText.time(toTime)}';
+
+  factory OvertimeRequest.fromJson(Map<String, dynamic> json) {
+    final statusStr = json['status']?.toString() ?? 'pending';
+    final status = statusStr == 'approved' ? OvertimeStatus.approved : OvertimeStatus.pending;
+    final date = DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now();
+
+    DateTime parseTime(String? tStr) {
+      if (tStr == null || tStr.isEmpty) return date;
+      if (tStr.contains('T')) {
+        return DateTime.tryParse(tStr) ?? date;
+      }
+      final parts = tStr.split(':');
+      if (parts.length >= 2) {
+        final h = int.tryParse(parts[0]) ?? date.hour;
+        final m = int.tryParse(parts[1]) ?? date.minute;
+        return DateTime(date.year, date.month, date.day, h, m);
+      }
+      return date;
+    }
+
+    final fromTime = parseTime(json['start_time']?.toString());
+    final toTime = parseTime(json['end_time']?.toString());
+    final attachUrl = json['attachment']?.toString();
+
+    return OvertimeRequest(
+      id: json['id']?.toString() ?? '',
+      fullName: json['employee_name']?.toString() ?? '',
+      employeeId: json['employee_code']?.toString() ?? '',
+      date: date,
+      fromTime: fromTime,
+      toTime: toTime,
+      reason: json['reason']?.toString() ?? '',
+      status: status,
+      hasAttachment: attachUrl != null && attachUrl.isNotEmpty,
+      attachmentPath: attachUrl,
+    );
+  }
 }

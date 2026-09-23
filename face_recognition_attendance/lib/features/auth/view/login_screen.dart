@@ -159,37 +159,42 @@ class LoginScreen extends GetView<LoginController> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Obx(
-                              () => SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: Checkbox(
-                                  value: controller.rememberMe.value,
-                                  onChanged: (val) =>
-                                      controller.rememberMe.value = val ?? false,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  activeColor: AppColors.primary,
-                                  side: BorderSide(
-                                    color: isDark ? AppColors.darkBorder : AppColors.hairline,
-                                    width: 1.5,
+                        GestureDetector(
+                          onTap: () => controller.rememberMe.toggle(),
+                          behavior: HitTestBehavior.opaque,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Obx(
+                                () => SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: Checkbox(
+                                    value: controller.rememberMe.value,
+                                    onChanged: (val) =>
+                                        controller.rememberMe.value = val ?? false,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    activeColor: AppColors.primary,
+                                    side: BorderSide(
+                                      color: isDark ? AppColors.darkBorder : AppColors.hairline,
+                                      width: 1.5,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'auth_remember_me'.tr,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: isDark ? AppColors.darkText : AppColors.ink,
+                              const SizedBox(width: 8),
+                              Text(
+                                'auth_remember_me'.tr,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? AppColors.darkText : AppColors.ink,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         TextButton(
                           onPressed: () => Get.toNamed(AppRoutes.forgotpassword),

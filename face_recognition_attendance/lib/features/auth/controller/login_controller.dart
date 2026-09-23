@@ -2,6 +2,7 @@ import 'package:face_recognition_attendance/config/navigation/navigation_control
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/service/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
+import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
@@ -19,7 +20,7 @@ class LoginController extends GetxController {
   //UI State
   final RxBool isGoogleLoading = false.obs;
   final RxBool isPasswordHidden = true.obs;
-  final RxBool rememberMe = false.obs;
+  final RxBool rememberMe = true.obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
@@ -28,7 +29,16 @@ class LoginController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    emailController.text = '';
+    passwordController.text = '';
+    errorMessage.value = '';
+    _loadRememberMe();
     _checkCurrentUser();
+  }
+
+  Future<void> _loadRememberMe() async {
+    final val = await SecureStorageService().getRememberMe();
+    rememberMe.value = val;
   }
 
   Future<void> checkFaceStatus() async {
@@ -44,6 +54,13 @@ class LoginController extends GetxController {
   }
 
   Future<void> _checkCurrentUser() async {
+    final secureStorage = SecureStorageService();
+    final remember = await secureStorage.getRememberMe();
+    if (!remember) {
+      // User unchecked remember me previously: do not restore cached session
+      return;
+    }
+
     final firebaseUser = _firebaseService.getCurrentUser();
     if (firebaseUser != null) {
       final user = await _firebaseService.getUserByUid(firebaseUser.uid);
@@ -52,7 +69,29 @@ class LoginController extends GetxController {
         if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
           _syncProfileToBackend(user.profileUrl!);
         }
+        final token = await _firebaseService.getIdToken();
+        final refreshToken = firebaseUser.refreshToken;
+        await secureStorage.saveUserSession(
+          uid: user.uid,
+          email: user.email,
+          accessToken: token ?? '',
+          refreshToken: refreshToken,
+          userData: user.toJson(),
+        );
         await checkFaceStatus();
+        return;
+      }
+    }
+
+    // Fallback to SecureStorageService for persistent offline launch
+    if (await secureStorage.hasValidSession()) {
+      final cached = await secureStorage.getCachedUserData();
+      if (cached != null) {
+        try {
+          final user = UserModel.fromJson(cached);
+          currentuser.value = user;
+          await checkFaceStatus();
+        } catch (_) {}
       }
     }
   }
@@ -81,12 +120,28 @@ class LoginController extends GetxController {
         if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
           _syncProfileToBackend(user.profileUrl!);
         }
+        final token = await _firebaseService.getIdToken(forceRefresh: true);
+        final firebaseUser = _firebaseService.getCurrentUser();
+
+        await SecureStorageService().setRememberMe(rememberMe.value);
+        if (rememberMe.value) {
+          await SecureStorageService().saveUserSession(
+            uid: user.uid,
+            email: user.email,
+            accessToken: token ?? '',
+            refreshToken: firebaseUser?.refreshToken,
+            userData: user.toJson(),
+          );
+        } else {
+          await SecureStorageService().clearSession();
+        }
         await checkFaceStatus();
         _navigationBasedOnRole(user.role);
         return true;
       } else {
         // 2. User exists in Auth, but NO document found in Firestore
         await _firebaseService.logout(); // Clean up auth session so they aren't stuck in a half-logged-in state
+        await SecureStorageService().clearAll();
 
         errorMessage.value = "User profile not found in database. Please contact an administrator.";
 
@@ -172,6 +227,21 @@ class LoginController extends GetxController {
       if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
         _syncProfileToBackend(user.profileUrl!);
       }
+
+      await SecureStorageService().setRememberMe(rememberMe.value);
+      if (rememberMe.value) {
+        final token = await _firebaseService.getIdToken();
+        final firebaseUser = _firebaseService.getCurrentUser();
+        await SecureStorageService().saveUserSession(
+          uid: user.uid,
+          email: user.email,
+          accessToken: token ?? '',
+          refreshToken: firebaseUser?.refreshToken,
+          userData: user.toJson(),
+        );
+      } else {
+        await SecureStorageService().clearSession();
+      }
       await checkFaceStatus();
 
       _navigationBasedOnRole(user.role);
@@ -222,6 +292,9 @@ class LoginController extends GetxController {
     } catch (e) {
       debugPrint('Logout service error: $e');
     } finally {
+      await SecureStorageService().clearSession();
+      await SecureStorageService().setRememberMe(true);
+      rememberMe.value = true;
       currentuser.value = null;
       hasFaceRegistered.value = false;
       emailController.clear();

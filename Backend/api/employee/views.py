@@ -233,12 +233,19 @@ def my_team_view(request):
 
     elif role == 'manager':
         pinned_members.append(EmployeeSerializer(user).data)
+        ceo = Employee.objects.filter(role='ceo').first()
+        if ceo:
+            pinned_members.append(EmployeeSerializer(ceo).data)
 
         leaders_qs = Employee.objects.filter(role='leader')
         if user.branch:
             leaders_qs = leaders_qs.filter(branch=user.branch)
         leaders = leaders_qs.select_related('branch', 'department').order_by('fullname')
         leaders_data = filter_emp_data(EmployeeSerializer(leaders, many=True).data)
+
+        other_mgrs_qs = Employee.objects.filter(role='manager').exclude(id=user.id)
+        other_mgrs = other_mgrs_qs.select_related('branch', 'department').order_by('fullname')
+        other_mgrs_data = filter_emp_data(EmployeeSerializer(other_mgrs, many=True).data)
 
         team_qs = Employee.objects.exclude(id=user.id)
         if user.branch:
@@ -255,6 +262,13 @@ def my_team_view(request):
                 'is_branch_list': False,
             },
             {
+                'key': 'other_managers',
+                'title': 'Other Managers',
+                'badge': str(len(other_mgrs_data)),
+                'items': other_mgrs_data,
+                'is_branch_list': False,
+            },
+            {
                 'key': 'team',
                 'title': 'Team',
                 'badge': str(len(team_data)),
@@ -265,6 +279,11 @@ def my_team_view(request):
 
     elif role == 'leader':
         pinned_members.append(EmployeeSerializer(user).data)
+        mgr = None
+        if user.branch:
+            mgr = Employee.objects.filter(role='manager', branch=user.branch).first()
+        if mgr:
+            pinned_members.append(EmployeeSerializer(mgr).data)
 
         emp_qs = Employee.objects.filter(role='employee')
         if user.department:

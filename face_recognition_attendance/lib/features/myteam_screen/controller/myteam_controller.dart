@@ -110,7 +110,7 @@ class MyTeamController extends GetxController {
 
     // Keep digits and leading plus sign
     final cleanNumber = phone.replaceAll(RegExp(r'[^\d+]'), '');
-    final Uri phoneUri = Uri(scheme: 'tel', path: cleanNumber);
+    final Uri phoneUri = Uri.parse('tel:$cleanNumber');
 
     try {
       final bool launched = await launchUrl(
@@ -118,12 +118,8 @@ class MyTeamController extends GetxController {
         mode: LaunchMode.externalApplication,
       );
       if (!launched) {
-        if (context.mounted) {
-          RequestSnack.show(
-            ScaffoldMessenger.of(context),
-            'Could not launch dialer for $cleanNumber.',
-          );
-        }
+        // Fallback standard launch
+        await launchUrl(phoneUri);
       }
     } catch (e) {
       if (context.mounted) {

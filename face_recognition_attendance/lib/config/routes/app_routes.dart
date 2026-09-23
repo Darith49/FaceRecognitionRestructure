@@ -49,4 +49,7 @@ abstract class AppRoutes {
 
   // Face Biometrics & Camera
   static const String faceCapture = "/face-capture";
+
+  // Notifications
+  static const String notifications = "/notifications";
 }

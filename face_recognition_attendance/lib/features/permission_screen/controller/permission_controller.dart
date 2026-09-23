@@ -1,37 +1,31 @@
-import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
+import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:face_recognition_attendance/features/permission_screen/model/permission_request.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-/// TODO: set to false (and load from Firestore) when the backend is connected.
-/// While it is true, two example requests are added so every screen can be tested.
-const bool _useSampleData = true;
-
-/// Keeps the permission requests for the Permission and Request Information screens.
-/// For now the data lives in memory only (it is lost when the app closes).
 class PermissionController extends GetxController {
+  final ApiService _apiService = ApiService();
+
   /// Submitted requests (Pending + Approved).
   final RxList<PermissionRequest> requests = <PermissionRequest>[].obs;
 
   /// Sessions added in the "Request List" that are not submitted yet.
   final RxList<PermissionSession> draftSessions = <PermissionSession>[].obs;
 
+  final RxBool isLoading = false.obs;
+
   String? _ownerUid;
-  int _idCounter = 0;
 
   @override
   void onInit() {
     super.onInit();
     _watchSignedInUser();
-    _loadSampleRequests();
+    fetchRequests();
   }
 
-  UserModel? get _signedInUser => Get.isRegistered<LoginController>()
-      ? Get.find<LoginController>().currentuser.value
-      : null;
-
-  /// If another user logs in on the same phone, do not show the old user's requests.
   void _watchSignedInUser() {
     if (!Get.isRegistered<LoginController>()) return;
 
@@ -43,56 +37,31 @@ class PermissionController extends GetxController {
       _ownerUid = user?.uid;
       draftSessions.clear();
       requests.clear();
-      _loadSampleRequests();
+      fetchRequests();
     });
   }
 
-  void _loadSampleRequests() {
-    if (!_useSampleData) return;
-
-    final user = _signedInUser;
-    final name = user?.fullname ?? 'Full Name';
-    final employeeId = user?.employeeId ?? '00000';
-
-    requests.assignAll([
-      PermissionRequest(
-        id: 'sample-pending',
-        fullName: name,
-        employeeId: employeeId,
-        date: DateTime(2026, 9, 21),
-        schedule: '07:45-09:15',
-        reason: 'Sick',
-        status: RequestStatus.pending,
-      ),
-      PermissionRequest(
-        id: 'sample-approved',
-        fullName: name,
-        employeeId: employeeId,
-        date: DateTime(2026, 9, 7),
-        schedule: '07:45-09:15',
-        reason: 'Sick',
-        status: RequestStatus.approved,
-        authorizedAt: DateTime(2026, 9, 6, 7, 43, 11),
-      ),
-      PermissionRequest(
-        id: 'sample-approved-2',
-        fullName: name,
-        employeeId: employeeId,
-        date: DateTime(2026, 9, 28),
-        schedule: '09:30-11:00',
-        reason: 'Family event',
-        status: RequestStatus.approved,
-        authorizedAt: DateTime(2026, 9, 18, 9, 15, 30),
-      ),
-    ]);
+  Future<void> fetchRequests() async {
+    try {
+      isLoading.value = true;
+      final res = await _apiService.get('/requests/permissions/');
+      if (res is List) {
+        final list = res
+            .map((e) => PermissionRequest.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        requests.assignAll(list);
+      }
+    } catch (e) {
+      debugPrint('Error fetching permission requests: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   List<PermissionRequest> requestsWithStatus(RequestStatus status) {
     return requests.where((request) => request.status == status).toList();
   }
 
-  /// True when a submitted request already uses this date + schedule.
-  /// [excludeId] lets a request ignore itself while it is being edited.
   bool _slotTaken(DateTime date, String schedule, {String? excludeId}) {
     final day = DateText.ymd(date);
     return requests.any(
@@ -103,8 +72,6 @@ class PermissionController extends GetxController {
     );
   }
 
-  /// Returns false when the same date + schedule is already in the list
-  /// or already has a request.
   bool addSession(PermissionSession session) {
     final alreadyAdded =
         draftSessions.any((item) => item.isSameSlot(session)) ||
@@ -122,41 +89,43 @@ class PermissionController extends GetxController {
 
   void clearDrafts() => draftSessions.clear();
 
-  /// Turns every session in the Request List into a Pending request.
-  /// Returns how many requests were created.
-  int submitDraftSessions() {
-    final user = _signedInUser;
+  Future<int> submitDraftSessions() async {
     final count = draftSessions.length;
-
     for (final session in draftSessions) {
-      _idCounter++;
-      requests.insert(
-        0,
-        PermissionRequest(
-          id: '${DateTime.now().microsecondsSinceEpoch}-$_idCounter',
-          fullName: user?.fullname ?? 'Unknown',
-          employeeId: user?.employeeId ?? '-',
-          date: session.date,
-          schedule: session.schedule,
-          reason: session.reason,
-          status: RequestStatus.pending,
-        ),
-      );
+      final dateStr =
+          "${session.date.year.toString().padLeft(4, '0')}-${session.date.month.toString().padLeft(2, '0')}-${session.date.day.toString().padLeft(2, '0')}";
+      int sessionNum = 1;
+      if (session.schedule.contains('13:') ||
+          session.schedule.contains('14:') ||
+          session.schedule.contains('15:') ||
+          session.schedule.contains('16:') ||
+          session.schedule.contains('17:')) {
+        sessionNum = 2;
+      }
+
+      try {
+        await _apiService.post('/requests/permissions/', body: {
+          'date': dateStr,
+          'session': sessionNum,
+          'schedule_time': session.schedule,
+          'reason': session.reason,
+        });
+      } catch (e) {
+        debugPrint('Error creating permission request: $e');
+      }
     }
 
     draftSessions.clear();
+    await fetchRequests();
     return count;
   }
 
-  /// Saves the changes made on the detail page.
-  /// An approved request that is changed goes back to Pending (needs approval again).
-  /// Returns null when saved, or a message that explains why it could not be saved.
-  String? updateRequest({
+  Future<String?> updateRequest({
     required String id,
     required DateTime date,
     required String schedule,
     required String reason,
-  }) {
+  }) async {
     final index = requests.indexWhere((request) => request.id == id);
     if (index == -1) return 'This request no longer exists.';
 
@@ -164,21 +133,38 @@ class PermissionController extends GetxController {
       return 'You already have a request for that date and schedule.';
     }
 
-    final current = requests[index];
-    requests[index] = PermissionRequest(
-      id: current.id,
-      type: current.type,
-      fullName: current.fullName,
-      employeeId: current.employeeId,
-      date: date,
-      schedule: schedule,
-      reason: reason,
-      status: RequestStatus.pending,
-    );
-    return null;
+    final dateStr =
+        "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    int sessionNum = 1;
+    if (schedule.contains('13:') ||
+        schedule.contains('14:') ||
+        schedule.contains('15:') ||
+        schedule.contains('16:') ||
+        schedule.contains('17:')) {
+      sessionNum = 2;
+    }
+
+    try {
+      await _apiService.patch('/requests/permissions/$id/', body: {
+        'date': dateStr,
+        'schedule_time': schedule,
+        'session': sessionNum,
+        'reason': reason,
+      });
+      await fetchRequests();
+      return null;
+    } catch (e) {
+      return 'Failed to update request: $e';
+    }
   }
 
-  void cancelRequest(String id) {
+  Future<void> cancelRequest(String id) async {
+    try {
+      await _apiService.delete('/requests/permissions/$id/');
+    } catch (e) {
+      debugPrint('Error deleting permission request: $e');
+    }
     requests.removeWhere((request) => request.id == id);
+    await fetchRequests();
   }
 }

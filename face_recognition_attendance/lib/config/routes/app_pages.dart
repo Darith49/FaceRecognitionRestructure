@@ -39,6 +39,7 @@ import 'package:face_recognition_attendance/features/department/view/department_
 import 'package:face_recognition_attendance/features/employee/view/create_employee_screen.dart';
 import 'package:face_recognition_attendance/features/employee/view/employee_list_screen.dart';
 import 'package:face_recognition_attendance/features/face/view/face_capture_screen.dart';
+import 'package:face_recognition_attendance/features/notification/view/notification_screen.dart';
 import 'package:face_recognition_attendance/features/settings/binding/settings_binding.dart';
 import 'package:face_recognition_attendance/features/settings/screens/settings_screen.dart';
 import 'package:get/get.dart';
@@ -231,6 +232,12 @@ class AppPages {
     GetPage(
       name: AppRoutes.faceCapture,
       page: () => const FaceCaptureScreen(),
+    ),
+
+    // ----------- Notifications -----------
+    GetPage(
+      name: AppRoutes.notifications,
+      page: () => const NotificationScreen(),
     ),
   ];
 }

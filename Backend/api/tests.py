@@ -485,3 +485,233 @@ class HealthCheckTests(TestCase):
         self.assertEqual(data.get('database'), 'healthy')
         self.assertEqual(data.get('service'), 'attendance-backend-api')
 
+
+class RequestAndScheduleTests(TestCase):
+    def setUp(self):
+        from rest_framework.test import APIRequestFactory
+        self.factory = APIRequestFactory()
+
+        self.branch = Branch.objects.create(
+            name="Main Branch",
+            latitude=11.5564,
+            longitude=104.9282,
+            radius=100.0,
+        )
+        self.dept = Department.objects.create(
+            name="Mobile Dev",
+            branch=self.branch,
+        )
+        self.ceo = Employee.objects.create(
+            firebase_uid="uid-ceo",
+            employee_id="CEO-01",
+            fullname="The CEO",
+            email="ceo@corp.com",
+            role="ceo",
+            branch=self.branch,
+            department=self.dept,
+            status="active",
+        )
+        self.manager = Employee.objects.create(
+            firebase_uid="uid-mgr",
+            employee_id="MGR-01",
+            fullname="Branch Manager",
+            email="mgr@corp.com",
+            role="manager",
+            branch=self.branch,
+            department=self.dept,
+            status="active",
+        )
+        self.leader = Employee.objects.create(
+            firebase_uid="uid-ldr",
+            employee_id="LDR-01",
+            fullname="Team Leader",
+            email="ldr@corp.com",
+            role="leader",
+            branch=self.branch,
+            department=self.dept,
+            status="active",
+        )
+        self.employee = Employee.objects.create(
+            firebase_uid="uid-emp",
+            employee_id="EMP-01",
+            fullname="Software Engineer",
+            email="emp@corp.com",
+            role="employee",
+            branch=self.branch,
+            department=self.dept,
+            status="active",
+            work_days="mon,tue,wed,thu,fri",
+        )
+
+    def test_monthly_summary_calculation(self):
+        from rest_framework.test import force_authenticate
+        from api.attendance.views import monthly_summary
+
+        req = self.factory.get('/api/v1/attendance/monthly-summary/?year=2026&month=9')
+        force_authenticate(req, user=self.employee)
+        res = monthly_summary(req)
+
+        self.assertEqual(res.status_code, 200)
+        data = res.data
+        self.assertEqual(data['year'], 2026)
+        self.assertEqual(data['month'], 9)
+        self.assertEqual(data['month_name'], 'September')
+        self.assertGreater(data['days_goal'], 0)
+        self.assertIn('calendar_days', data)
+        self.assertIn('2026-09-01', data['calendar_days'])
+        self.assertIn('schedule', data)
+        self.assertIn('holidays', data)
+
+    def test_leave_request_flow(self):
+        from rest_framework.test import force_authenticate
+        from api.request.views import leave_list_create, leave_review, incoming_requests
+
+        # 1. Employee submits leave
+        post_req = self.factory.post('/api/v1/requests/leave/', {
+            'leave_type': 'early_checkout',
+            'day_type': 'First Half',
+            'from_date': '2026-09-23',
+            'to_date': '2026-09-23',
+            'reason': 'Medical appointment',
+        })
+        force_authenticate(post_req, user=self.employee)
+        res_post = leave_list_create(post_req)
+        self.assertEqual(res_post.status_code, 201)
+        leave_id = res_post.data['id']
+
+        # 2. Leader checks incoming requests
+        inc_req = self.factory.get('/api/v1/requests/incoming/')
+        force_authenticate(inc_req, user=self.leader)
+        res_inc = incoming_requests(inc_req)
+        self.assertEqual(res_inc.status_code, 200)
+        self.assertTrue(any(l['id'] == leave_id for l in res_inc.data['leaves']))
+
+        # 3. Leader approves leave
+        rev_req = self.factory.post(f'/api/v1/requests/leave/{leave_id}/review/', {
+            'status': 'approved',
+            'review_notes': 'Take care',
+        })
+        force_authenticate(rev_req, user=self.leader)
+        res_rev = leave_review(rev_req, pk=leave_id)
+        self.assertEqual(res_rev.status_code, 200)
+        self.assertEqual(res_rev.data['status'], 'approved')
+
+    def test_suggestion_box_anonymous_default(self):
+        from rest_framework.test import force_authenticate
+        from api.request.views import suggestion_list_create, suggestion_mark_read
+
+        # 1. Employee submits anonymous suggestion
+        post_req = self.factory.post('/api/v1/requests/suggestions/', {
+            'message': 'Please provide ergonomic chairs.',
+            'is_anonymous': True,
+        })
+        force_authenticate(post_req, user=self.employee)
+        res_post = suggestion_list_create(post_req)
+        self.assertEqual(res_post.status_code, 201)
+        self.assertEqual(res_post.data['sender_name'], 'Anonymous')
+        sugg_id = res_post.data['id']
+
+        # 2. Manager views suggestions and marks as read
+        get_req = self.factory.get('/api/v1/requests/suggestions/')
+        force_authenticate(get_req, user=self.manager)
+        res_get = suggestion_list_create(get_req)
+        self.assertEqual(res_get.status_code, 200)
+        self.assertTrue(any(s['id'] == sugg_id for s in res_get.data))
+
+        read_req = self.factory.patch(f'/api/v1/requests/suggestions/{sugg_id}/read/')
+        force_authenticate(read_req, user=self.manager)
+        res_read = suggestion_mark_read(read_req, pk=sugg_id)
+        self.assertEqual(res_read.status_code, 200)
+        self.assertTrue(res_read.data['is_read'])
+
+    def test_department_summary_and_permission_detail(self):
+        from rest_framework.test import force_authenticate
+        from api.attendance.views import department_summary
+        from api.request.views import permission_list_create, permission_detail
+
+        # 1. Employee creates permission request
+        p_post = self.factory.post('/api/v1/requests/permissions/', {
+            'date': '2026-09-15',
+            'session': 1,
+            'schedule_time': '07:00-11:00',
+            'reason': 'Medical checkup',
+        })
+        force_authenticate(p_post, user=self.employee)
+        res_p = permission_list_create(p_post)
+        self.assertEqual(res_p.status_code, 201)
+        perm_id = res_p.data['id']
+
+        # 2. Test department summary endpoint
+        dep_req = self.factory.get('/api/v1/attendance/department-summary/?month=9&year=2026')
+        force_authenticate(dep_req, user=self.employee)
+        res_dep = department_summary(dep_req)
+        self.assertEqual(res_dep.status_code, 200)
+        self.assertIn('absent_count', res_dep.data)
+        self.assertIn('departments', res_dep.data)
+        self.assertIn('records', res_dep.data)
+
+        # 3. Employee updates permission request via PATCH
+        p_patch = self.factory.patch(f'/api/v1/requests/permissions/{perm_id}/', {
+            'reason': 'Updated medical checkup',
+        })
+        force_authenticate(p_patch, user=self.employee)
+        res_patch = permission_detail(p_patch, pk=perm_id)
+        self.assertEqual(res_patch.status_code, 200)
+        self.assertEqual(res_patch.data['reason'], 'Updated medical checkup')
+
+        # 4. Employee cancels permission request via DELETE
+        p_del = self.factory.delete(f'/api/v1/requests/permissions/{perm_id}/')
+        force_authenticate(p_del, user=self.employee)
+        res_del = permission_detail(p_del, pk=perm_id)
+        self.assertEqual(res_del.status_code, 200)
+
+    def test_section_based_leave_and_early_departure(self):
+        from rest_framework.test import force_authenticate
+        from api.request.views import leave_list_create, leave_review
+        from api.attendance.services import AttendanceService
+        from api.request.models import Notification
+
+        # 1. Employee creates Section 1 Early Departure Leave Request
+        post_req = self.factory.post('/api/v1/requests/leave/', {
+            'session': 1,
+            'leave_mode': 'early_leave',
+            'early_leave_time': '09:30:00',
+            'day_type': 'Section 1 (Morning)',
+            'from_date': '2026-09-18',
+            'to_date': '2026-09-18',
+            'reason': 'Doctor appointment at 10 AM',
+        })
+        force_authenticate(post_req, user=self.employee)
+        res_post = leave_list_create(post_req)
+        self.assertEqual(res_post.status_code, 201)
+        self.assertEqual(res_post.data['session'], 1)
+        self.assertEqual(res_post.data['leave_mode'], 'early_leave')
+        self.assertEqual(res_post.data['early_leave_time'], '09:30:00')
+        leave_id = res_post.data['id']
+
+        # Verify supervisor got notified
+        notif = Notification.objects.filter(recipient=self.leader, reference_id=str(leave_id)).first()
+        self.assertIsNotNone(notif)
+        self.assertIn("Section 1", notif.message)
+
+        # 2. Leader approves the request
+        rev_req = self.factory.post(f'/api/v1/requests/leave/{leave_id}/review/', {
+            'status': 'approved',
+            'review_notes': 'Approved for Section 1 early leave.',
+        })
+        force_authenticate(rev_req, user=self.leader)
+        res_rev = leave_review(rev_req, pk=leave_id)
+        self.assertEqual(res_rev.status_code, 200)
+        self.assertEqual(res_rev.data['status'], 'approved')
+
+        # 3. Verify monthly summary includes the section-based leave
+        summary = AttendanceService.get_monthly_summary(self.employee, 2026, 9)
+        cal_day = summary['calendar_days'].get('2026-09-18')
+        self.assertIsNotNone(cal_day)
+        # Check leave records list
+        found = any(lr['id'] == leave_id and lr['session'] == 1 for lr in summary['leaves'])
+        self.assertTrue(found)
+
+
+
+

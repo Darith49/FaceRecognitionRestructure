@@ -424,7 +424,7 @@ class LocalDatabaseService {
         // Restore biometrics and profile picture from vault if present
         if (vault.containsKey(email)) {
           final v = vault[email]!;
-          if (v['profile_picture'] != null && (employees[idx]['profile_picture'] == null || employees[idx]['profile_picture'].toString().isEmpty)) {
+          if (v['profile_picture'] != null && v['profile_picture'].toString().isNotEmpty) {
             employees[idx]['profile_picture'] = v['profile_picture'];
           }
           if (v['has_face_registered'] == true) {
@@ -620,7 +620,7 @@ class LocalDatabaseService {
       // Restore from vault if available
       if (vault.containsKey(email)) {
         final v = vault[email]!;
-        if (v['profile_picture'] != null && (emp['profile_picture'] == null || emp['profile_picture'].toString().isEmpty)) {
+        if (v['profile_picture'] != null && v['profile_picture'].toString().isNotEmpty) {
           emp['profile_picture'] = v['profile_picture'];
         }
         if (v['has_face_registered'] == true) {

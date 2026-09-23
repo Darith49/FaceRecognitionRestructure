@@ -121,6 +121,9 @@ class BackendServer {
       // 5. Employees
       if (path.contains('/api/employees/me') && (method == 'PATCH' || method == 'PUT')) {
         final body = await _readJsonBody(request);
+        if (body.containsKey('profile_url') && !body.containsKey('profile_picture')) {
+          body['profile_picture'] = body['profile_url'];
+        }
         final email = body['email']?.toString() ?? request.uri.queryParameters['email'] ?? '';
         final uid = body['uid']?.toString() ?? request.uri.queryParameters['uid'] ?? '';
 

@@ -2,7 +2,9 @@ import 'package:face_recognition_attendance/config/navigation/navigation_control
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/service/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
+import 'package:face_recognition_attendance/core/services/local_database_service.dart';
 import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
+import 'package:face_recognition_attendance/core/services/sqlite_sync_service.dart';
 import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
@@ -69,8 +71,17 @@ class LoginController extends GetxController {
 
     final firebaseUser = _firebaseService.getCurrentUser();
     if (firebaseUser != null) {
-      final user = await _firebaseService.getUserByUid(firebaseUser.uid);
+      var user = await _firebaseService.getUserByUid(firebaseUser.uid);
       if (user != null) {
+        final vault = LocalDatabaseService().getUserAccountData(user.email);
+        if (vault != null) {
+          user = user.copyWith(
+            profileUrl: (vault['profile_picture'] != null && vault['profile_picture'].toString().isNotEmpty)
+                ? vault['profile_picture']
+                : user.profileUrl,
+            hasFaceRegistered: vault['has_face_registered'] == true || user.hasFaceRegistered,
+          );
+        }
         currentuser.value = user;
         hasFaceRegistered.value = user.hasFaceRegistered;
         if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
@@ -95,7 +106,16 @@ class LoginController extends GetxController {
       final cached = await secureStorage.getCachedUserData();
       if (cached != null) {
         try {
-          final user = UserModel.fromJson(cached);
+          var user = UserModel.fromJson(cached);
+          final vault = LocalDatabaseService().getUserAccountData(user.email);
+          if (vault != null) {
+            user = user.copyWith(
+              profileUrl: (vault['profile_picture'] != null && vault['profile_picture'].toString().isNotEmpty)
+                  ? vault['profile_picture']
+                  : user.profileUrl,
+              hasFaceRegistered: vault['has_face_registered'] == true || user.hasFaceRegistered,
+            );
+          }
           currentuser.value = user;
           hasFaceRegistered.value = user.hasFaceRegistered;
           await checkFaceStatus();
@@ -290,6 +310,11 @@ class LoginController extends GetxController {
       }
       await _syncProfileToBackend(compressed);
       await SecureStorageService().updateCachedUserData(updated.toJson());
+      await SqliteSyncService().syncProfilePicture(
+        email: user.email,
+        uid: user.uid,
+        profilePictureBase64: compressed,
+      );
 
       // Auto-refresh MyTeam tab so it reflects the updated picture immediately
       if (Get.isRegistered<MyTeamController>()) {

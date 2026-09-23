@@ -390,8 +390,14 @@ class AppSqliteDatabase {
 
   void saveUserVault(String email, Map<String, dynamic> data) {
     final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) return;
     final existing = getUserVault(cleanEmail) ?? {};
     final merged = Map<String, dynamic>.from(existing)..addAll(data);
+
+    // Map profile_url alias if present
+    if (merged.containsKey('profile_url') && (!merged.containsKey('profile_picture') || merged['profile_picture'] == null)) {
+      merged['profile_picture'] = merged['profile_url'];
+    }
 
     final templatesJson = merged['face_templates'] != null
         ? (merged['face_templates'] is String ? merged['face_templates'] : jsonEncode(merged['face_templates']))
@@ -485,18 +491,33 @@ class AppSqliteDatabase {
     final targetId = emp['id'];
     final email = emp['email']?.toString() ?? '';
 
+    // Allowed columns in employees table to prevent SQL errors from non-existent fields
+    const allowedColumns = {
+      'firebase_uid', 'employee_id', 'fullname', 'email', 'role',
+      'branch', 'branch_name', 'department', 'department_name', 'status',
+      'section1_start', 'section1_end', 'section2_start', 'section2_end',
+      'work_days', 'created_by', 'created_at', 'profile_picture',
+      'has_face_registered', 'face_templates', 'face_jpg', 'face_registered_at',
+    };
+
     final fields = <String>[];
     final values = <dynamic>[];
 
     updates.forEach((k, v) {
-      if (k == 'has_face_registered') {
+      String col = k;
+      if (col == 'uid') col = 'firebase_uid';
+      if (col == 'profile_url') col = 'profile_picture';
+
+      if (!allowedColumns.contains(col)) return;
+
+      if (col == 'has_face_registered') {
         fields.add('has_face_registered = ?');
         values.add(v == true ? 1 : 0);
-      } else if (k == 'face_templates') {
+      } else if (col == 'face_templates') {
         fields.add('face_templates = ?');
         values.add(v != null ? (v is String ? v : jsonEncode(v)) : null);
-      } else if (k != 'id') {
-        fields.add('$k = ?');
+      } else if (col != 'id') {
+        fields.add('$col = ?');
         values.add(v);
       }
     });
@@ -507,8 +528,15 @@ class AppSqliteDatabase {
     }
 
     // Mirror updates to vault if email exists and biometrics or avatar were updated
-    if (email.isNotEmpty && (updates.containsKey('profile_picture') || updates.containsKey('has_face_registered') || updates.containsKey('face_templates'))) {
-      saveUserVault(email, updates);
+    final vaultUpdates = <String, dynamic>{};
+    if (updates.containsKey('profile_picture')) vaultUpdates['profile_picture'] = updates['profile_picture'];
+    if (updates.containsKey('profile_url')) vaultUpdates['profile_picture'] = updates['profile_url'];
+    if (updates.containsKey('has_face_registered')) vaultUpdates['has_face_registered'] = updates['has_face_registered'];
+    if (updates.containsKey('face_templates')) vaultUpdates['face_templates'] = updates['face_templates'];
+    if (updates.containsKey('face_jpg')) vaultUpdates['face_jpg'] = updates['face_jpg'];
+
+    if (email.isNotEmpty && vaultUpdates.isNotEmpty) {
+      saveUserVault(email, vaultUpdates);
     }
   }
 

@@ -157,7 +157,11 @@ class LocalAuthService {
           .toList();
     }
 
-    final effectiveProfilePic = emp['profile_picture'] ?? vault?['profile_picture'];
+    final vaultPic = vault?['profile_picture']?.toString();
+    final empPic = emp['profile_picture']?.toString();
+    final effectiveProfilePic = (vaultPic != null && vaultPic.isNotEmpty)
+        ? vaultPic
+        : ((empPic != null && empPic.isNotEmpty) ? empPic : null);
     final effectiveFaceJpg = emp['face_jpg']?.toString() ?? vault?['face_jpg']?.toString();
 
     return UserModel(

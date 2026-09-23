@@ -248,8 +248,6 @@ class RequestScreen extends StatelessWidget {
 
               // ─── CLOCK ATTENDANCE (Inline) ───────────────────────────────────
               Obx(() {
-                // Hide for CEO/Admin roles
-                if (homeCtrl.isCeo) return const SizedBox.shrink();
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

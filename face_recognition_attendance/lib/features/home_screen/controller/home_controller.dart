@@ -62,16 +62,14 @@ class HomeController extends GetxController {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       now.value = DateText.nowCambodia();
     });
+    _authController.checkFaceStatus();
+    fetchTodayAttendanceStatus();
     if (isCeo) {
       refreshAdminOverview();
-    } else {
-      _authController.checkFaceStatus();
-      fetchTodayAttendanceStatus();
     }
   }
 
   Future<void> fetchTodayAttendanceStatus() async {
-    if (isCeo) return;
     try {
       final res = await _apiService.get('/attendance/status/');
       if (res is Map) {
@@ -331,7 +329,7 @@ class HomeController extends GetxController {
   // ─── Button Label & Subtext ─────────────────────────────────────────────────
 
   String get buttonLabel {
-    if (!isCeo && !hasFaceRegistered) {
+    if (!hasFaceRegistered) {
       return 'Register Face';
     }
     switch (state.value) {
@@ -352,7 +350,7 @@ class HomeController extends GetxController {
   }
 
   String get buttonSubtext {
-    if (!isCeo && !hasFaceRegistered) {
+    if (!hasFaceRegistered) {
       return 'Enroll your face first';
     }
     switch (state.value) {
@@ -393,8 +391,6 @@ class HomeController extends GetxController {
   // ─── State Progression ──────────────────────────────────────────────────────
 
   Future<void> onMainButtonPressed() async {
-    if (isCeo) return; // CEO does not check in
-
     // Account without registered face -> directly route to face enrollment
     if (!hasFaceRegistered) {
       final res = await Get.toNamed(

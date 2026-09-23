@@ -390,6 +390,13 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
         color: const Color(0xFF059669),
         onTap: () => Get.toNamed(AppRoutes.request),
       ),
+      _ActionItem(
+        title: 'Clock Attendance',
+        subtitle: 'Record executive shift',
+        icon: Icons.fingerprint_rounded,
+        color: const Color(0xFF6366F1),
+        onTap: () => Get.toNamed(AppRoutes.clock),
+      ),
     ];
 
     return LayoutBuilder(builder: (context, constraints) {

@@ -881,7 +881,7 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
   }
 
   Color _buttonColor(CheckState state) {
-    if (!widget.controller.isCeo && !widget.controller.hasFaceRegistered) {
+    if (!widget.controller.hasFaceRegistered) {
       return const Color(0xFF7C3AED);
     }
     switch (state) {
@@ -900,7 +900,7 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
   }
 
   IconData _buttonIcon(CheckState state) {
-    if (!widget.controller.isCeo && !widget.controller.hasFaceRegistered) {
+    if (!widget.controller.hasFaceRegistered) {
       return Icons.face_retouching_natural_rounded;
     }
     switch (state) {

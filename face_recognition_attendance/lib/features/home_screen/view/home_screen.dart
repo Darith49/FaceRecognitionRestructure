@@ -916,7 +916,7 @@ class _CheckInButtonState extends State<_CheckInButton>
   }
 
   Color _buttonColor(CheckState state) {
-    if (!widget.controller.isCeo && !widget.controller.hasFaceRegistered) {
+    if (!widget.controller.hasFaceRegistered) {
       return const Color(0xFF7C3AED);
     }
     switch (state) {
@@ -935,7 +935,7 @@ class _CheckInButtonState extends State<_CheckInButton>
   }
 
   IconData _buttonIcon(CheckState state) {
-    if (!widget.controller.isCeo && !widget.controller.hasFaceRegistered) {
+    if (!widget.controller.hasFaceRegistered) {
       return Icons.face_retouching_natural_rounded;
     }
     switch (state) {
@@ -1138,6 +1138,11 @@ class _CeoActionPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ─── 0. Executive Attendance Card ───
+          _CeoAttendanceCard(controller: controller),
+
+          const SizedBox(height: 16),
+
           // ─── 1. Quick Stats Summary (3 Metric Cards) ───
           Row(
             children: [
@@ -1355,6 +1360,271 @@ class _CeoActionPanel extends StatelessWidget {
 
           // ─── 3. Recent Activity / Created Lists Preview ───
           _RecentCreatedOverview(controller: controller),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Executive Attendance Card for CEO ────────────────────────────────────────
+
+class _CeoAttendanceCard extends StatelessWidget {
+  final HomeController controller;
+
+  const _CeoAttendanceCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: appleCardDecoration(radius: 20),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // Header: "Executive Attendance" + "Full Clock View"
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.access_time_filled_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Executive Attendance',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: RequestColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Obx(() {
+                        final state = controller.state.value;
+                        String statusDesc;
+                        Color statusColor;
+                        if (state == CheckState.completed || state == CheckState.checkedOut) {
+                          statusDesc = 'All Shifts Recorded';
+                          statusColor = RequestColors.approvedStatus;
+                        } else if (state == CheckState.session1CheckedIn || state == CheckState.session2CheckedIn) {
+                          statusDesc = 'Clocked In • Shift in progress';
+                          statusColor = RequestColors.primary;
+                        } else {
+                          statusDesc = 'Ready to Clock In';
+                          statusColor = RequestColors.textSecondary;
+                        }
+                        return Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: statusColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              statusDesc,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: statusColor,
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Get.toNamed(AppRoutes.clock),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: RequestColors.primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Full View',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: RequestColors.primary,
+                          ),
+                        ),
+                        SizedBox(width: 2),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 16,
+                          color: RequestColors.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1, indent: 16, endIndent: 16),
+
+          // Shift Info Row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Obx(() {
+              return Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'TODAY\'S SHIFT',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: RequestColors.textSecondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'S1: ${controller.session1SchedIn.value} - ${controller.session1SchedOut.value}  •  S2: ${controller.session2SchedIn.value} - ${controller.session2SchedOut.value}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: RequestColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'WORKED',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: RequestColors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          controller.totalHoursText,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: RequestColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+
+          // Clock In/Out Action Button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Obx(() {
+              final state = controller.state.value;
+              final hasFace = controller.hasFaceRegistered;
+              final isDone = state == CheckState.completed || state == CheckState.checkedOut;
+
+              Color btnColor;
+              String btnText;
+              IconData btnIcon;
+
+              if (!hasFace) {
+                btnColor = const Color(0xFF7C3AED);
+                btnText = 'Register Face First';
+                btnIcon = Icons.face_retouching_natural_rounded;
+              } else if (isDone) {
+                btnColor = RequestColors.approvedStatus;
+                btnText = 'Completed for Today';
+                btnIcon = Icons.check_circle_rounded;
+              } else {
+                switch (state) {
+                  case CheckState.session1NotCheckedIn:
+                  case CheckState.notCheckedIn:
+                  case CheckState.session2NotCheckedIn:
+                    btnColor = RequestColors.primary;
+                    btnText = 'Clock In (${controller.buttonSubtext})';
+                    btnIcon = Icons.login_rounded;
+                    break;
+                  case CheckState.session1CheckedIn:
+                  case CheckState.checkedIn:
+                  case CheckState.session2CheckedIn:
+                    btnColor = RequestColors.danger;
+                    btnText = 'Clock Out (${controller.buttonSubtext})';
+                    btnIcon = Icons.logout_rounded;
+                    break;
+                  default:
+                    btnColor = RequestColors.primary;
+                    btnText = 'Clock In';
+                    btnIcon = Icons.login_rounded;
+                }
+              }
+
+              return Material(
+                color: btnColor,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  onTap: isDone ? null : () => controller.onMainButtonPressed(),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(btnIcon, color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          btnText,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
         ],
       ),
     );

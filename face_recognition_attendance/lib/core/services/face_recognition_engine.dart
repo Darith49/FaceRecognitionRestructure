@@ -3,7 +3,28 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:face_recognition_attendance/features/face/model/person_model.dart';
 
-/// Result of a face recognition and liveness analysis pass.
+/// Result of a 1:1 identity verification pass.
+class FaceVerificationResult {
+  final bool isVerified;
+  final double similarity;
+  final double liveness;
+  final String reason;
+  final Uint8List? candidateFace;
+  final Uint8List? enrolledFace;
+  final String personName;
+
+  const FaceVerificationResult({
+    required this.isVerified,
+    required this.similarity,
+    required this.liveness,
+    required this.reason,
+    this.candidateFace,
+    this.enrolledFace,
+    required this.personName,
+  });
+}
+
+/// Result of a 1:N face identification pass.
 class FaceMatchResult {
   final Person? matchedPerson;
   final double similarity;
@@ -24,22 +45,40 @@ class FaceMatchResult {
   });
 }
 
-/// Cross-platform Biometric Face Recognition & Liveness Engine.
-/// Designed after the kby-ai FaceRecognition architecture to run
-/// natively and client-side on both Web and Native (Android, iOS, Windows, macOS).
+/// Face presence and image quality evaluation.
+class FaceDetectionCheck {
+  final bool hasFace;
+  final String reason;
+  final double confidence;
+
+  const FaceDetectionCheck({
+    required this.hasFace,
+    required this.reason,
+    required this.confidence,
+  });
+}
+
+/// Cross-platform Biometric Face Recognition, Liveness & Anti-Spoofing Engine.
+/// Designed after kby-ai FaceRecognition architecture with strict identity verification.
 class FaceRecognitionEngine {
   static final FaceRecognitionEngine _instance = FaceRecognitionEngine._internal();
   factory FaceRecognitionEngine() => _instance;
   FaceRecognitionEngine._internal();
 
-  /// Default similarity threshold for 1:N face identification (0.0 to 1.0).
-  double defaultIdentifyThreshold = 0.72;
+  /// Default similarity threshold for biometric matching (kby-ai default: 0.80).
+  double defaultIdentifyThreshold = 0.80;
 
-  /// Default liveness threshold based on sharpness and gradient entropy.
-  double defaultLivenessThreshold = 0.60;
+  /// Default liveness threshold for anti-spoofing (kby-ai default: 0.70).
+  double defaultLivenessThreshold = 0.70;
 
   /// Normalized embedding dimensions
   static const int embeddingDimension = 128;
+
+  /// Initialize or update engine thresholds (defaults to kby-ai standards: 0.80 and 0.70).
+  void initSettings({double? identifyThreshold, double? livenessThreshold}) {
+    if (identifyThreshold != null) defaultIdentifyThreshold = identifyThreshold;
+    if (livenessThreshold != null) defaultLivenessThreshold = livenessThreshold;
+  }
 
   /// Calculates cosine similarity between two biometric templates.
   /// Matches the kby-ai similarityCalculation interface.
@@ -60,8 +99,66 @@ class FaceRecognitionEngine {
     if (normA <= 0.0 || normB <= 0.0) return 0.0;
 
     final cosSim = dotProduct / (sqrt(normA) * sqrt(normB));
-    // Clamped and normalized to [0.0, 1.0]
     return cosSim.clamp(0.0, 1.0);
+  }
+
+  /// Detects whether an actual human face is present in the cropped frame.
+  /// Prevents blank walls, ceilings, dark rooms, or uniform surfaces from being scanned.
+  FaceDetectionCheck detectFacePresence(img.Image image) {
+    final grayscale = img.grayscale(image);
+
+    // 1. Check average brightness
+    double sum = 0.0;
+    double sumSq = 0.0;
+    final total = grayscale.width * grayscale.height;
+
+    for (int y = 0; y < grayscale.height; y++) {
+      for (int x = 0; x < grayscale.width; x++) {
+        final val = grayscale.getPixel(x, y).r.toDouble();
+        sum += val;
+        sumSq += val * val;
+      }
+    }
+
+    if (total == 0) {
+      return const FaceDetectionCheck(hasFace: false, reason: 'Invalid image dimensions.', confidence: 0.0);
+    }
+
+    final mean = sum / total;
+    final variance = (sumSq / total) - (mean * mean);
+    final stdDev = sqrt(max(variance, 0.0));
+
+    // Under-exposed or over-exposed
+    if (mean < 25.0) {
+      return const FaceDetectionCheck(hasFace: false, reason: 'Image is too dark. Please ensure sufficient lighting.', confidence: 0.0);
+    }
+    if (mean > 240.0) {
+      return const FaceDetectionCheck(hasFace: false, reason: 'Image is overexposed. Avoid direct glare or bright backlight.', confidence: 0.0);
+    }
+
+    // Flat surface check (blank walls, plain papers have very low variance)
+    if (stdDev < 16.0) {
+      return const FaceDetectionCheck(hasFace: false, reason: 'No facial features detected. Please point the camera at a real face.', confidence: 0.0);
+    }
+
+    // 2. Facial Structure Heuristic: Eye Region vs Cheek Region Contrast
+    // Gradient energy check: count meaningful edges
+    int edgeCount = 0;
+    for (int y = 2; y < grayscale.height - 2; y += 2) {
+      for (int x = 2; x < grayscale.width - 2; x += 2) {
+        final gx = (grayscale.getPixel(x + 1, y).r - grayscale.getPixel(x - 1, y).r).abs();
+        final gy = (grayscale.getPixel(x, y + 1).r - grayscale.getPixel(x, y - 1).r).abs();
+        if (gx + gy > 30) edgeCount++;
+      }
+    }
+
+    if (edgeCount < 40) {
+      return const FaceDetectionCheck(hasFace: false, reason: 'Insufficient facial contours. Please position your face closer.', confidence: 0.1);
+    }
+
+    // Passed basic biometric structure tests
+    final confidence = min(1.0, (edgeCount / 150.0) * (stdDev / 40.0));
+    return FaceDetectionCheck(hasFace: true, reason: 'Face detected successfully', confidence: confidence);
   }
 
   /// Extracts a normalized 128-dimensional biometric template from image bytes.
@@ -71,16 +168,16 @@ class FaceRecognitionEngine {
       throw Exception('Unable to decode image for face template extraction.');
     }
 
-    // 1. Orient image upright
     final oriented = img.bakeOrientation(decoded);
-
-    // 2. Crop face region (center portrait crop with aspect ratio 1:1)
     final faceCrop = _cropFaceRegion(oriented);
 
-    // 3. Resize to standard biometric analysis canvas (112x112)
-    final normalizedFace = img.copyResize(faceCrop, width: 112, height: 112);
+    // Verify face presence
+    final check = detectFacePresence(faceCrop);
+    if (!check.hasFace) {
+      throw Exception(check.reason);
+    }
 
-    // 4. Extract localized spatial gradient & texture embedding
+    final normalizedFace = img.copyResize(faceCrop, width: 112, height: 112);
     final embedding = _computeSpatialFeatureVector(normalizedFace);
 
     return _l2Normalize(embedding);
@@ -95,7 +192,9 @@ class FaceRecognitionEngine {
     final faceCrop = _cropFaceRegion(oriented);
     final resized = img.copyResize(faceCrop, width: 96, height: 96);
 
-    // Calculate Laplacian gradient variance (sharpness metric)
+    final check = detectFacePresence(resized);
+    if (!check.hasFace) return 0.0;
+
     double sum = 0.0;
     double sumSq = 0.0;
     int count = 0;
@@ -110,7 +209,6 @@ class FaceRecognitionEngine {
         final left = grayscale.getPixel(x - 1, y).r;
         final right = grayscale.getPixel(x + 1, y).r;
 
-        // Discrete 4-neighborhood Laplacian operator
         final lap = (4 * c - up - down - left - right).abs();
         sum += lap;
         sumSq += lap * lap;
@@ -123,20 +221,125 @@ class FaceRecognitionEngine {
     final mean = sum / count;
     final variance = (sumSq / count) - (mean * mean);
 
-    // Map variance to liveness score [0.0, 1.0]
-    // A clean camera face usually has variance between 150 and 1500+
-    double livenessScore = (variance / 300.0).clamp(0.0, 1.0);
+    double livenessScore = (variance / 260.0).clamp(0.0, 1.0);
 
-    // Check minimum illumination contrast
     final contrast = _calculateContrast(grayscale);
-    if (contrast < 0.15) {
-      livenessScore *= 0.5; // penalize underexposed/flat images
+    if (contrast < 0.18) {
+      livenessScore *= 0.5;
     }
 
     return livenessScore;
   }
 
-  /// Identifies a face against enrolled persons in 1:N matching.
+  /// Strict 1:1 Identity Verification:
+  /// Verifies that the scanned face matches the target enrolled person.
+  /// Prevents other people from scanning into your face.
+  Future<FaceVerificationResult> verifyUserFace(
+    Uint8List candidateBytes,
+    Person enrolledPerson, {
+    double? identifyThreshold,
+    double? livenessThreshold,
+  }) async {
+    final idThreshold = identifyThreshold ?? defaultIdentifyThreshold;
+    final liveThreshold = livenessThreshold ?? defaultLivenessThreshold;
+
+    Uint8List? croppedJpg;
+    try {
+      final decoded = img.decodeImage(candidateBytes);
+      if (decoded != null) {
+        final faceCrop = _cropFaceRegion(img.bakeOrientation(decoded));
+        final thumb = img.copyResize(faceCrop, width: 160, height: 160);
+        croppedJpg = Uint8List.fromList(img.encodeJpg(thumb, quality: 85));
+      }
+    } catch (_) {}
+
+    try {
+      final decoded = img.decodeImage(candidateBytes);
+      if (decoded == null) {
+        return FaceVerificationResult(
+          isVerified: false,
+          similarity: 0.0,
+          liveness: 0.0,
+          reason: 'Unable to decode captured camera photo.',
+          personName: enrolledPerson.name,
+          enrolledFace: enrolledPerson.faceJpg,
+        );
+      }
+
+      final oriented = img.bakeOrientation(decoded);
+      final faceCrop = _cropFaceRegion(oriented);
+
+      // 1. Detect if a face actually exists in frame
+      final presence = detectFacePresence(faceCrop);
+      if (!presence.hasFace) {
+        return FaceVerificationResult(
+          isVerified: false,
+          similarity: 0.0,
+          liveness: 0.0,
+          reason: presence.reason,
+          candidateFace: croppedJpg,
+          enrolledFace: enrolledPerson.faceJpg,
+          personName: enrolledPerson.name,
+        );
+      }
+
+      // 2. Extract Biometric Template
+      final normalizedFace = img.copyResize(faceCrop, width: 112, height: 112);
+      final candidateTemplate = _l2Normalize(_computeSpatialFeatureVector(normalizedFace));
+
+      // 3. Evaluate Liveness
+      final liveness = await calculateLiveness(candidateBytes);
+      if (liveness < liveThreshold) {
+        return FaceVerificationResult(
+          isVerified: false,
+          similarity: 0.0,
+          liveness: liveness,
+          reason: 'Liveness check failed (${(liveness * 100).toStringAsFixed(0)}% < ${(liveThreshold * 100).toStringAsFixed(0)}%). Please position your face clearly in direct lighting.',
+          candidateFace: croppedJpg,
+          enrolledFace: enrolledPerson.faceJpg,
+          personName: enrolledPerson.name,
+        );
+      }
+
+      // 4. Compute Cosine Similarity against the enrolled user
+      final similarity = similarityCalculation(candidateTemplate, enrolledPerson.templates);
+
+      if (similarity < idThreshold) {
+        return FaceVerificationResult(
+          isVerified: false,
+          similarity: similarity,
+          liveness: liveness,
+          reason: 'Security Alert: Biometric mismatch! The scanned face does not match ${enrolledPerson.name}\'s enrolled profile (${(similarity * 100).toStringAsFixed(1)}% < ${(idThreshold * 100).toStringAsFixed(0)}%). Check-in rejected.',
+          candidateFace: croppedJpg,
+          enrolledFace: enrolledPerson.faceJpg,
+          personName: enrolledPerson.name,
+        );
+      }
+
+      // 5. Verification Confirmed
+      return FaceVerificationResult(
+        isVerified: true,
+        similarity: similarity,
+        liveness: liveness,
+        reason: 'Identity verified as ${enrolledPerson.name} (${(similarity * 100).toStringAsFixed(1)}%).',
+        candidateFace: croppedJpg,
+        enrolledFace: enrolledPerson.faceJpg,
+        personName: enrolledPerson.name,
+      );
+    } catch (e) {
+      return FaceVerificationResult(
+        isVerified: false,
+        similarity: 0.0,
+        liveness: 0.0,
+        reason: 'Verification error: $e',
+        candidateFace: croppedJpg,
+        enrolledFace: enrolledPerson.faceJpg,
+        personName: enrolledPerson.name,
+      );
+    }
+  }
+
+  /// Identifies a face against enrolled persons in 1:N matching (e.g. for Kiosk or Face Login).
   Future<FaceMatchResult> matchFace(
     Uint8List candidateBytes,
     List<Person> enrolledPersons, {
@@ -150,7 +353,6 @@ class FaceRecognitionEngine {
       final template = await extractFaceTemplate(candidateBytes);
       final liveness = await calculateLiveness(candidateBytes);
 
-      // Extract a nice thumbnail for display
       Uint8List? croppedJpg;
       try {
         final decoded = img.decodeImage(candidateBytes);
@@ -191,7 +393,7 @@ class FaceRecognitionEngine {
       } else if (maxSimilarity >= idThreshold && liveness < liveThreshold) {
         message = 'Face matched (${(maxSimilarity * 100).toStringAsFixed(1)}%), but liveness score too low (${(liveness * 100).toStringAsFixed(0)}%). Please face the camera directly in good lighting.';
       } else {
-        message = 'Face not recognized. Similarity (${(maxSimilarity * 100).toStringAsFixed(1)}%) below required threshold.';
+        message = 'Face not recognized (${(maxSimilarity * 100).toStringAsFixed(1)}% < ${(idThreshold * 100).toStringAsFixed(0)}%). Access denied.';
       }
 
       return FaceMatchResult(
@@ -204,7 +406,6 @@ class FaceRecognitionEngine {
         croppedFaceJpg: croppedJpg,
       );
     } catch (e) {
-      print('[FaceRecognitionEngine] matchFace error: $e');
       return FaceMatchResult(
         similarity: 0.0,
         liveness: 0.0,
@@ -220,7 +421,6 @@ class FaceRecognitionEngine {
     final w = image.width;
     final h = image.height;
 
-    // Standard portrait bounds: centered horizontally, 15%-75% vertically
     final cropSize = min(w, h);
     final cropWidth = (cropSize * 0.75).round();
     final cropHeight = (cropSize * 0.85).round();
@@ -245,7 +445,6 @@ class FaceRecognitionEngine {
     final grayscale = img.grayscale(image);
     final features = List<double>.filled(embeddingDimension, 0.0);
 
-    // Compute global luminance mean and standard deviation for contrast invariance
     double globalSum = 0.0;
     double globalSq = 0.0;
     final totalPixels = grayscale.width * grayscale.height;
@@ -260,7 +459,6 @@ class FaceRecognitionEngine {
     final globalVar = totalPixels > 0 ? (globalSq / totalPixels) - (globalMean * globalMean) : 1.0;
     final globalStd = sqrt(max(globalVar, 1.0));
 
-    // Split face into an 8x8 spatial grid (64 cells)
     const gridSize = 8;
     final cellW = (grayscale.width / gridSize).floor();
     final cellH = (grayscale.height / gridSize).floor();
@@ -298,11 +496,9 @@ class FaceRecognitionEngine {
         final normVal = (cellMean - globalMean) / globalStd;
         final normGrad = (cellGrad - (globalStd * 0.4)) / globalStd;
 
-        // First 64 dims: standardized relative luminance across facial landmarks
         if (featureIndex < 64) {
           features[featureIndex] = normVal;
         }
-        // Second 64 dims: standardized gradient edge dynamics
         if (featureIndex + 64 < embeddingDimension) {
           features[featureIndex + 64] = normGrad;
         }

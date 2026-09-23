@@ -262,6 +262,21 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       _showSuccessDialog(message, timeDisplay: timeDisplay, resultData: result);
     } on ApiException catch (e) {
       final msg = e.message;
+      final isSecurityIssue = msg.toLowerCase().contains('security') ||
+          msg.toLowerCase().contains('mismatch') ||
+          msg.toLowerCase().contains('not match') ||
+          msg.toLowerCase().contains('unauthorized') ||
+          msg.toLowerCase().contains('not recognized');
+
+      final isQualityOrEnrollIssue = msg.toLowerCase().contains('liveness') ||
+          msg.toLowerCase().contains('no face') ||
+          msg.toLowerCase().contains('not registered') ||
+          msg.toLowerCase().contains('register your face') ||
+          msg.toLowerCase().contains('no enrolled') ||
+          msg.toLowerCase().contains('too dark') ||
+          msg.toLowerCase().contains('overexposed') ||
+          msg.toLowerCase().contains('contour');
+
       final isTimeIssue =
           msg.toLowerCase().contains('section') ||
           msg.toLowerCase().contains('scheduled') ||
@@ -271,7 +286,15 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
           msg.toLowerCase().contains('away from') ||
           msg.toLowerCase().contains('radius');
 
-      if (isTimeIssue || isLocationIssue) {
+      if (isSecurityIssue || isQualityOrEnrollIssue) {
+        _showSecurityAlertDialog(
+          title: isSecurityIssue
+              ? 'Security Alert: Biometric Mismatch'
+              : 'Face Verification Failed',
+          message: msg,
+          details: e.details,
+        );
+      } else if (isTimeIssue || isLocationIssue) {
         final title = isTimeIssue
             ? 'Outside Check-In Window'
             : 'Location Out of Range';
@@ -382,6 +405,32 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                   ),
                 ),
               ],
+              if (resultData is Map && resultData['similarity'] != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.verified_user_rounded, size: 16, color: Colors.green.shade700),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Biometric Match: ${((resultData['similarity'] as num) * 100).toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -402,6 +451,117 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                     'Done',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSecurityAlertDialog({
+    required String title,
+    required String message,
+    dynamic details,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.gpp_bad_rounded,
+                  size: 44,
+                  color: Colors.red.shade600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red.shade700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade800,
+                  height: 1.4,
+                ),
+              ),
+              if (details is Map && details['similarity'] != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Biometric Match:', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                          Text(
+                            '${((details['similarity'] as num) * 100).toStringAsFixed(1)}% (Req: 80%)',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
+                          ),
+                        ],
+                      ),
+                      if (details['liveness'] != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Liveness Score:', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                            Text(
+                              '${((details['liveness'] as num) * 100).toStringAsFixed(1)}% (Req: 70%)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: (details['liveness'] as num) >= 0.70 ? Colors.green.shade700 : Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade600,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
               ),
             ],

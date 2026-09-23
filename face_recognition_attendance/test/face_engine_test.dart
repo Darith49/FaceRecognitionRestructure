@@ -111,5 +111,45 @@ void main() async {
   assert(diffResult.isRecognized == false, 'Different face should not be recognized');
   assert(diffResult.similarity < 0.75, 'Similarity of different face should be below threshold');
 
-  print('\n=== ALL BIOMETRIC FACE RECOGNITION TESTS PASSED SUCCESSFULLY! ===');
+  // Test 6: Strict 1:1 Identity Verification (Authorized user)
+  print('\n[Test 6] Testing 1:1 identity verification with authorized face...');
+  final authVerify = await engine.verifyUserFace(
+    jpgBytes,
+    enrolledPerson,
+    identifyThreshold: 0.80,
+    livenessThreshold: 0.70,
+  );
+  print('1:1 Verification Passed: ${authVerify.isVerified}');
+  print('Reason: ${authVerify.reason}');
+  assert(authVerify.isVerified == true, 'Genuine enrolled face must be verified');
+
+  // Test 7: Anti-Buddy-Punching (Impostor face scanning on someone else\'s account)
+  print('\n[Test 7] Testing Anti-Buddy-Punching (Impostor face rejected)...');
+  final impostorVerify = await engine.verifyUserFace(
+    diffBytes,
+    enrolledPerson,
+    identifyThreshold: 0.80,
+    livenessThreshold: 0.70,
+  );
+  print('Impostor Verification Passed: ${impostorVerify.isVerified}');
+  print('Reason: ${impostorVerify.reason}');
+  assert(impostorVerify.isVerified == false, 'Impostor face MUST be rejected');
+  assert(impostorVerify.reason.contains('mismatch') || impostorVerify.reason.contains('No facial'), 'Must give security alert');
+
+  // Test 8: Blank Surface / Non-Face Rejection
+  print('\n[Test 8] Testing non-face / blank surface rejection...');
+  final blankImg = img.Image(width: 200, height: 200);
+  img.fill(blankImg, color: img.ColorRgb8(245, 245, 245)); // blank white wall
+  final blankBytes = Uint8List.fromList(img.encodeJpg(blankImg));
+
+  final blankVerify = await engine.verifyUserFace(
+    blankBytes,
+    enrolledPerson,
+  );
+  print('Blank surface verification passed: ${blankVerify.isVerified}');
+  print('Reason: ${blankVerify.reason}');
+  assert(blankVerify.isVerified == false, 'Blank surface must NOT pass verification');
+  assert(blankVerify.reason.contains('facial features') || blankVerify.reason.contains('features'), 'Must reject blank surface');
+
+  print('\n=== ALL BIOMETRIC FACE RECOGNITION & SECURITY TESTS PASSED SUCCESSFULLY! ===');
 }

@@ -3,6 +3,7 @@ import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/service/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
+import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
@@ -279,13 +280,16 @@ class LoginController extends GetxController {
   Future<void> updateProfilePicture(String profileUrl) async {
     final user = currentuser.value;
     if (user != null) {
-      currentuser.value = user.copyWith(profileUrl: profileUrl);
+      final compressed = ImageCompressor.compressProfilePicture(profileUrl);
+      final updated = user.copyWith(profileUrl: compressed);
+      currentuser.value = updated;
       try {
-        await _firebaseService.updateProfilePicture(user.uid, profileUrl);
+        await _firebaseService.updateProfilePicture(user.uid, compressed);
       } catch (e) {
         debugPrint('Error updating profile picture in Firestore: $e');
       }
-      await _syncProfileToBackend(profileUrl);
+      await _syncProfileToBackend(compressed);
+      await SecureStorageService().updateCachedUserData(updated.toJson());
 
       // Auto-refresh MyTeam tab so it reflects the updated picture immediately
       if (Get.isRegistered<MyTeamController>()) {

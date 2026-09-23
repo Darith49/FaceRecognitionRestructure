@@ -129,6 +129,9 @@ class LocalAuthService {
 
   UserModel _createAndCacheUser(Map<String, dynamic> emp) {
     final uid = emp['firebase_uid'] ?? emp['id'].toString();
+    final email = emp['email']?.toString().toLowerCase().trim() ?? '';
+    final vault = _db.getUserAccountData(email);
+
     _currentUser = LocalUser(
       uid: uid,
       email: emp['email'] ?? '',
@@ -137,6 +140,7 @@ class LocalAuthService {
     _authBox.write('current_user_uid', uid);
 
     final bool hasFace = emp['has_face_registered'] == true ||
+        (vault?['has_face_registered'] == true) ||
         _db.getPersons().any((p) =>
             p.id == uid ||
             p.employeeId == emp['employee_id'] ||
@@ -147,7 +151,14 @@ class LocalAuthService {
       templates = (emp['face_templates'] as List)
           .map((e) => (e as num).toDouble())
           .toList();
+    } else if (vault?['face_templates'] is List) {
+      templates = (vault!['face_templates'] as List)
+          .map((e) => (e as num).toDouble())
+          .toList();
     }
+
+    final effectiveProfilePic = emp['profile_picture'] ?? vault?['profile_picture'];
+    final effectiveFaceJpg = emp['face_jpg']?.toString() ?? vault?['face_jpg']?.toString();
 
     return UserModel(
       uid: uid,
@@ -162,10 +173,10 @@ class LocalAuthService {
       createdAt: emp['created_at'] != null
           ? DateTime.tryParse(emp['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      profileUrl: emp['profile_picture'],
+      profileUrl: effectiveProfilePic,
       hasFaceRegistered: hasFace,
       faceTemplates: templates,
-      faceJpg: emp['face_jpg']?.toString(),
+      faceJpg: effectiveFaceJpg,
     );
   }
 
@@ -206,9 +217,14 @@ class LocalAuthService {
   }
 
   Future<void> updateProfilePicture(String uid, String profileUrl) async {
-    final emp = _db.getEmployeeByUid(uid);
+    final emp = _db.getEmployeeByUid(uid) ??
+        (_currentUser != null ? _db.getEmployeeByEmail(_currentUser!.email) : null);
     if (emp != null) {
       _db.updateEmployee(emp['id'], {'profile_picture': profileUrl});
+      final email = emp['email']?.toString() ?? _currentUser?.email ?? '';
+      if (email.isNotEmpty) {
+        _db.saveUserAccountData(email, {'profile_picture': profileUrl});
+      }
     }
   }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:face_recognition_attendance/core/services/face_recognition_engine.dart';
+import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
 import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
@@ -82,8 +83,10 @@ class ApiService {
       final user = _auth.getCurrentUser();
       if (user == null) return {'registered': false};
       final emp = _db.getEmployeeByUid(user.uid) ?? _db.getEmployeeByEmail(user.email);
+      final vault = _db.getUserAccountData(user.email);
       final empCode = emp?['employee_id']?.toString() ?? '';
-      final enrolled = (emp != null && emp['has_face_registered'] == true) ||
+      final enrolled = (vault?['has_face_registered'] == true) ||
+          (emp != null && emp['has_face_registered'] == true) ||
           _db.getPersons().any(
             (p) =>
                 p.id == user.uid ||
@@ -225,6 +228,27 @@ class ApiService {
       return _db.updateBranch(id, data);
     }
 
+    if (clean.contains('/employees/me/')) {
+      final user = _auth.getCurrentUser();
+      if (user != null) {
+        final emp = _db.getEmployeeByUid(user.uid) ?? _db.getEmployeeByEmail(user.email);
+        if (emp != null) {
+          if (data.containsKey('profile_url') && !data.containsKey('profile_picture')) {
+            data['profile_picture'] = data['profile_url'];
+          }
+          if (data.containsKey('profile_picture') && data['profile_picture'] != null) {
+            data['profile_picture'] = ImageCompressor.compressProfilePicture(data['profile_picture'].toString());
+          }
+          final res = _db.updateEmployee(emp['id'], data);
+          if (data.containsKey('profile_picture')) {
+            _db.saveUserAccountData(user.email, {'profile_picture': data['profile_picture']});
+          }
+          return res;
+        }
+      }
+      return data;
+    }
+
     if (clean.contains('/employees/')) {
       final id = parts.length >= 2 ? parts[1] : 1;
       return _db.updateEmployee(id, data);
@@ -325,16 +349,26 @@ class ApiService {
         );
       }
 
+      // Compress thumbnail for efficient browser storage (~5KB)
+      final compressedThumb = ImageCompressor.compressFaceReference(bytes);
       final person = Person(
         id: personId,
         name: personName,
         employeeId: employeeId,
-        faceJpg: bytes,
+        faceJpg: compressedThumb,
         templates: template,
         enrolledAt: DateTime.now(),
       );
 
       _db.savePerson(person);
+
+      // Save directly to the persistent user vault so it permanently survives
+      _db.saveUserAccountData(user.email, {
+        'has_face_registered': true,
+        'face_templates': template,
+        'face_jpg': base64Encode(compressedThumb),
+        'face_registered_at': DateTime.now().toIso8601String(),
+      });
 
       // Keep LoginController & session in sync immediately with the saved face
       if (Get.isRegistered<LoginController>()) {
@@ -344,7 +378,7 @@ class ApiService {
           final updated = loginCtrl.currentuser.value!.copyWith(
             hasFaceRegistered: true,
             faceTemplates: template,
-            faceJpg: base64Encode(bytes),
+            faceJpg: base64Encode(compressedThumb),
           );
           loginCtrl.currentuser.value = updated;
           SecureStorageService().updateCachedUserData(updated.toJson());

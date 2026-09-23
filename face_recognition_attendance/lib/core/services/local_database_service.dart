@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/features/face/model/person_model.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -22,6 +23,33 @@ class LocalDatabaseService {
     _seedDefaultDataIfEmpty();
     _syncDemoAccounts();
     _isInitialized = true;
+  }
+
+  // ==================== PERSISTENT USER ACCOUNT VAULT ====================
+  // Ensures profile pictures and face biometrics are permanently retained
+  // across logins, app restarts, and demo account synchronization.
+  Map<String, dynamic> _getUserVault() {
+    final raw = _box.read<Map>('user_account_vault');
+    return raw != null
+        ? Map<String, dynamic>.from(raw.map((k, v) => MapEntry(k.toString(), Map<String, dynamic>.from(v as Map))))
+        : <String, dynamic>{};
+  }
+
+  void saveUserAccountData(String email, Map<String, dynamic> updates) {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) return;
+    final vault = _getUserVault();
+    final existing = vault[cleanEmail] ?? <String, dynamic>{};
+    updates.forEach((k, v) => existing[k] = v);
+    vault[cleanEmail] = existing;
+    _box.write('user_account_vault', vault);
+  }
+
+  Map<String, dynamic>? getUserAccountData(String email) {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) return null;
+    final vault = _getUserVault();
+    return vault[cleanEmail];
   }
 
   void _seedDefaultDataIfEmpty() {
@@ -305,9 +333,11 @@ class LocalDatabaseService {
         ? List<Map<String, dynamic>>.from(raw.map((e) => Map<String, dynamic>.from(e as Map)))
         : <Map<String, dynamic>>[];
 
+    final vault = _getUserVault();
     for (final demo in demoDefs) {
+      final email = demo['email']?.toString().toLowerCase().trim() ?? '';
       final idx = employees.indexWhere((e) =>
-          e['email']?.toString().toLowerCase().trim() == demo['email']?.toString().toLowerCase().trim());
+          e['email']?.toString().toLowerCase().trim() == email);
       if (idx != -1) {
         employees[idx]['role'] = demo['role'];
         employees[idx]['fullname'] = demo['fullname'];
@@ -318,12 +348,26 @@ class LocalDatabaseService {
         employees[idx]['department'] ??= demo['department'];
         employees[idx]['department_name'] ??= demo['department_name'];
         employees[idx]['status'] = 'active';
-        // Biometrics (has_face_registered, face_templates, face_jpg) are preserved
+
+        // Restore biometrics and profile picture from vault if present
+        if (vault.containsKey(email)) {
+          final v = vault[email]!;
+          if (v['profile_picture'] != null && (employees[idx]['profile_picture'] == null || employees[idx]['profile_picture'].toString().isEmpty)) {
+            employees[idx]['profile_picture'] = v['profile_picture'];
+          }
+          if (v['has_face_registered'] == true) {
+            employees[idx]['has_face_registered'] = true;
+            employees[idx]['face_templates'] ??= v['face_templates'];
+            employees[idx]['face_jpg'] ??= v['face_jpg'];
+            employees[idx]['face_registered_at'] ??= v['face_registered_at'];
+          }
+        }
       } else {
         int nextId = 1;
         if (employees.isNotEmpty) {
           nextId = employees.map((e) => (e['id'] as num?)?.toInt() ?? 0).reduce(max) + 1;
         }
+        final v = vault[email];
         employees.add({
           'id': nextId,
           'section1_start': '08:00:00',
@@ -333,8 +377,10 @@ class LocalDatabaseService {
           'work_days': 'mon,tue,wed,thu,fri',
           'created_by': 'system',
           'created_at': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-          'profile_picture': null,
-          'has_face_registered': false,
+          'profile_picture': v?['profile_picture'],
+          'has_face_registered': v?['has_face_registered'] == true,
+          'face_templates': v?['face_templates'],
+          'face_jpg': v?['face_jpg'],
           ...demo,
         });
       }
@@ -405,29 +451,51 @@ class LocalDatabaseService {
 
   void savePerson(Person person) {
     _cachedPersons = null;
+
+    // Compress reference face image to prevent exceeding browser storage quota
+    final compressedFaceJpg = ImageCompressor.compressFaceReference(person.faceJpg);
+    final optimizedPerson = Person(
+      id: person.id,
+      name: person.name,
+      employeeId: person.employeeId,
+      faceJpg: compressedFaceJpg,
+      templates: person.templates,
+      enrolledAt: person.enrolledAt,
+    );
+
     final list = _box.read<List>('persons') ?? [];
-    final existingIndex = list.indexWhere((p) => p['id'] == person.id || p['employeeId'] == person.employeeId);
+    final existingIndex = list.indexWhere((p) => p['id'] == optimizedPerson.id || p['employeeId'] == optimizedPerson.employeeId);
     if (existingIndex >= 0) {
-      list[existingIndex] = person.toMap();
+      list[existingIndex] = optimizedPerson.toMap();
     } else {
-      list.add(person.toMap());
+      list.add(optimizedPerson.toMap());
     }
     _box.write('persons', list);
 
-    // Save directly to the account in 'employees' storage
+    // Save directly to the account in 'employees' storage and vault
     final rawEmp = _box.read<List>('employees') ?? [];
     final empList = List<Map<String, dynamic>>.from(rawEmp.map((e) => Map<String, dynamic>.from(e as Map)));
     final empIdx = empList.indexWhere((e) =>
-        e['id']?.toString() == person.id ||
-        e['firebase_uid']?.toString() == person.id ||
-        e['employee_id']?.toString() == person.employeeId ||
-        e['employee_id']?.toString() == person.id);
+        e['id']?.toString() == optimizedPerson.id ||
+        e['firebase_uid']?.toString() == optimizedPerson.id ||
+        e['employee_id']?.toString() == optimizedPerson.employeeId ||
+        e['employee_id']?.toString() == optimizedPerson.id);
     if (empIdx >= 0) {
       empList[empIdx]['has_face_registered'] = true;
-      empList[empIdx]['face_templates'] = person.templates;
-      empList[empIdx]['face_jpg'] = base64Encode(person.faceJpg);
-      empList[empIdx]['face_registered_at'] = person.enrolledAt.toIso8601String();
+      empList[empIdx]['face_templates'] = optimizedPerson.templates;
+      empList[empIdx]['face_jpg'] = base64Encode(optimizedPerson.faceJpg);
+      empList[empIdx]['face_registered_at'] = optimizedPerson.enrolledAt.toIso8601String();
       _box.write('employees', empList);
+
+      final email = empList[empIdx]['email']?.toString();
+      if (email != null && email.isNotEmpty) {
+        saveUserAccountData(email, {
+          'has_face_registered': true,
+          'face_templates': optimizedPerson.templates,
+          'face_jpg': base64Encode(optimizedPerson.faceJpg),
+          'face_registered_at': optimizedPerson.enrolledAt.toIso8601String(),
+        });
+      }
     }
   }
 
@@ -460,10 +528,27 @@ class LocalDatabaseService {
     final personList = _cachedPersons ?? (
       (_box.read<List>('persons') ?? []).map((e) => Person.fromMap(Map<String, dynamic>.from(e as Map))).toList()
     );
+    final vault = _getUserVault();
 
     for (final emp in list) {
+      final email = emp['email']?.toString().toLowerCase().trim() ?? '';
       final empCode = emp['employee_id']?.toString() ?? '';
       final empUid = emp['firebase_uid']?.toString() ?? emp['id']?.toString() ?? '';
+
+      // Restore from vault if available
+      if (vault.containsKey(email)) {
+        final v = vault[email]!;
+        if (v['profile_picture'] != null && (emp['profile_picture'] == null || emp['profile_picture'].toString().isEmpty)) {
+          emp['profile_picture'] = v['profile_picture'];
+        }
+        if (v['has_face_registered'] == true) {
+          emp['has_face_registered'] = true;
+          emp['face_templates'] ??= v['face_templates'];
+          emp['face_jpg'] ??= v['face_jpg'];
+          emp['face_registered_at'] ??= v['face_registered_at'];
+        }
+      }
+
       final hasFace = emp['has_face_registered'] == true ||
           personList.any((p) =>
               p.id == empUid ||
@@ -519,9 +604,34 @@ class LocalDatabaseService {
     final idx = list.indexWhere((e) => e['id'].toString() == id.toString());
     if (idx < 0) return null;
     final updated = Map<String, dynamic>.from(list[idx]);
+
+    // Automatically optimize profile picture if being updated
+    if (updates.containsKey('profile_picture') && updates['profile_picture'] != null) {
+      final rawPic = updates['profile_picture'].toString();
+      if (rawPic.isNotEmpty) {
+        updates['profile_picture'] = ImageCompressor.compressProfilePicture(rawPic);
+      }
+    }
+
     updates.forEach((k, v) => updated[k] = v);
     list[idx] = updated;
     _box.write('employees', list);
+
+    // Keep vault in sync
+    final email = updated['email']?.toString().toLowerCase().trim();
+    if (email != null && email.isNotEmpty) {
+      final vaultUpdates = <String, dynamic>{};
+      if (updates.containsKey('profile_picture')) {
+        vaultUpdates['profile_picture'] = updates['profile_picture'];
+      }
+      if (updates.containsKey('has_face_registered')) {
+        vaultUpdates['has_face_registered'] = updates['has_face_registered'];
+      }
+      if (vaultUpdates.isNotEmpty) {
+        saveUserAccountData(email, vaultUpdates);
+      }
+    }
+
     return updated;
   }
 

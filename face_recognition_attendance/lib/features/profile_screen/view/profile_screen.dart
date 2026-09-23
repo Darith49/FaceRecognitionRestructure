@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:face_recognition_attendance/core/utils/file_picker_helper.dart';
+import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/permissions/app_permissions.dart';
 import 'package:face_recognition_attendance/core/permissions/widgets/permission_view.dart';
@@ -552,10 +553,9 @@ class ProfileScreen extends StatelessWidget {
 
       RequestSnack.show(messenger, 'Updating profile picture...');
 
-      final ext = file.extension?.toLowerCase() ?? 'jpeg';
-      final mime = (ext == 'png') ? 'image/png' : 'image/jpeg';
-      final base64String = base64Encode(bytes);
-      final dataUri = 'data:$mime;base64,$base64String';
+      final compressedBytes = ImageCompressor.compressImageBytes(bytes, maxDimension: 220, quality: 82);
+      final base64String = base64Encode(compressedBytes);
+      final dataUri = 'data:image/jpeg;base64,$base64String';
 
       await controller.updateProfilePicture(dataUri);
 

@@ -135,6 +135,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       Get.snackbar(
         'Location Required',
         'Waiting for GPS fix. Please ensure location is enabled.',
+        snackPosition: SnackPosition.TOP,
       );
       _getCurrentLocation();
       return;
@@ -151,7 +152,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       Get.snackbar(
         'Error',
         'Could not complete face scan: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -166,6 +167,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       Get.snackbar(
         'Location Required',
         'Waiting for GPS fix. Please ensure location is enabled.',
+        snackPosition: SnackPosition.TOP,
       );
       _getCurrentLocation();
       return;
@@ -178,7 +180,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       if (file == null) return;
       await _processImageBytes(file.bytes, file.name);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to select image: $e');
+      Get.snackbar('Error', 'Failed to select image: $e', snackPosition: SnackPosition.TOP);
     }
   }
 
@@ -307,7 +309,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
         Get.snackbar(
           '${_getActionTitle()} Failed',
           e.message,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade600,
           colorText: Colors.white,
           duration: const Duration(seconds: 4),
@@ -317,7 +319,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       Get.snackbar(
         'Error',
         'Could not complete face scan: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );

@@ -330,26 +330,103 @@ class RequestButton extends StatelessWidget {
   }
 }
 
-/// Small message at the bottom of the screen.
+/// Notification popup displayed at the top of the screen so it is never
+/// covered or obscured by the floating bottom navigation bar.
 class RequestSnack {
   RequestSnack._();
 
-  /// Get the messenger BEFORE any `await` or `Get.back()`:
-  /// `RequestSnack.show(ScaffoldMessenger.of(context), 'Saved');`
-  static void show(ScaffoldMessengerState messenger, String message) {
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: RequestColors.textPrimary,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+  /// Displays a modern, non-intrusive popup notification at the top of the screen.
+  /// Fully backwards compatible with existing `RequestSnack.show(messenger, message)` calls.
+  static void show(dynamic messenger, String message, {bool? isError}) {
+    final lower = message.toLowerCase();
+    final bool err = isError ??
+        (lower.contains('failed') ||
+            lower.contains('error') ||
+            lower.contains('denied') ||
+            lower.contains('too large') ||
+            lower.contains('cancelled') ||
+            lower.contains('first') ||
+            lower.contains('must') ||
+            lower.contains('required'));
+
+    final bool success = !err &&
+        (lower.contains('success') ||
+            lower.contains('saved') ||
+            lower.contains('submitted') ||
+            lower.contains('updated') ||
+            lower.contains('approved'));
+
+    final Color bgColor = err
+        ? const Color(0xFFDC2626)
+        : (success ? const Color(0xFF16A34A) : RequestColors.textPrimary);
+
+    final IconData icon = err
+        ? Icons.error_outline_rounded
+        : (success ? Icons.check_circle_outline_rounded : Icons.info_outline_rounded);
+
+    try {
+      if (Get.isSnackbarOpen) {
+        Get.closeCurrentSnackbar();
+      }
+
+      Get.rawSnackbar(
+        messageText: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.20),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
+          ],
         ),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: bgColor,
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        borderRadius: 16,
+        duration: const Duration(seconds: 3),
+        snackStyle: SnackStyle.FLOATING,
+        animationDuration: const Duration(milliseconds: 280),
+        boxShadows: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
       );
+    } catch (_) {
+      // Fallback if GetX overlay is unavailable in current context
+      if (messenger is ScaffoldMessengerState) {
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(message),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: bgColor,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+      }
+    }
   }
 }
 

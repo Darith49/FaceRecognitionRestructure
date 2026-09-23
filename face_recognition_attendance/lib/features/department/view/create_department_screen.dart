@@ -44,7 +44,11 @@ class _CreateDepartmentScreenState extends State<CreateDepartmentScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedBranchId == null) {
-      Get.snackbar('Branch Required', 'Please select a branch for this department.');
+      Get.snackbar(
+        'Branch Required',
+        'Please select a branch for this department.',
+        snackPosition: SnackPosition.TOP,
+      );
       return;
     }
 
@@ -61,7 +65,7 @@ class _CreateDepartmentScreenState extends State<CreateDepartmentScreen> {
         Get.snackbar(
           'Success',
           'Department "$deptName" created successfully.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.shade600,
           colorText: Colors.white,
           icon: const Icon(Icons.check_circle_rounded, color: Colors.white),

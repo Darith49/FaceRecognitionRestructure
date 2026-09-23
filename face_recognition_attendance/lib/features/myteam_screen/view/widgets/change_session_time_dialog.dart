@@ -244,7 +244,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
         Get.snackbar(
           'Session Updated',
           'Work schedule for ${widget.memberName} was successfully updated.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.shade700,
           colorText: Colors.white,
           icon: const Icon(Icons.check_circle_rounded, color: Colors.white),

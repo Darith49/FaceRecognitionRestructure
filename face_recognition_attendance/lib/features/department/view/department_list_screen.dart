@@ -250,7 +250,7 @@ class DepartmentListScreen extends StatelessWidget {
                               if (isSubmitting.value || controller.isLoading.value) return;
                               if (!formKey.currentState!.validate()) return;
                               if (selectedBranchId == null) {
-                                Get.snackbar('Branch Required', 'Please select a branch.');
+                                Get.snackbar('Branch Required', 'Please select a branch.', snackPosition: SnackPosition.TOP);
                                 return;
                               }
                               isSubmitting.value = true;
@@ -266,7 +266,7 @@ class DepartmentListScreen extends StatelessWidget {
                                   Get.snackbar(
                                     'Success',
                                     'Department "$name" updated successfully.',
-                                    snackPosition: SnackPosition.BOTTOM,
+                                    snackPosition: SnackPosition.TOP,
                                     backgroundColor: Colors.green.shade600,
                                     colorText: Colors.white,
                                     icon: const Icon(Icons.check_circle_rounded, color: Colors.white),

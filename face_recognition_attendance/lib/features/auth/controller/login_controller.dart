@@ -148,7 +148,7 @@ class LoginController extends GetxController {
         Get.snackbar(
           'Account Not Found',
           errorMessage.value,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade600,
           colorText: Colors.white,
           icon: const Icon(Icons.error_outline, color: Colors.white),
@@ -163,7 +163,7 @@ class LoginController extends GetxController {
       Get.snackbar(
         'Login Failed',
         errorMessage.value,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
         icon: const Icon(Icons.error_outline, color: Colors.white),
@@ -213,7 +213,7 @@ class LoginController extends GetxController {
         Get.snackbar(
           'Account Not Found',
           errorMessage.value,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade600,
           colorText: Colors.white,
           icon: const Icon(Icons.error_outline, color: Colors.white),
@@ -253,7 +253,7 @@ class LoginController extends GetxController {
         Get.snackbar(
           'Sign In Failed',
           errorMessage.value,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade600,
           colorText: Colors.white,
           icon: const Icon(Icons.error_outline, color: Colors.white),

@@ -97,7 +97,7 @@ class CeoPanelController extends GetxController {
     Get.snackbar(
       'Security Thresholds Updated',
       'Match: ${(identify * 100).toStringAsFixed(0)}% • Liveness: ${(liveness * 100).toStringAsFixed(0)}%',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: const Color(0xFF0F172A),
       colorText: Colors.white,
       icon: const Icon(Icons.shield_rounded, color: Color(0xFF34C759)),
@@ -113,7 +113,7 @@ class CeoPanelController extends GetxController {
     Get.snackbar(
       'Request Approved',
       'Leave request #$leaveId approved successfully.',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.green.shade700,
       colorText: Colors.white,
       margin: const EdgeInsets.all(16),
@@ -127,7 +127,7 @@ class CeoPanelController extends GetxController {
     Get.snackbar(
       'Request Rejected',
       'Leave request #$leaveId has been declined.',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.red.shade700,
       colorText: Colors.white,
       margin: const EdgeInsets.all(16),

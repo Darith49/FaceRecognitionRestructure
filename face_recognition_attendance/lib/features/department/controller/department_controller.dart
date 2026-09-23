@@ -58,7 +58,7 @@ class DepartmentController extends GetxController {
       Get.snackbar(
         'Failed',
         e.message,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -67,7 +67,7 @@ class DepartmentController extends GetxController {
       Get.snackbar(
         'Error',
         'Could not create department: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -104,7 +104,7 @@ class DepartmentController extends GetxController {
       Get.snackbar(
         'Failed',
         e.message,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -113,7 +113,7 @@ class DepartmentController extends GetxController {
       Get.snackbar(
         'Error',
         'Could not update department: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -131,7 +131,7 @@ class DepartmentController extends GetxController {
       Get.snackbar(
         'Success',
         'Department deleted successfully.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green.shade600,
         colorText: Colors.white,
       );
@@ -140,7 +140,7 @@ class DepartmentController extends GetxController {
       Get.snackbar(
         'Failed',
         e.message,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );

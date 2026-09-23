@@ -118,7 +118,7 @@ class EmployeeController extends GetxController {
       Get.snackbar(
         'Failed to Invite',
         e.message,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -127,7 +127,7 @@ class EmployeeController extends GetxController {
       Get.snackbar(
         'Error',
         'Could not invite employee: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -190,7 +190,7 @@ class EmployeeController extends GetxController {
       Get.snackbar(
         'Failed',
         e.message,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -199,7 +199,7 @@ class EmployeeController extends GetxController {
       Get.snackbar(
         'Error',
         'Could not update employee: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -224,7 +224,7 @@ class EmployeeController extends GetxController {
       Get.snackbar(
         'Invitation Sent',
         'Invitation email resent to ${employee.email}',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green.shade600,
         colorText: Colors.white,
         icon: const Icon(Icons.mark_email_read_outlined, color: Colors.white),
@@ -237,7 +237,7 @@ class EmployeeController extends GetxController {
       Get.snackbar(
         'Failed to Resend',
         e.message,
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -246,7 +246,7 @@ class EmployeeController extends GetxController {
       Get.snackbar(
         'Error',
         'Could not resend invitation: $e',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );

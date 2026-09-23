@@ -251,7 +251,7 @@ class BranchListScreen extends StatelessWidget {
                                     latController.text = pos.latitude.toStringAsFixed(6);
                                     lngController.text = pos.longitude.toStringAsFixed(6);
                                   } catch (e) {
-                                    Get.snackbar('GPS Error', e.toString());
+                                    Get.snackbar('GPS Error', e.toString(), snackPosition: SnackPosition.TOP);
                                   } finally {
                                     isLocating.value = false;
                                   }
@@ -344,7 +344,7 @@ class BranchListScreen extends StatelessWidget {
                                   Get.snackbar(
                                     'Success',
                                     'Branch "$name" updated successfully.',
-                                    snackPosition: SnackPosition.BOTTOM,
+                                    snackPosition: SnackPosition.TOP,
                                     backgroundColor: Colors.green.shade600,
                                     colorText: Colors.white,
                                     icon: const Icon(Icons.check_circle_rounded, color: Colors.white),

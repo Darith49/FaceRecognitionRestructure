@@ -337,8 +337,11 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: 'Team management & approval workflows',
                     icon: Icons.admin_panel_settings_rounded,
                     iconColor: RequestColors.primary,
-                    onTap: () =>
-                        Get.snackbar('Manager Action', 'Manager Portal'),
+                    onTap: () => Get.snackbar(
+                      'Manager Action',
+                      'Manager Portal',
+                      snackPosition: SnackPosition.TOP,
+                    ),
                   ),
                 ),
               ),
@@ -355,7 +358,11 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: 'Direct team oversight & task delegation',
                     icon: Icons.supervisor_account_rounded,
                     iconColor: RequestColors.gold,
-                    onTap: () => Get.snackbar('Leader Action', 'Leader View'),
+                    onTap: () => Get.snackbar(
+                      'Leader Action',
+                      'Leader View',
+                      snackPosition: SnackPosition.TOP,
+                    ),
                   ),
                 ),
               ),
@@ -372,8 +379,11 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: 'Personal dashboard & self-service tools',
                     icon: Icons.person_rounded,
                     iconColor: RequestColors.approvedStatus,
-                    onTap: () =>
-                        Get.snackbar('Employee Action', 'Employee Workspace'),
+                    onTap: () => Get.snackbar(
+                      'Employee Action',
+                      'Employee Workspace',
+                      snackPosition: SnackPosition.TOP,
+                    ),
                   ),
                 ),
               ),

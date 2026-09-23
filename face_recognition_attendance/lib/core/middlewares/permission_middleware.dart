@@ -20,7 +20,7 @@ class PermissionMiddleware extends GetMiddleware {
       Get.snackbar(
         'Access Denied',
         'You do not have permission to view this page.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade800,
         colorText: Colors.white,
       );

@@ -794,7 +794,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                       Get.snackbar(
                                         'Success',
                                         'User "$fullname" updated successfully.',
-                                        snackPosition: SnackPosition.BOTTOM,
+                                        snackPosition: SnackPosition.TOP,
                                         backgroundColor: Colors.green.shade600,
                                         colorText: Colors.white,
                                         icon: const Icon(Icons.check_circle_rounded, color: Colors.white),

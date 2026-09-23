@@ -40,7 +40,11 @@ class _CreateBranchScreenState extends State<CreateBranchScreen> {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Get.snackbar('Location Service', 'Location services are disabled. Please turn on GPS.');
+        Get.snackbar(
+          'Location Service',
+          'Location services are disabled. Please turn on GPS.',
+          snackPosition: SnackPosition.TOP,
+        );
         return;
       }
 
@@ -48,13 +52,21 @@ class _CreateBranchScreenState extends State<CreateBranchScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          Get.snackbar('Permission Denied', 'Location permissions are denied.');
+          Get.snackbar(
+            'Permission Denied',
+            'Location permissions are denied.',
+            snackPosition: SnackPosition.TOP,
+          );
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        Get.snackbar('Permission Denied', 'Location permissions are permanently denied.');
+        Get.snackbar(
+          'Permission Denied',
+          'Location permissions are permanently denied.',
+          snackPosition: SnackPosition.TOP,
+        );
         return;
       }
 
@@ -73,12 +85,12 @@ class _CreateBranchScreenState extends State<CreateBranchScreen> {
       Get.snackbar(
         'GPS Located',
         'Coordinates updated (Accuracy: ${position.accuracy.toStringAsFixed(1)}m)',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.indigo.shade600,
         colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar('Location Error', e.toString());
+      Get.snackbar('Location Error', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) {
         setState(() => _isGettingLocation = false);
@@ -96,7 +108,7 @@ class _CreateBranchScreenState extends State<CreateBranchScreen> {
     final radius = double.tryParse(_radiusController.text.trim()) ?? 100.0;
 
     if (lat == null || lng == null) {
-      Get.snackbar('Invalid Input', 'Please enter valid latitude and longitude.');
+      Get.snackbar('Invalid Input', 'Please enter valid latitude and longitude.', snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -114,7 +126,7 @@ class _CreateBranchScreenState extends State<CreateBranchScreen> {
         Get.snackbar(
           'Success',
           'Branch "$name" created successfully.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.shade600,
           colorText: Colors.white,
           icon: const Icon(Icons.check_circle_rounded, color: Colors.white),

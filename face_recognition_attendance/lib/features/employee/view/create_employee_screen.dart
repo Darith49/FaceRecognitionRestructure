@@ -103,7 +103,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
       Get.snackbar(
         'Invalid Section 1 Time',
         'Section 1 End time must be after Start time.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -115,7 +115,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
       Get.snackbar(
         'Invalid Section 2 Time',
         'Section 2 End time must be after Start time.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -126,7 +126,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
       Get.snackbar(
         'Invalid Shift Order',
         'Section 2 cannot start before Section 1 ends.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -137,7 +137,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
       Get.snackbar(
         'Select Work Days',
         'Please select at least one active work day.',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
       );
@@ -172,7 +172,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
         Get.snackbar(
           'Success',
           'User "$fullname" created successfully.',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.shade600,
           colorText: Colors.white,
           icon: const Icon(Icons.check_circle_rounded, color: Colors.white),

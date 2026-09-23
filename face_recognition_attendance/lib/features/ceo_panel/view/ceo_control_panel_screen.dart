@@ -204,51 +204,51 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
 
   // ─── 2. KPI Grid ───────────────────────────────────────────────────────────
   Widget _buildKpiGrid(BuildContext context) {
+    final kpis = [
+      _buildKpiCard(
+        title: 'Total Workforce',
+        value: controller.totalEmployees.toString(),
+        subtitle: '${controller.activeEmployees} active accounts',
+        icon: Icons.groups_rounded,
+        color: const Color(0xFF2563EB),
+        bg: const Color(0xFFEFF6FF),
+      ),
+      _buildKpiCard(
+        title: 'Present Today',
+        value: controller.presentToday.toString(),
+        subtitle: '${controller.onLeaveToday} approved leave',
+        icon: Icons.how_to_reg_rounded,
+        color: const Color(0xFF059669),
+        bg: const Color(0xFFECFDF5),
+      ),
+      _buildKpiCard(
+        title: 'Biometric Enrolled',
+        value: '${(controller.biometricEnrollmentRate * 100).toStringAsFixed(0)}%',
+        subtitle: '${controller.biometricEnrolledCount} / ${controller.totalEmployees} registered',
+        icon: Icons.face_rounded,
+        color: const Color(0xFF7C3AED),
+        bg: const Color(0xFFF5F3FF),
+      ),
+      _buildKpiCard(
+        title: 'Branches & Hubs',
+        value: controller.totalBranches.toString(),
+        subtitle: '${controller.totalDepartments} departments',
+        icon: Icons.account_tree_rounded,
+        color: const Color(0xFFD97706),
+        bg: const Color(0xFFFFFBEB),
+      ),
+    ];
+
     return LayoutBuilder(builder: (context, constraints) {
       final isWide = constraints.maxWidth > 500;
       final crossAxisCount = isWide ? 4 : 2;
+      final spacing = 12.0;
+      final cardWidth = (constraints.maxWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
 
-      return GridView.count(
-        crossAxisCount: crossAxisCount,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: isWide ? 1.4 : 1.35,
-        children: [
-          _buildKpiCard(
-            title: 'Total Workforce',
-            value: controller.totalEmployees.toString(),
-            subtitle: '${controller.activeEmployees} active accounts',
-            icon: Icons.groups_rounded,
-            color: const Color(0xFF2563EB),
-            bg: const Color(0xFFEFF6FF),
-          ),
-          _buildKpiCard(
-            title: 'Present Today',
-            value: controller.presentToday.toString(),
-            subtitle: '${controller.onLeaveToday} approved leave',
-            icon: Icons.how_to_reg_rounded,
-            color: const Color(0xFF059669),
-            bg: const Color(0xFFECFDF5),
-          ),
-          _buildKpiCard(
-            title: 'Biometric Enrolled',
-            value: '${(controller.biometricEnrollmentRate * 100).toStringAsFixed(0)}%',
-            subtitle: '${controller.biometricEnrolledCount} / ${controller.totalEmployees} registered',
-            icon: Icons.face_rounded,
-            color: const Color(0xFF7C3AED),
-            bg: const Color(0xFFF5F3FF),
-          ),
-          _buildKpiCard(
-            title: 'Branches & Hubs',
-            value: controller.totalBranches.toString(),
-            subtitle: '${controller.totalDepartments} departments',
-            icon: Icons.account_tree_rounded,
-            color: const Color(0xFFD97706),
-            bg: const Color(0xFFFFFBEB),
-          ),
-        ],
+      return Wrap(
+        spacing: spacing,
+        runSpacing: spacing,
+        children: kpis.map((card) => SizedBox(width: cardWidth, child: card)).toList(),
       );
     });
   }
@@ -277,19 +277,24 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
+              Flexible(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 4),
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
@@ -300,30 +305,26 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
               ),
             ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0F172A),
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: color,
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
           ),
         ],
       ),
@@ -394,81 +395,78 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
     return LayoutBuilder(builder: (context, constraints) {
       final isWide = constraints.maxWidth > 550;
       final count = isWide ? 4 : 2;
+      final spacing = 10.0;
+      final cardWidth = (constraints.maxWidth - spacing * (count - 1)) / count;
 
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: actions.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: count,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: isWide ? 2.2 : 2.0,
-        ),
-        itemBuilder: (context, idx) {
-          final item = actions[idx];
-          return InkWell(
-            onTap: item.onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x04000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: item.color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+      return Wrap(
+        spacing: spacing,
+        runSpacing: spacing,
+        children: actions.map((item) {
+          return SizedBox(
+            width: cardWidth,
+            child: InkWell(
+              onTap: item.onTap,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x04000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
-                    child: Icon(item.icon, color: item.color, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          item.title,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          item.subtitle,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF64748B),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: item.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(item.icon, color: item.color, size: 18),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            item.title,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E293B),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.subtitle,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF64748B),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
-        },
+        }).toList(),
       );
     });
   }

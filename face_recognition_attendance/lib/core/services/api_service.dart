@@ -98,6 +98,12 @@ class ApiService {
         'on_leave': _db.getLeaves().where((l) => l['status'] == 'approved').length,
       };
     }
+    if (clean.contains('/attendance/monthly-summary/')) {
+      final user = _auth.getCurrentUser();
+      final year = int.tryParse(queryParams?['year']?.toString() ?? '') ?? DateTime.now().year;
+      final month = int.tryParse(queryParams?['month']?.toString() ?? '') ?? DateTime.now().month;
+      return _db.getMonthlySummary(year: year, month: month, employeeId: user?.uid);
+    }
     if (clean.contains('/attendance/')) {
       final list = _db.getAttendanceRecords();
       return {'results': list, 'count': list.length};

@@ -5,6 +5,7 @@ import 'package:face_recognition_attendance/core/permissions/app_permissions.dar
 import 'package:face_recognition_attendance/core/permissions/widgets/permission_view.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
+import 'package:face_recognition_attendance/features/schedule_screen/controller/schedule_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -924,8 +925,6 @@ class _RoleListTile extends StatelessWidget {
 
 // ─── Attendance Calendar Card ────────────────────────────────────────────────
 
-enum _ProfileDayStatus { worked, absent, dayOff, none }
-
 class _AbsenceReasonInfo {
   final String leaveType;
   final String reason;
@@ -952,8 +951,10 @@ class _ProfileCalendarCard extends StatefulWidget {
 }
 
 class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
-  DateTime _focusedDay = DateTime.now();
-  DateTime _selectedDay = DateTime.now();
+  ScheduleController get _controller => Get.isRegistered<ScheduleController>()
+      ? Get.find<ScheduleController>()
+      : Get.put(ScheduleController());
+
   PageController? _pageController;
 
   static const List<String> _monthNames = [
@@ -981,44 +982,62 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
     'Sun',
   ];
 
-  _ProfileDayStatus _statusFor(DateTime day) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final date = DateTime(day.year, day.month, day.day);
-
-    if (date.isAfter(today)) return _ProfileDayStatus.none;
-    if (date.weekday == DateTime.sunday) return _ProfileDayStatus.dayOff;
-    // Mock absence days for realistic UX (day 3 and day 17)
-    if (date.day == 3 || date.day == 17) return _ProfileDayStatus.absent;
-    return _ProfileDayStatus.worked;
-  }
-
-  Color _statusColor(_ProfileDayStatus s) => switch (s) {
-    _ProfileDayStatus.worked => RequestColors.approvedStatus,
-    _ProfileDayStatus.absent => RequestColors.danger,
-    _ProfileDayStatus.dayOff => RequestColors.teal,
-    _ProfileDayStatus.none => RequestColors.primary,
+  Color _statusColor(DayStatus s) => switch (s) {
+    DayStatus.worked => RequestColors.approvedStatus,
+    DayStatus.workday => const Color(0xFF2E7D32),
+    DayStatus.absent => RequestColors.danger,
+    DayStatus.dayOff => RequestColors.teal,
+    DayStatus.overtime => const Color(0xFF7B1FA2),
+    DayStatus.leave => RequestColors.gold,
+    DayStatus.none => RequestColors.primary,
   };
 
-  String _statusLabel(_ProfileDayStatus s) => switch (s) {
-    _ProfileDayStatus.worked => 'Worked',
-    _ProfileDayStatus.absent => 'Absent',
-    _ProfileDayStatus.dayOff => 'Day off (Sunday)',
-    _ProfileDayStatus.none => 'No record',
+  String _statusLabel(DayStatus s) => switch (s) {
+    DayStatus.worked => 'Worked',
+    DayStatus.workday => 'Workday',
+    DayStatus.absent => 'Absent',
+    DayStatus.dayOff => 'Day off',
+    DayStatus.overtime => 'Overtime',
+    DayStatus.leave => 'Leave',
+    DayStatus.none => 'No record',
   };
 
-  IconData _statusIcon(_ProfileDayStatus s) => switch (s) {
-    _ProfileDayStatus.worked => Icons.check_circle_rounded,
-    _ProfileDayStatus.absent => Icons.cancel_rounded,
-    _ProfileDayStatus.dayOff => Icons.weekend_rounded,
-    _ProfileDayStatus.none => Icons.event_rounded,
+  IconData _statusIcon(DayStatus s) => switch (s) {
+    DayStatus.worked => Icons.check_circle_rounded,
+    DayStatus.workday => Icons.work_outline_rounded,
+    DayStatus.absent => Icons.cancel_rounded,
+    DayStatus.dayOff => Icons.weekend_rounded,
+    DayStatus.overtime => Icons.more_time_rounded,
+    DayStatus.leave => Icons.beach_access_rounded,
+    DayStatus.none => Icons.event_rounded,
   };
 
   _AbsenceReasonInfo _getAbsenceReason(DateTime date) {
+    final dateStr =
+        '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final matchingLeave = _controller.leaves.firstWhereOrNull((l) {
+      return dateStr.compareTo(l.fromDate) >= 0 && dateStr.compareTo(l.toDate) <= 0;
+    });
+
+    if (matchingLeave != null) {
+      return _AbsenceReasonInfo(
+        leaveType: matchingLeave.leaveType,
+        reason: matchingLeave.reason.isNotEmpty
+            ? matchingLeave.reason
+            : 'Scheduled approved leave.',
+        approvedBy: 'Management HR Department',
+        status: matchingLeave.status.capitalizeFirst ?? 'Approved',
+        timeRange: 'Full Day (08:00 AM – 05:00 PM)',
+        documentNote:
+            'Leave record #${matchingLeave.id} approved in attendance system.',
+      );
+    }
+
     if (date.day == 3) {
       return const _AbsenceReasonInfo(
         leaveType: 'Sick Leave (Medical Consultation)',
-        reason: 'Severe fever and migraine. Visited clinic for checkup and prescribed bed rest.',
+        reason:
+            'Severe fever and migraine. Visited clinic for checkup and prescribed bed rest.',
         approvedBy: 'Heng Sokha (Operations Manager)',
         status: 'Permission Approved',
         timeRange: 'Full Day (07:00 AM – 05:00 PM)',
@@ -1028,7 +1047,8 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
     }
     return const _AbsenceReasonInfo(
       leaveType: 'Personal Leave (Family Matter)',
-      reason: 'Urgent family obligation in hometown. Permission requested in advance.',
+      reason:
+          'Urgent family obligation in hometown. Permission requested in advance.',
       approvedBy: 'Sophea Chan (HR Lead)',
       status: 'Permission Approved',
       timeRange: 'Full Day (07:00 AM – 05:00 PM)',
@@ -1038,11 +1058,18 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
 
   void _changeMonth({required bool next}) {
     const duration = Duration(milliseconds: 300);
-    if (_pageController == null) return;
-    if (next) {
-      _pageController!.nextPage(duration: duration, curve: Curves.easeOut);
+    if (_pageController != null && _pageController!.hasClients) {
+      if (next) {
+        _pageController!.nextPage(duration: duration, curve: Curves.easeOut);
+      } else {
+        _pageController!.previousPage(duration: duration, curve: Curves.easeOut);
+      }
     } else {
-      _pageController!.previousPage(duration: duration, curve: Curves.easeOut);
+      if (next) {
+        _controller.nextMonth();
+      } else {
+        _controller.previousMonth();
+      }
     }
   }
 
@@ -1212,7 +1239,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     ),
                     _infoRow(
                       icon: Icons.access_time_rounded,
-                      label: 'Shift / Range',
+                      label: 'Time Range',
                       value: info.timeRange,
                     ),
                     const Divider(
@@ -1343,10 +1370,10 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
   }
 
   Widget _buildDayCell(DateTime day, DateTime selectedDay) {
-    final status = _statusFor(day);
+    final status = _controller.statusFor(day);
     final selected = isSameDay(day, selectedDay);
     final isToday = isSameDay(day, DateTime.now());
-    final hasStatus = status != _ProfileDayStatus.none;
+    final hasStatus = status != DayStatus.none;
     final color = _statusColor(status);
 
     final Color background = selected
@@ -1414,200 +1441,207 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedStatus = _statusFor(_selectedDay);
-    final selectedColor = _statusColor(selectedStatus);
-    final isAbsent = selectedStatus == _ProfileDayStatus.absent;
+    return Obx(() {
+      final focusedDay = _controller.focusedDay.value;
+      final selectedDay = _controller.selectedDay.value;
+      final selectedStatus = _controller.statusFor(selectedDay);
+      final selectedColor = _statusColor(selectedStatus);
+      final isAbsent = selectedStatus == DayStatus.absent || selectedStatus == DayStatus.leave;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: appleCardDecoration(radius: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Calendar View',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      color: RequestColors.textPrimary,
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: appleCardDecoration(radius: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Calendar View',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        color: RequestColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${_monthNames[_focusedDay.month - 1]} ${_focusedDay.year}',
+                    const SizedBox(height: 2),
+                    Text(
+                      '${_monthNames[focusedDay.month - 1]} ${focusedDay.year}',
+                      style: const TextStyle(
+                        color: RequestColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    _navArrow(
+                      Icons.chevron_left_rounded,
+                      () => _changeMonth(next: false),
+                    ),
+                    const SizedBox(width: 8),
+                    _navArrow(
+                      Icons.chevron_right_rounded,
+                      () => _changeMonth(next: true),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Calendar Grid
+            TableCalendar(
+              firstDay: DateTime.utc(2020, 1, 1),
+              lastDay: DateTime.utc(2035, 12, 31),
+              focusedDay: focusedDay,
+              selectedDayPredicate: (day) => isSameDay(day, selectedDay),
+              startingDayOfWeek: StartingDayOfWeek.monday,
+              headerVisible: false,
+              availableGestures: AvailableGestures.horizontalSwipe,
+              rowHeight: 44,
+              daysOfWeekHeight: 28,
+              calendarStyle: const CalendarStyle(outsideDaysVisible: false),
+              calendarBuilders: CalendarBuilders(
+                prioritizedBuilder: (context, day, focused) =>
+                    _buildDayCell(day, selectedDay),
+                dowBuilder: (context, day) => Center(
+                  child: Text(
+                    _weekdayLabels[day.weekday - 1],
                     style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
                       color: RequestColors.textSecondary,
-                      fontSize: 12,
                     ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  _navArrow(
-                    Icons.chevron_left_rounded,
-                    () => _changeMonth(next: false),
-                  ),
-                  const SizedBox(width: 8),
-                  _navArrow(
-                    Icons.chevron_right_rounded,
-                    () => _changeMonth(next: true),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Calendar Grid
-          TableCalendar(
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2035, 12, 31),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
-            startingDayOfWeek: StartingDayOfWeek.monday,
-            headerVisible: false,
-            availableGestures: AvailableGestures.horizontalSwipe,
-            rowHeight: 44,
-            daysOfWeekHeight: 28,
-            calendarStyle: const CalendarStyle(outsideDaysVisible: false),
-            calendarBuilders: CalendarBuilders(
-              prioritizedBuilder: (context, day, focusedDay) =>
-                  _buildDayCell(day, _selectedDay),
-              dowBuilder: (context, day) => Center(
-                child: Text(
-                  _weekdayLabels[day.weekday - 1],
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: RequestColors.textSecondary,
                   ),
                 ),
               ),
+              onCalendarCreated: (controller) => _pageController = controller,
+              onPageChanged: _controller.onPageChanged,
+              onDaySelected: (selected, focused) {
+                _controller.onDaySelected(selected, focused);
+                final status = _controller.statusFor(selected);
+                if (status == DayStatus.absent || status == DayStatus.leave) {
+                  _showAbsenceReasonSheet(context, selected);
+                }
+              },
             ),
-            onCalendarCreated: (controller) => _pageController = controller,
-            onPageChanged: (day) => setState(() => _focusedDay = day),
-            onDaySelected: (selected, focused) {
-              setState(() {
-                _selectedDay = selected;
-                _focusedDay = focused;
-              });
-              if (_statusFor(selected) == _ProfileDayStatus.absent) {
-                _showAbsenceReasonSheet(context, selected);
-              }
-            },
-          ),
 
-          const SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-          // Selected day status banner
-          InkWell(
-            onTap: isAbsent
-                ? () => _showAbsenceReasonSheet(context, _selectedDay)
-                : null,
-            borderRadius: BorderRadius.circular(14),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: selectedColor.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(14),
-                border: isAbsent
-                    ? Border.all(
-                        color: RequestColors.danger.withValues(alpha: 0.35),
-                      )
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _statusIcon(selectedStatus),
-                    size: 20,
-                    color: selectedColor,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${_weekdayLabels[_selectedDay.weekday - 1]}, ${_monthNames[_selectedDay.month - 1]} ${_selectedDay.day}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: RequestColors.textPrimary,
-                          ),
-                        ),
-                        if (isAbsent)
-                          const Text(
-                            'Tap to view permission reason',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: RequestColors.danger,
-                              fontWeight: FontWeight.w600,
+            // Selected day status banner
+            InkWell(
+              onTap: isAbsent
+                  ? () => _showAbsenceReasonSheet(context, selectedDay)
+                  : null,
+              borderRadius: BorderRadius.circular(14),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: selectedColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
+                  border: isAbsent
+                      ? Border.all(
+                          color: selectedColor.withValues(alpha: 0.35),
+                        )
+                      : null,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _statusIcon(selectedStatus),
+                      size: 20,
+                      color: selectedColor,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${_weekdayLabels[selectedDay.weekday - 1]}, ${_monthNames[selectedDay.month - 1]} ${selectedDay.day}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: RequestColors.textPrimary,
                             ),
                           ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selectedColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _statusLabel(selectedStatus),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: selectedColor,
-                          ),
-                        ),
-                        if (isAbsent) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: 14,
-                            color: selectedColor,
-                          ),
+                          if (isAbsent)
+                            Text(
+                              selectedStatus == DayStatus.leave
+                                  ? 'Tap to view leave details'
+                                  : 'Tap to view permission reason',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: selectedColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selectedColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _statusLabel(selectedStatus),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: selectedColor,
+                            ),
+                          ),
+                          if (isAbsent) ...[
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 14,
+                              color: selectedColor,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 14),
+            const SizedBox(height: 14),
 
-          // Legend / Notes: only Worked, Absent, Day off like Sunday
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              _legendDot(RequestColors.approvedStatus, 'Worked'),
-              _legendDot(RequestColors.danger, 'Absent'),
-              _legendDot(RequestColors.teal, 'Day off (Sunday)'),
-            ],
-          ),
-        ],
-      ),
-    );
+            // Legend / Notes
+            Wrap(
+              spacing: 14,
+              runSpacing: 8,
+              children: [
+                _legendDot(_statusColor(DayStatus.worked), 'Worked'),
+                _legendDot(_statusColor(DayStatus.absent), 'Absent'),
+                _legendDot(_statusColor(DayStatus.dayOff), 'Day off'),
+                _legendDot(_statusColor(DayStatus.overtime), 'Overtime'),
+                _legendDot(_statusColor(DayStatus.leave), 'Leave'),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
+

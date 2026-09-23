@@ -134,11 +134,18 @@ class ScheduleController extends GetxController {
   void _changeMonth({required bool next}) {
     const duration = Duration(milliseconds: 300);
     final controller = _pageController;
-    if (controller == null) return;
-    if (next) {
-      controller.nextPage(duration: duration, curve: Curves.easeOut);
+    if (controller != null && controller.hasClients) {
+      if (next) {
+        controller.nextPage(duration: duration, curve: Curves.easeOut);
+      } else {
+        controller.previousPage(duration: duration, curve: Curves.easeOut);
+      }
     } else {
-      controller.previousPage(duration: duration, curve: Curves.easeOut);
+      final current = focusedDay.value;
+      final newDay = next
+          ? DateTime(current.year, current.month + 1, 1)
+          : DateTime(current.year, current.month - 1, 1);
+      onPageChanged(newDay);
     }
   }
 

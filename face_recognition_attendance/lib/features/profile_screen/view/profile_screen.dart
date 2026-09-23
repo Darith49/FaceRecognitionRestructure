@@ -467,67 +467,16 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty || parts.first.isEmpty) return '?';
-    if (parts.length == 1) return parts.first[0].toUpperCase();
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
-
   Widget _buildAvatarImage(String? profileUrl, String name) {
-    if (profileUrl != null && profileUrl.isNotEmpty) {
-      if (profileUrl.startsWith('data:image')) {
-        final bytes = AppAvatar.decodeBase64Cached(profileUrl);
-        if (bytes != null) {
-          return ClipOval(
-            child: Image.memory(
-              bytes,
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-            ),
-          );
-        }
-      } else if (profileUrl.startsWith('http')) {
-        return ClipOval(
-          child: Image.network(
-            profileUrl,
-            width: 64,
-            height: 64,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => _fallbackAvatar(name),
-          ),
-        );
-      }
-    }
-    return _fallbackAvatar(name);
-  }
-
-  Widget _fallbackAvatar(String name) {
-    return Container(
-      width: 64,
-      height: 64,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF7C3AED),
-            Color(0xFF9333EA),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Text(
-          _initials(name),
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-      ),
+    return AppAvatar(
+      profileUrl: profileUrl,
+      name: name,
+      size: 64,
+      gradientColors: const [
+        Color(0xFF7C3AED),
+        Color(0xFF9333EA),
+      ],
+      textColor: Colors.white,
     );
   }
 

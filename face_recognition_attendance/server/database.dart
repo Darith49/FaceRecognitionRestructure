@@ -39,7 +39,21 @@ class AppSqliteDatabase {
 
     _createTables();
     _seedInitialDataIfEmpty();
+    _cleanupCorruptedAvatars();
     _initialized = true;
+  }
+
+  void _cleanupCorruptedAvatars() {
+    try {
+      _db!.execute('''
+        UPDATE user_vault SET profile_picture = NULL 
+        WHERE profile_picture LIKE '%test_%' OR profile_picture LIKE '%TEST_%' OR (profile_picture IS NOT NULL AND length(profile_picture) < 100);
+      ''');
+      _db!.execute('''
+        UPDATE employees SET profile_picture = NULL 
+        WHERE profile_picture LIKE '%test_%' OR profile_picture LIKE '%TEST_%' OR (profile_picture IS NOT NULL AND length(profile_picture) < 100);
+      ''');
+    } catch (_) {}
   }
 
   void close() {
@@ -399,6 +413,11 @@ class AppSqliteDatabase {
       merged['profile_picture'] = merged['profile_url'];
     }
 
+    final rawPic = merged['profile_picture']?.toString();
+    if (rawPic != null && (rawPic.contains('test_') || rawPic.contains('TEST_') || rawPic.length < 100)) {
+      merged['profile_picture'] = null;
+    }
+
     final templatesJson = merged['face_templates'] != null
         ? (merged['face_templates'] is String ? merged['face_templates'] : jsonEncode(merged['face_templates']))
         : null;
@@ -407,7 +426,7 @@ class AppSqliteDatabase {
       INSERT INTO user_vault (email, profile_picture, has_face_registered, face_templates, face_jpg, face_registered_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(email) DO UPDATE SET
-        profile_picture = COALESCE(excluded.profile_picture, user_vault.profile_picture),
+        profile_picture = CASE WHEN excluded.profile_picture IS NOT NULL THEN excluded.profile_picture ELSE user_vault.profile_picture END,
         has_face_registered = COALESCE(excluded.has_face_registered, user_vault.has_face_registered),
         face_templates = COALESCE(excluded.face_templates, user_vault.face_templates),
         face_jpg = COALESCE(excluded.face_jpg, user_vault.face_jpg),
@@ -425,13 +444,14 @@ class AppSqliteDatabase {
     // Also update employees table if user exists there
     _db!.execute('''
       UPDATE employees SET
-        profile_picture = COALESCE(?, profile_picture),
+        profile_picture = CASE WHEN ? IS NOT NULL THEN ? ELSE profile_picture END,
         has_face_registered = CASE WHEN ? = 1 THEN 1 ELSE has_face_registered END,
         face_templates = COALESCE(?, face_templates),
         face_jpg = COALESCE(?, face_jpg),
         face_registered_at = COALESCE(?, face_registered_at)
       WHERE LOWER(email) = ?;
     ''', [
+      merged['profile_picture'],
       merged['profile_picture'],
       (merged['has_face_registered'] == true) ? 1 : 0,
       templatesJson,
@@ -516,6 +536,13 @@ class AppSqliteDatabase {
       } else if (col == 'face_templates') {
         fields.add('face_templates = ?');
         values.add(v != null ? (v is String ? v : jsonEncode(v)) : null);
+      } else if (col == 'profile_picture') {
+        final picStr = v?.toString();
+        final cleanPic = (picStr != null && (picStr.contains('test_') || picStr.contains('TEST_') || picStr.length < 100))
+            ? null
+            : picStr;
+        fields.add('profile_picture = ?');
+        values.add(cleanPic);
       } else if (col != 'id') {
         fields.add('$col = ?');
         values.add(v);

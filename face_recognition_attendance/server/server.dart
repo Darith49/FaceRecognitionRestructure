@@ -37,10 +37,12 @@ class BackendServer {
   }
 
   Future<void> _handleRequest(HttpRequest request) async {
-    // 1. CORS Preflight & Headers
+    // 1. CORS Preflight & Headers with full Private Network Access (PNA) support
     request.response.headers.add('Access-Control-Allow-Origin', '*');
     request.response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    request.response.headers.add('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept, Authorization, X-Requested-With');
+    request.response.headers.add('Access-Control-Allow-Headers', '*');
+    request.response.headers.add('Access-Control-Allow-Private-Network', 'true');
+    request.response.headers.add('Access-Control-Max-Age', '86400');
     request.response.headers.add('Content-Type', 'application/json; charset=utf-8');
 
     if (request.method.toUpperCase() == 'OPTIONS') {
@@ -51,6 +53,7 @@ class BackendServer {
 
     final path = request.uri.path.toLowerCase();
     final method = request.method.toUpperCase();
+    print('[SQLite Server] $method $path');
 
     try {
       // 2. Health check
@@ -118,8 +121,31 @@ class BackendServer {
         return;
       }
 
-      // 5. Employees
-      if (path.contains('/api/employees/me') && (method == 'PATCH' || method == 'PUT')) {
+      // 5. Dedicated Profile Picture Upload / Update Endpoint
+      if (path.contains('/api/profile/upload') || path.contains('/api/profile/update')) {
+        final body = await _readJsonBody(request);
+        final email = body['email']?.toString() ?? request.uri.queryParameters['email'] ?? '';
+        final uid = body['uid']?.toString() ?? request.uri.queryParameters['uid'] ?? '';
+        final pic = body['profile_picture']?.toString() ?? body['profile_url']?.toString();
+
+        if (email.isNotEmpty && pic != null && pic.isNotEmpty) {
+          db.saveUserVault(email, {'profile_picture': pic});
+          final emp = db.getEmployeeByEmail(email) ?? (uid.isNotEmpty ? db.getEmployeeById(uid) : null);
+          if (emp != null) {
+            db.updateEmployee(emp['id'], {'profile_picture': pic});
+          }
+          print('[SQLite Server] Successfully persisted profile picture for $email (len: ${pic.length})');
+        }
+
+        _sendJson(request.response, {
+          'status': 'success',
+          'message': 'Profile picture successfully persisted in SQLite database.',
+        });
+        return;
+      }
+
+      // 6. Employees Update
+      if (path.contains('/api/employees/me') && (method == 'PATCH' || method == 'PUT' || method == 'POST')) {
         final body = await _readJsonBody(request);
         if (body.containsKey('profile_url') && !body.containsKey('profile_picture')) {
           body['profile_picture'] = body['profile_url'];

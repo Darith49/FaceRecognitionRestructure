@@ -84,9 +84,6 @@ class LoginController extends GetxController {
         }
         currentuser.value = user;
         hasFaceRegistered.value = user.hasFaceRegistered;
-        if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
-          _syncProfileToBackend(user.profileUrl!);
-        }
         final token = await _firebaseService.getIdToken();
         final refreshToken = firebaseUser.refreshToken;
         await secureStorage.saveUserSession(

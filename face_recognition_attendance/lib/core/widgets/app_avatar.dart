@@ -37,15 +37,25 @@ class AppAvatar extends StatelessWidget {
 
   /// Decodes base64 data URI or raw base64 string with memory caching
   static Uint8List? decodeBase64Cached(String dataUriOrBase64) {
-    final int hash = dataUriOrBase64.hashCode;
+    final trimmed = dataUriOrBase64.trim();
+    if (trimmed.isEmpty) return null;
+
+    // Filter out dummy/corrupted placeholder strings
+    if (trimmed.contains('test_') || trimmed.contains('TEST_') || trimmed.length < 50) {
+      return null;
+    }
+
+    final int hash = trimmed.hashCode;
     final cached = _base64Cache[hash];
     if (cached != null) return cached;
 
     try {
-      final base64Data = dataUriOrBase64.contains(',')
-          ? dataUriOrBase64.split(',').last
-          : dataUriOrBase64;
+      final base64Data = trimmed.contains(',')
+          ? trimmed.split(',').last.trim()
+          : trimmed;
       final bytes = base64Decode(base64Data);
+      if (bytes.length < 20) return null;
+
       if (_base64Cache.length > 100) {
         _base64Cache.remove(_base64Cache.keys.first);
       }
@@ -58,10 +68,29 @@ class AppAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (profileUrl != null && profileUrl!.isNotEmpty) {
-      if (profileUrl!.startsWith('data:image')) {
-        final bytes = decodeBase64Cached(profileUrl!);
-        if (bytes != null) {
+    if (profileUrl != null && profileUrl!.trim().isNotEmpty) {
+      final url = profileUrl!.trim();
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: border,
+          ),
+          child: ClipOval(
+            child: Image.network(
+              url,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => _buildFallback(),
+            ),
+          ),
+        );
+      } else {
+        final bytes = decodeBase64Cached(url);
+        if (bytes != null && bytes.isNotEmpty) {
           return Container(
             width: size,
             height: size,
@@ -80,24 +109,6 @@ class AppAvatar extends StatelessWidget {
             ),
           );
         }
-      } else if (profileUrl!.startsWith('http')) {
-        return Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: border,
-          ),
-          child: ClipOval(
-            child: Image.network(
-              profileUrl!,
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => _buildFallback(),
-            ),
-          ),
-        );
       }
     }
 

@@ -24,25 +24,30 @@ class SqliteSyncService extends GetxService {
   bool _isSyncing = false;
 
   /// Initializes connection to the local SQLite backend.
+  /// Tries both localhost and 127.0.0.1 to eliminate Private Network Access (PNA) and CORS issues on Web.
   /// If reachable, automatically pulls the complete SQLite state into the app.
   Future<bool> init({String? customUrl}) async {
-    if (customUrl != null && customUrl.isNotEmpty) {
-      baseUrl = customUrl;
-    }
+    final candidateUrls = customUrl != null && customUrl.isNotEmpty
+        ? [customUrl]
+        : ['http://localhost:8080/api', 'http://127.0.0.1:8080/api'];
 
-    try {
-      final res = await _client.get('$baseUrl/health').timeout(const Duration(milliseconds: 2000));
-      if (res.isOk && res.body is Map && res.body['status'] == 'healthy') {
-        isBackendAvailable.value = true;
-        debugPrint('[SqliteSync] Connected to local SQLite backend at $baseUrl');
-        await bootstrapFromDatabase();
-        return true;
+    for (final candidate in candidateUrls) {
+      try {
+        final res = await _client.get('$candidate/health').timeout(const Duration(milliseconds: 3000));
+        if (res.isOk && res.body is Map && res.body['status'] == 'healthy') {
+          baseUrl = candidate;
+          isBackendAvailable.value = true;
+          debugPrint('[SqliteSync] Connected to local SQLite backend at $baseUrl');
+          await bootstrapFromDatabase();
+          return true;
+        }
+      } catch (e) {
+        debugPrint('[SqliteSync] Attempt to connect to $candidate failed: $e');
       }
-    } catch (e) {
-      debugPrint('[SqliteSync] Local SQLite backend not detected at $baseUrl ($e). Using standalone local storage.');
     }
 
     isBackendAvailable.value = false;
+    debugPrint('[SqliteSync] Local SQLite backend not reachable on candidates. Operating in offline storage mode.');
     return false;
   }
 
@@ -74,6 +79,9 @@ class SqliteSyncService extends GetxService {
     required dynamic templates,
     String? referenceImage,
   }) async {
+    if (!isBackendAvailable.value) {
+      await init();
+    }
     if (!isBackendAvailable.value) return;
 
     try {
@@ -98,15 +106,30 @@ class SqliteSyncService extends GetxService {
     String? uid,
     required String profilePictureBase64,
   }) async {
-    if (!isBackendAvailable.value) return;
+    if (!isBackendAvailable.value) {
+      await init();
+    }
+    if (!isBackendAvailable.value) {
+      debugPrint('[SqliteSync] Cannot sync profile picture: Backend server not reachable.');
+      return;
+    }
 
     try {
-      await _client.patch('$baseUrl/employees/me/', {
+      // 1. Try PATCH /api/employees/me/
+      final res = await _client.patch('$baseUrl/employees/me/', {
         'email': email,
         'uid': uid,
         'profile_picture': profilePictureBase64,
       });
-      debugPrint('[SqliteSync] Profile picture synchronized with SQLite for $email');
+
+      // 2. Also POST to /profile/upload to guarantee persistence across all server endpoints
+      await _client.post('$baseUrl/profile/upload', {
+        'email': email,
+        'uid': uid,
+        'profile_picture': profilePictureBase64,
+      });
+
+      debugPrint('[SqliteSync] Profile picture successfully synchronized with SQLite backend for $email (status: ${res.statusCode})');
     } catch (e) {
       debugPrint('[SqliteSync] Failed to sync profile picture to SQLite: $e');
     }

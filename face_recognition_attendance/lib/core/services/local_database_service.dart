@@ -44,7 +44,15 @@ class LocalDatabaseService {
       incomingVault.forEach((k, v) {
         if (v is Map) {
           final existing = currentVault[k] ?? <String, dynamic>{};
-          v.forEach((vk, vv) => existing[vk.toString()] = vv);
+          v.forEach((vk, vv) {
+            if (vk == 'profile_picture' && vv != null) {
+              final pic = vv.toString();
+              if (pic.contains('test_') || pic.contains('TEST_') || pic.length < 50) {
+                return;
+              }
+            }
+            existing[vk.toString()] = vv;
+          });
           currentVault[k] = existing;
         }
       });

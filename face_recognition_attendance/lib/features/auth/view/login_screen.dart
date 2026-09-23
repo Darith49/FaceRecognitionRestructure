@@ -258,64 +258,6 @@ class LoginScreen extends GetView<LoginController> {
                       ),
                     ),
 
-                    const SizedBox(height: 14),
-
-                    // Google Sign In
-                    Obx(() {
-                      final isAnyLoading =
-                          controller.isLoading.value || controller.isGoogleLoading.value;
-                      final isGoogleLoading = controller.isGoogleLoading.value;
-
-                      return SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: OutlinedButton(
-                          onPressed: isAnyLoading
-                              ? null
-                              : () => controller.loginWithGoogle(),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-                            foregroundColor: isDark ? AppColors.darkText : AppColors.ink,
-                            side: BorderSide(
-                              color: isDark ? AppColors.darkBorder : AppColors.hairline,
-                            ),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: isGoogleLoading
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: AppColors.primary,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.asset(
-                                      "assets/login/Google.png",
-                                      width: 22,
-                                      height: 22,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'auth_google_sign_in'.tr,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? AppColors.darkText : AppColors.ink,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      );
-                    }),
-
                     const SizedBox(height: 28),
 
                     // FAST DEMO ACCESS Card

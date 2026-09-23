@@ -22,10 +22,6 @@ class FirebaseService {
     return _auth.resetPassowrd(email: email);
   }
 
-  Future<dynamic> signInWithGoogle() {
-    return _auth.signInWithGoogle();
-  }
-
   dynamic getCurrentUser() {
     return _auth.getCurrentUser();
   }

@@ -21,7 +21,6 @@ class LoginController extends GetxController {
   final passwordController = TextEditingController();
 
   //UI State
-  final RxBool isGoogleLoading = false.obs;
   final RxBool isPasswordHidden = true.obs;
   final RxBool rememberMe = true.obs;
   final RxBool isLoading = false.obs;
@@ -200,96 +199,6 @@ class LoginController extends GetxController {
       return false;
     } finally {
       isLoading.value = false;
-    }
-  }
-
-  //Log In with google
-  Future<void> loginWithGoogle() async {
-    isGoogleLoading.value = true;
-    errorMessage.value = "";
-
-    try {
-      final credential = await _firebaseService.signInWithGoogle();
-      final firebaseUser = credential.user;
-
-      if (firebaseUser == null) {
-        throw Exception('Google authentication failed.');
-      }
-
-      // 1. Try finding employee by UID
-      var user = await _firebaseService.getUserByUid(firebaseUser.uid);
-
-      // 2. If not found by UID, search by email and link to this UID
-      if (user == null && firebaseUser.email != null) {
-        user = await _firebaseService.getUserByEmail(firebaseUser.email!);
-        if (user != null) {
-          await _firebaseService.linkFirestoreUser(firebaseUser.uid, user);
-          user = user.copyWith(uid: firebaseUser.uid);
-        }
-      }
-
-      if (user == null) {
-        await _firebaseService.logout();
-
-        final email = firebaseUser.email ?? '';
-        errorMessage.value = email.isNotEmpty
-            ? 'No employee profile found for $email. Please contact an administrator.'
-            : 'User profile not found. Please contact an administrator.';
-
-        Get.snackbar(
-          'Account Not Found',
-          errorMessage.value,
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red.shade600,
-          colorText: Colors.white,
-          icon: const Icon(Icons.error_outline, color: Colors.white),
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-          duration: const Duration(seconds: 4),
-        );
-        return;
-      }
-      currentuser.value = user;
-      if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
-        _syncProfileToBackend(user.profileUrl!);
-      }
-
-      await SecureStorageService().setRememberMe(rememberMe.value);
-      if (rememberMe.value) {
-        final token = await _firebaseService.getIdToken();
-        final firebaseUser = _firebaseService.getCurrentUser();
-        await SecureStorageService().saveUserSession(
-          uid: user.uid,
-          email: user.email,
-          accessToken: token ?? '',
-          refreshToken: firebaseUser?.refreshToken,
-          userData: user.toJson(),
-        );
-      } else {
-        await SecureStorageService().clearSession();
-      }
-      await checkFaceStatus();
-
-      _navigationBasedOnRole(user.role);
-    } catch (e) {
-      final msg = e.toString().replaceFirst('Exception: ', '').trim();
-      errorMessage.value = msg;
-
-      if (!msg.toLowerCase().contains('cancelled')) {
-        Get.snackbar(
-          'Sign In Failed',
-          errorMessage.value,
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red.shade600,
-          colorText: Colors.white,
-          icon: const Icon(Icons.error_outline, color: Colors.white),
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-          duration: const Duration(seconds: 4),
-        );
-      }
-    } finally {
-      isGoogleLoading.value = false;
     }
   }
 

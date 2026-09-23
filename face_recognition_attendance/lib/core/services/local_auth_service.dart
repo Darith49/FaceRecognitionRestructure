@@ -193,16 +193,6 @@ class LocalAuthService {
     debugPrint('[LocalAuthService] Password reset requested for $email');
   }
 
-  Future<dynamic> signInWithGoogle() async {
-    // Provide seamless local mock for Google sign-in
-    final emp = _db.getEmployees().first;
-    return LocalUser(
-      uid: emp['firebase_uid'] ?? 'local_uid_google_1',
-      email: emp['email'] ?? 'google_user@company.com',
-      displayName: emp['fullname'],
-    );
-  }
-
   Future<String?> getIdToken({bool forceRefresh = false}) async {
     if (_currentUser == null) return null;
     return 'local_jwt_token_${_currentUser!.uid}_${DateTime.now().millisecondsSinceEpoch}';

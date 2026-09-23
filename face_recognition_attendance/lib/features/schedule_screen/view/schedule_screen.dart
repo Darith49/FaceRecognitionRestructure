@@ -543,9 +543,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
 
     return Padding(
       padding: const EdgeInsets.all(3),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+      child: Container(
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: background,

@@ -3,6 +3,7 @@ import 'package:face_recognition_attendance/core/utils/file_picker_helper.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/permissions/app_permissions.dart';
 import 'package:face_recognition_attendance/core/permissions/widgets/permission_view.dart';
+import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/controller/schedule_controller.dart';
@@ -475,9 +476,8 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildAvatarImage(String? profileUrl, String name) {
     if (profileUrl != null && profileUrl.isNotEmpty) {
       if (profileUrl.startsWith('data:image')) {
-        try {
-          final base64Data = profileUrl.split(',').last;
-          final bytes = base64Decode(base64Data);
+        final bytes = AppAvatar.decodeBase64Cached(profileUrl);
+        if (bytes != null) {
           return ClipOval(
             child: Image.memory(
               bytes,
@@ -486,7 +486,7 @@ class ProfileScreen extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           );
-        } catch (_) {}
+        }
       } else if (profileUrl.startsWith('http')) {
         return ClipOval(
           child: Image.network(
@@ -1395,9 +1395,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
 
     return Padding(
       padding: const EdgeInsets.all(3),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+      child: Container(
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: background,

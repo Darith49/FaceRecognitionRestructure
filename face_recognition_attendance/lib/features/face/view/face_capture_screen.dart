@@ -691,15 +691,22 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
         children: [
           // 1. Live Camera Preview or Web Fallback
           if (isCameraReady)
-            SizedBox.expand(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _cameraController!.value.previewSize!.height,
-                  height: _cameraController!.value.previewSize!.width,
-                  child: CameraPreview(_cameraController!),
-                ),
-              ),
+            Builder(
+              builder: (context) {
+                final previewSize = _cameraController!.value.previewSize;
+                final double width = previewSize?.height ?? 720.0;
+                final double height = previewSize?.width ?? 1280.0;
+                return SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: width,
+                      height: height,
+                      child: CameraPreview(_cameraController!),
+                    ),
+                  ),
+                );
+              },
             )
           else
             Center(

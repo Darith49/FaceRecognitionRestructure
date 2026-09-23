@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -31,13 +32,36 @@ class AppAvatar extends StatelessWidget {
     return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 
+  /// In-memory cache for decoded base64 images to prevent repeated decoding on every frame/rebuild
+  static final Map<int, Uint8List> _base64Cache = <int, Uint8List>{};
+
+  /// Decodes base64 data URI or raw base64 string with memory caching
+  static Uint8List? decodeBase64Cached(String dataUriOrBase64) {
+    final int hash = dataUriOrBase64.hashCode;
+    final cached = _base64Cache[hash];
+    if (cached != null) return cached;
+
+    try {
+      final base64Data = dataUriOrBase64.contains(',')
+          ? dataUriOrBase64.split(',').last
+          : dataUriOrBase64;
+      final bytes = base64Decode(base64Data);
+      if (_base64Cache.length > 100) {
+        _base64Cache.remove(_base64Cache.keys.first);
+      }
+      _base64Cache[hash] = bytes;
+      return bytes;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (profileUrl != null && profileUrl!.isNotEmpty) {
       if (profileUrl!.startsWith('data:image')) {
-        try {
-          final base64Data = profileUrl!.split(',').last;
-          final bytes = base64Decode(base64Data);
+        final bytes = decodeBase64Cached(profileUrl!);
+        if (bytes != null) {
           return Container(
             width: size,
             height: size,
@@ -55,7 +79,7 @@ class AppAvatar extends StatelessWidget {
               ),
             ),
           );
-        } catch (_) {}
+        }
       } else if (profileUrl!.startsWith('http')) {
         return Container(
           width: size,

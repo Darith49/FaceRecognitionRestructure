@@ -340,12 +340,17 @@ class LocalDatabaseService {
   }
 
   // ==================== PERSONS (BIOMETRICS) ====================
+  List<Person>? _cachedPersons;
+
   List<Person> getPersons() {
+    if (_cachedPersons != null) return _cachedPersons!;
     final raw = _box.read<List>('persons') ?? [];
-    return raw.map((e) => Person.fromMap(Map<String, dynamic>.from(e))).toList();
+    _cachedPersons = raw.map((e) => Person.fromMap(Map<String, dynamic>.from(e))).toList();
+    return _cachedPersons!;
   }
 
   void savePerson(Person person) {
+    _cachedPersons = null;
     final list = _box.read<List>('persons') ?? [];
     final existingIndex = list.indexWhere((p) => p['id'] == person.id || p['employeeId'] == person.employeeId);
     if (existingIndex >= 0) {
@@ -357,6 +362,7 @@ class LocalDatabaseService {
   }
 
   void deletePerson(String id) {
+    _cachedPersons = null;
     final list = _box.read<List>('persons') ?? [];
     list.removeWhere((p) => p['id'] == id || p['employeeId'] == id);
     _box.write('persons', list);
@@ -369,25 +375,26 @@ class LocalDatabaseService {
   }
 
   Map<String, dynamic>? getEmployeeByEmail(String email) {
+    final target = email.toLowerCase().trim();
     final list = getEmployees();
-    try {
-      return list.firstWhere(
-        (e) => (e['email'] as String).toLowerCase() == email.toLowerCase().trim(),
-      );
-    } catch (_) {
-      return null;
+    for (final e in list) {
+      final empEmail = e['email']?.toString().toLowerCase().trim();
+      if (empEmail == target) return e;
     }
+    return null;
   }
 
   Map<String, dynamic>? getEmployeeByUid(String uid) {
+    final target = uid.trim();
     final list = getEmployees();
-    try {
-      return list.firstWhere(
-        (e) => e['firebase_uid'] == uid || e['id'].toString() == uid || e['employee_id'] == uid,
-      );
-    } catch (_) {
-      return null;
+    for (final e in list) {
+      if (e['firebase_uid']?.toString() == target ||
+          e['id']?.toString() == target ||
+          e['employee_id']?.toString() == target) {
+        return e;
+      }
     }
+    return null;
   }
 
   Map<String, dynamic> saveEmployee(Map<String, dynamic> data) {

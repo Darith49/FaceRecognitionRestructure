@@ -58,6 +58,20 @@ class FaceDetectionCheck {
   });
 }
 
+class _ProcessedFace {
+  final img.Image faceCrop;
+  final FaceDetectionCheck presence;
+  final List<double> template;
+  final double liveness;
+
+  const _ProcessedFace({
+    required this.faceCrop,
+    required this.presence,
+    required this.template,
+    required this.liveness,
+  });
+}
+
 /// Cross-platform Biometric Face Recognition, Liveness & Anti-Spoofing Engine.
 /// Designed after kby-ai FaceRecognition architecture with strict identity verification.
 class FaceRecognitionEngine {
@@ -161,40 +175,33 @@ class FaceRecognitionEngine {
     return FaceDetectionCheck(hasFace: true, reason: 'Face detected successfully', confidence: confidence);
   }
 
-  /// Extracts a normalized 128-dimensional biometric template from image bytes.
-  Future<List<double>> extractFaceTemplate(Uint8List imageBytes) async {
-    final decoded = img.decodeImage(imageBytes);
-    if (decoded == null) {
-      throw Exception('Unable to decode image for face template extraction.');
-    }
-
+  /// Internal representation of single-pass processed biometric face data.
+  _ProcessedFace _processFaceOnce(img.Image decoded) {
     final oriented = img.bakeOrientation(decoded);
     final faceCrop = _cropFaceRegion(oriented);
-
-    // Verify face presence
     final check = detectFacePresence(faceCrop);
-    if (!check.hasFace) {
-      throw Exception(check.reason);
+
+    List<double> template = [];
+    double liveness = 0.0;
+
+    if (check.hasFace) {
+      final normalizedFace = img.copyResize(faceCrop, width: 112, height: 112);
+      final embedding = _computeSpatialFeatureVector(normalizedFace);
+      template = _l2Normalize(embedding);
+
+      liveness = _computeLivenessFromCrop(faceCrop);
     }
 
-    final normalizedFace = img.copyResize(faceCrop, width: 112, height: 112);
-    final embedding = _computeSpatialFeatureVector(normalizedFace);
-
-    return _l2Normalize(embedding);
+    return _ProcessedFace(
+      faceCrop: faceCrop,
+      presence: check,
+      template: template,
+      liveness: liveness,
+    );
   }
 
-  /// Evaluates liveness & image quality via high-frequency Laplacian variance and contrast.
-  Future<double> calculateLiveness(Uint8List imageBytes) async {
-    final decoded = img.decodeImage(imageBytes);
-    if (decoded == null) return 0.0;
-
-    final oriented = img.bakeOrientation(decoded);
-    final faceCrop = _cropFaceRegion(oriented);
+  double _computeLivenessFromCrop(img.Image faceCrop) {
     final resized = img.copyResize(faceCrop, width: 96, height: 96);
-
-    final check = detectFacePresence(resized);
-    if (!check.hasFace) return 0.0;
-
     double sum = 0.0;
     double sumSq = 0.0;
     int count = 0;
@@ -231,8 +238,34 @@ class FaceRecognitionEngine {
     return livenessScore;
   }
 
+  /// Extracts a normalized 128-dimensional biometric template from image bytes.
+  Future<List<double>> extractFaceTemplate(Uint8List imageBytes) async {
+    final decoded = img.decodeImage(imageBytes);
+    if (decoded == null) {
+      throw Exception('Unable to decode image for face template extraction.');
+    }
+
+    final processed = _processFaceOnce(decoded);
+    if (!processed.presence.hasFace) {
+      throw Exception(processed.presence.reason);
+    }
+
+    return processed.template;
+  }
+
+  /// Evaluates liveness & image quality via high-frequency Laplacian variance and contrast.
+  Future<double> calculateLiveness(Uint8List imageBytes) async {
+    final decoded = img.decodeImage(imageBytes);
+    if (decoded == null) return 0.0;
+
+    final processed = _processFaceOnce(decoded);
+    if (!processed.presence.hasFace) return 0.0;
+
+    return processed.liveness;
+  }
+
   /// Strict 1:1 Identity Verification:
-  /// Verifies that the scanned face matches the target enrolled person.
+  /// Verifies that the scanned face matches the target enrolled person in a single efficient pass.
   /// Prevents other people from scanning into your face.
   Future<FaceVerificationResult> verifyUserFace(
     Uint8List candidateBytes,
@@ -242,16 +275,6 @@ class FaceRecognitionEngine {
   }) async {
     final idThreshold = identifyThreshold ?? defaultIdentifyThreshold;
     final liveThreshold = livenessThreshold ?? defaultLivenessThreshold;
-
-    Uint8List? croppedJpg;
-    try {
-      final decoded = img.decodeImage(candidateBytes);
-      if (decoded != null) {
-        final faceCrop = _cropFaceRegion(img.bakeOrientation(decoded));
-        final thumb = img.copyResize(faceCrop, width: 160, height: 160);
-        croppedJpg = Uint8List.fromList(img.encodeJpg(thumb, quality: 85));
-      }
-    } catch (_) {}
 
     try {
       final decoded = img.decodeImage(candidateBytes);
@@ -266,49 +289,49 @@ class FaceRecognitionEngine {
         );
       }
 
-      final oriented = img.bakeOrientation(decoded);
-      final faceCrop = _cropFaceRegion(oriented);
+      final processed = _processFaceOnce(decoded);
+
+      // Fast thumbnail encoding from already cropped face
+      Uint8List? croppedJpg;
+      try {
+        final thumb = img.copyResize(processed.faceCrop, width: 160, height: 160);
+        croppedJpg = Uint8List.fromList(img.encodeJpg(thumb, quality: 85));
+      } catch (_) {}
 
       // 1. Detect if a face actually exists in frame
-      final presence = detectFacePresence(faceCrop);
-      if (!presence.hasFace) {
+      if (!processed.presence.hasFace) {
         return FaceVerificationResult(
           isVerified: false,
           similarity: 0.0,
           liveness: 0.0,
-          reason: presence.reason,
+          reason: processed.presence.reason,
           candidateFace: croppedJpg,
           enrolledFace: enrolledPerson.faceJpg,
           personName: enrolledPerson.name,
         );
       }
 
-      // 2. Extract Biometric Template
-      final normalizedFace = img.copyResize(faceCrop, width: 112, height: 112);
-      final candidateTemplate = _l2Normalize(_computeSpatialFeatureVector(normalizedFace));
-
-      // 3. Evaluate Liveness
-      final liveness = await calculateLiveness(candidateBytes);
-      if (liveness < liveThreshold) {
+      // 2. Evaluate Liveness
+      if (processed.liveness < liveThreshold) {
         return FaceVerificationResult(
           isVerified: false,
           similarity: 0.0,
-          liveness: liveness,
-          reason: 'Liveness check failed (${(liveness * 100).toStringAsFixed(0)}% < ${(liveThreshold * 100).toStringAsFixed(0)}%). Please position your face clearly in direct lighting.',
+          liveness: processed.liveness,
+          reason: 'Liveness check failed (${(processed.liveness * 100).toStringAsFixed(0)}% < ${(liveThreshold * 100).toStringAsFixed(0)}%). Please position your face clearly in direct lighting.',
           candidateFace: croppedJpg,
           enrolledFace: enrolledPerson.faceJpg,
           personName: enrolledPerson.name,
         );
       }
 
-      // 4. Compute Cosine Similarity against the enrolled user
-      final similarity = similarityCalculation(candidateTemplate, enrolledPerson.templates);
+      // 3. Compute Cosine Similarity against the enrolled user
+      final similarity = similarityCalculation(processed.template, enrolledPerson.templates);
 
       if (similarity < idThreshold) {
         return FaceVerificationResult(
           isVerified: false,
           similarity: similarity,
-          liveness: liveness,
+          liveness: processed.liveness,
           reason: 'Security Alert: Biometric mismatch! The scanned face does not match ${enrolledPerson.name}\'s enrolled profile (${(similarity * 100).toStringAsFixed(1)}% < ${(idThreshold * 100).toStringAsFixed(0)}%). Check-in rejected.',
           candidateFace: croppedJpg,
           enrolledFace: enrolledPerson.faceJpg,
@@ -316,11 +339,11 @@ class FaceRecognitionEngine {
         );
       }
 
-      // 5. Verification Confirmed
+      // 4. Verification Confirmed
       return FaceVerificationResult(
         isVerified: true,
         similarity: similarity,
-        liveness: liveness,
+        liveness: processed.liveness,
         reason: 'Identity verified as ${enrolledPerson.name} (${(similarity * 100).toStringAsFixed(1)}%).',
         candidateFace: croppedJpg,
         enrolledFace: enrolledPerson.faceJpg,
@@ -332,7 +355,6 @@ class FaceRecognitionEngine {
         similarity: 0.0,
         liveness: 0.0,
         reason: 'Verification error: $e',
-        candidateFace: croppedJpg,
         enrolledFace: enrolledPerson.faceJpg,
         personName: enrolledPerson.name,
       );
@@ -350,26 +372,43 @@ class FaceRecognitionEngine {
     final liveThreshold = livenessThreshold ?? defaultLivenessThreshold;
 
     try {
-      final template = await extractFaceTemplate(candidateBytes);
-      final liveness = await calculateLiveness(candidateBytes);
+      final decoded = img.decodeImage(candidateBytes);
+      if (decoded == null) {
+        return const FaceMatchResult(
+          similarity: 0.0,
+          liveness: 0.0,
+          isRecognized: false,
+          statusMessage: 'Unable to decode captured camera photo.',
+          extractedTemplate: [],
+        );
+      }
+
+      final processed = _processFaceOnce(decoded);
 
       Uint8List? croppedJpg;
       try {
-        final decoded = img.decodeImage(candidateBytes);
-        if (decoded != null) {
-          final faceCrop = _cropFaceRegion(img.bakeOrientation(decoded));
-          final thumb = img.copyResize(faceCrop, width: 160, height: 160);
-          croppedJpg = Uint8List.fromList(img.encodeJpg(thumb, quality: 85));
-        }
+        final thumb = img.copyResize(processed.faceCrop, width: 160, height: 160);
+        croppedJpg = Uint8List.fromList(img.encodeJpg(thumb, quality: 85));
       } catch (_) {}
+
+      if (!processed.presence.hasFace) {
+        return FaceMatchResult(
+          similarity: 0.0,
+          liveness: 0.0,
+          isRecognized: false,
+          statusMessage: processed.presence.reason,
+          extractedTemplate: processed.template,
+          croppedFaceJpg: croppedJpg,
+        );
+      }
 
       if (enrolledPersons.isEmpty) {
         return FaceMatchResult(
           similarity: 0.0,
-          liveness: liveness,
+          liveness: processed.liveness,
           isRecognized: false,
           statusMessage: 'No registered face profiles found in the system.',
-          extractedTemplate: template,
+          extractedTemplate: processed.template,
           croppedFaceJpg: croppedJpg,
         );
       }
@@ -378,31 +417,33 @@ class FaceRecognitionEngine {
       Person? bestMatch;
 
       for (final person in enrolledPersons) {
-        final sim = similarityCalculation(template, person.templates);
+        final sim = similarityCalculation(processed.template, person.templates);
         if (sim > maxSimilarity) {
           maxSimilarity = sim;
           bestMatch = person;
         }
       }
 
-      final bool recognized = maxSimilarity >= idThreshold && liveness >= liveThreshold;
+      final bool recognized = maxSimilarity >= idThreshold && processed.liveness >= liveThreshold;
 
       String message;
       if (recognized && bestMatch != null) {
         message = 'Recognized as ${bestMatch.name} (${(maxSimilarity * 100).toStringAsFixed(1)}%)';
-      } else if (maxSimilarity >= idThreshold && liveness < liveThreshold) {
-        message = 'Face matched (${(maxSimilarity * 100).toStringAsFixed(1)}%), but liveness score too low (${(liveness * 100).toStringAsFixed(0)}%). Please face the camera directly in good lighting.';
+      } else if (maxSimilarity >= idThreshold && processed.liveness < liveThreshold) {
+        message = 'Face matched (${(maxSimilarity * 100).toStringAsFixed(1)}%), but liveness score too low (${(processed.liveness * 100).toStringAsFixed(0)}%). Please face the camera directly in good lighting.';
+      } else if (bestMatch != null) {
+        message = 'Face recognized with low confidence (${(maxSimilarity * 100).toStringAsFixed(1)}% < ${(idThreshold * 100).toStringAsFixed(0)}%). Access denied.';
       } else {
         message = 'Face not recognized (${(maxSimilarity * 100).toStringAsFixed(1)}% < ${(idThreshold * 100).toStringAsFixed(0)}%). Access denied.';
       }
 
       return FaceMatchResult(
-        matchedPerson: bestMatch,
+        matchedPerson: recognized ? bestMatch : null,
         similarity: maxSimilarity.clamp(0.0, 1.0),
-        liveness: liveness,
+        liveness: processed.liveness,
         isRecognized: recognized,
         statusMessage: message,
-        extractedTemplate: template,
+        extractedTemplate: processed.template,
         croppedFaceJpg: croppedJpg,
       );
     } catch (e) {
@@ -411,7 +452,7 @@ class FaceRecognitionEngine {
         liveness: 0.0,
         isRecognized: false,
         statusMessage: 'Failed to process face: $e',
-        extractedTemplate: [],
+        extractedTemplate: const [],
       );
     }
   }

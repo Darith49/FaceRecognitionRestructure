@@ -107,7 +107,7 @@ class NavigationScreen extends GetView<NavigationController> {
                   ? Colors.white.withValues(alpha: 0.15)
                   : const Color(0xFFE5E5EA).withValues(alpha: 0.85),
               barHeight: 64,
-              quality: GlassQuality.premium,
+              quality: GlassQuality.standard,
               interactionBehavior: GlassInteractionBehavior.full,
             ),
           ),

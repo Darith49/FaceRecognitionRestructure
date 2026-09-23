@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:face_recognition_attendance/core/services/sqlite_sync_service.dart';
 import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/features/face/model/person_model.dart';
 import 'package:get_storage/get_storage.dart';
@@ -35,6 +36,69 @@ class LocalDatabaseService {
         : <String, dynamic>{};
   }
 
+  /// Hydrates the local cache with the full persistent state from the SQLite database.
+  void hydrateFromSqlite(Map<String, dynamic> data) {
+    if (data.containsKey('user_vault') && data['user_vault'] is Map) {
+      final incomingVault = Map<String, dynamic>.from(data['user_vault'] as Map);
+      final currentVault = _getUserVault();
+      incomingVault.forEach((k, v) {
+        if (v is Map) {
+          final existing = currentVault[k] ?? <String, dynamic>{};
+          v.forEach((vk, vv) => existing[vk.toString()] = vv);
+          currentVault[k] = existing;
+        }
+      });
+      _box.write('user_account_vault', currentVault);
+    }
+
+    if (data.containsKey('employees') && data['employees'] is List) {
+      final incomingEmps = (data['employees'] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      if (incomingEmps.isNotEmpty) {
+        _box.write('employees', incomingEmps);
+      }
+    }
+
+    if (data.containsKey('persons') && data['persons'] is List) {
+      final incomingPersons = (data['persons'] as List)
+          .map((p) => Map<String, dynamic>.from(p as Map))
+          .toList();
+      if (incomingPersons.isNotEmpty) {
+        _box.write('persons', incomingPersons);
+      }
+    }
+
+    if (data.containsKey('attendance') && data['attendance'] is List) {
+      final incomingAtt = (data['attendance'] as List)
+          .map((a) => Map<String, dynamic>.from(a as Map))
+          .toList();
+      if (incomingAtt.isNotEmpty) {
+        _box.write('attendance', incomingAtt);
+      }
+    }
+
+    if (data.containsKey('leaves') && data['leaves'] is List) {
+      final incomingLeaves = (data['leaves'] as List)
+          .map((l) => Map<String, dynamic>.from(l as Map))
+          .toList();
+      if (incomingLeaves.isNotEmpty) {
+        _box.write('leaves', incomingLeaves);
+      }
+    }
+
+    if (data.containsKey('overtimes') && data['overtimes'] is List) {
+      final incomingOt = (data['overtimes'] as List)
+          .map((o) => Map<String, dynamic>.from(o as Map))
+          .toList();
+      if (incomingOt.isNotEmpty) {
+        _box.write('overtimes', incomingOt);
+      }
+    }
+
+    _syncDemoAccounts();
+  }
+
   void saveUserAccountData(String email, Map<String, dynamic> updates) {
     final cleanEmail = email.trim().toLowerCase();
     if (cleanEmail.isEmpty) return;
@@ -43,6 +107,14 @@ class LocalDatabaseService {
     updates.forEach((k, v) => existing[k] = v);
     vault[cleanEmail] = existing;
     _box.write('user_account_vault', vault);
+
+    // Synchronize profile picture with SQLite backend
+    if (updates.containsKey('profile_picture') && updates['profile_picture'] != null) {
+      SqliteSyncService().syncProfilePicture(
+        email: cleanEmail,
+        profilePictureBase64: updates['profile_picture'].toString(),
+      );
+    }
   }
 
   Map<String, dynamic>? getUserAccountData(String email) {
@@ -495,6 +567,16 @@ class LocalDatabaseService {
           'face_jpg': base64Encode(optimizedPerson.faceJpg),
           'face_registered_at': optimizedPerson.enrolledAt.toIso8601String(),
         });
+
+        // Mirror directly to SQLite database backend
+        SqliteSyncService().syncFaceRegistration(
+          email: email,
+          uid: optimizedPerson.id,
+          employeeId: optimizedPerson.employeeId,
+          name: optimizedPerson.name,
+          templates: optimizedPerson.templates,
+          referenceImage: base64Encode(optimizedPerson.faceJpg),
+        );
       }
     }
   }
@@ -777,6 +859,19 @@ class LocalDatabaseService {
     }
 
     _box.write('attendance', list);
+
+    // Sync to SQLite backend
+    SqliteSyncService().syncAttendance(
+      employeeId: employeeId.toString(),
+      employeeName: employeeName,
+      type: 'check-in',
+      time: now.toIso8601String().substring(11, 19),
+      date: dateStr,
+      checkType: 'face',
+      faceMatched: true,
+      confidence: similarity ?? 0.95,
+    );
+
     return record;
   }
 
@@ -796,6 +891,7 @@ class LocalDatabaseService {
       (a) => a['employee_id'].toString() == employeeId.toString() && a['date'] == dateStr,
     );
 
+    Map<String, dynamic> result;
     if (existingIdx >= 0) {
       final updated = Map<String, dynamic>.from(list[existingIdx]);
       updated['check_out_time'] = now.toIso8601String();
@@ -803,7 +899,7 @@ class LocalDatabaseService {
       if (longitude != null) updated['out_longitude'] = longitude;
       list[existingIdx] = updated;
       _box.write('attendance', list);
-      return updated;
+      result = updated;
     } else {
       final int nextId = list.isEmpty ? 1 : list.length + 1;
       final record = {
@@ -821,8 +917,22 @@ class LocalDatabaseService {
       };
       list.add(record);
       _box.write('attendance', list);
-      return record;
+      result = record;
     }
+
+    // Sync to SQLite backend
+    SqliteSyncService().syncAttendance(
+      employeeId: employeeId.toString(),
+      employeeName: employeeName,
+      type: 'check-out',
+      time: now.toIso8601String().substring(11, 19),
+      date: dateStr,
+      checkType: 'face',
+      faceMatched: true,
+      confidence: similarity ?? 0.95,
+    );
+
+    return result;
   }
 
   Map<String, dynamic> getAttendanceStatus(dynamic employeeId) {

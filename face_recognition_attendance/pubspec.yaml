@@ -50,6 +50,7 @@ dependencies:
   web: ^1.1.1
   image: ^4.3.0
   shared_preferences: ^2.3.2
+  sqlite3: ^3.6.0
 
 dev_dependencies:
   flutter_test:

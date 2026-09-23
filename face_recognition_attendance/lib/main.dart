@@ -4,6 +4,7 @@ import 'package:face_recognition_attendance/core/services/language_service.dart'
 import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
 import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
+import 'package:face_recognition_attendance/core/services/sqlite_sync_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -28,6 +29,9 @@ Future<void> main() async {
   await LocalDatabaseService().init();
   await LocalAuthService().init();
 
+  // Connect to persistent SQLite backend if available and pull disk state
+  await SqliteSyncService().init();
+
   // Fast session check for instant launch
   final secureStorage = SecureStorageService();
   final rememberMe = await secureStorage.getRememberMe();
@@ -47,6 +51,20 @@ Future<void> main() async {
     if (cachedData != null) {
       try {
         initialUser = UserModel.fromJson(cachedData);
+        // Refresh with latest persistent vault data from SQLite
+        final vault = LocalDatabaseService().getUserAccountData(initialUser.email);
+        if (vault != null) {
+          initialUser = initialUser.copyWith(
+            profileUrl: vault['profile_picture'] ?? initialUser.profileUrl,
+            hasFaceRegistered: vault['has_face_registered'] == true || initialUser.hasFaceRegistered,
+            faceTemplates: vault['face_templates'] != null
+                ? (vault['face_templates'] is List
+                    ? (vault['face_templates'] as List).map((e) => (e as num).toDouble()).toList()
+                    : null)
+                : initialUser.faceTemplates,
+            faceJpg: vault['face_jpg'] ?? initialUser.faceJpg,
+          );
+        }
         LocalAuthService().setCurrentUserFromModel(initialUser);
       } catch (_) {}
     }

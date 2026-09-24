@@ -41,9 +41,9 @@ class NotificationScreen extends GetView<NotificationController> {
           icon: const Icon(FluentIcons.chevron_left_24_regular, color: RequestColors.textPrimary, size: 20),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
+        title: Text(
+          'Notifications'.tr,
+          style: const TextStyle(
             color: RequestColors.textPrimary,
             fontWeight: FontWeight.w700,
             fontSize: 18,
@@ -54,9 +54,9 @@ class NotificationScreen extends GetView<NotificationController> {
             if (controller.unreadCount.value == 0) return const SizedBox.shrink();
             return TextButton(
               onPressed: () => controller.markAllAsRead(),
-              child: const Text(
-                'Mark all read',
-                style: TextStyle(
+              child: Text(
+                'Mark all read'.tr,
+                style: const TextStyle(
                   color: RequestColors.primary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -78,19 +78,19 @@ class NotificationScreen extends GetView<NotificationController> {
               children: [
                 const Icon(FluentIcons.alert_off_24_regular, color: RequestColors.primary, size: 36),
                 const SizedBox(height: 16),
-                const Text(
-                  'No notifications yet',
-                  style: TextStyle(
+                Text(
+                  'No notifications yet'.tr,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: RequestColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'You will be notified about request updates and approvals here.',
+                Text(
+                  'You will be notified about request updates and approvals here.'.tr,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: RequestColors.textSecondary),
+                  style: const TextStyle(fontSize: 13, color: RequestColors.textSecondary),
                 ),
               ],
             ),
@@ -140,7 +140,7 @@ class NotificationScreen extends GetView<NotificationController> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      notif.title,
+                                      notif.title.tr,
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800,
@@ -162,7 +162,7 @@ class NotificationScreen extends GetView<NotificationController> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                notif.message,
+                                notif.message.tr,
                                 style: const TextStyle(
                                   fontSize: 13,
                                   color: RequestColors.textSecondary,
@@ -175,7 +175,7 @@ class NotificationScreen extends GetView<NotificationController> {
                                 children: [
                                   if (notif.senderName.isNotEmpty)
                                     Text(
-                                      'From: ${notif.senderName}',
+                                      '${'From:'.tr} ${notif.senderName}',
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,

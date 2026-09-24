@@ -16,9 +16,9 @@ class OvertimeDetailScreen extends GetView<OvertimeController> {
     final request = args is String ? controller.findById(args) : null;
 
     if (request == null) {
-      return const RequestScaffold(
+      return RequestScaffold(
         title: 'Overtime',
-        body: Center(child: Text('This request could not be found.')),
+        body: Center(child: Text('This request could not be found.'.tr)),
       );
     }
 

@@ -26,7 +26,7 @@ class SessionListScreen extends GetView<PermissionController> {
                 arguments: {'fromSessionList': true},
               ),
               icon: const Icon(FluentIcons.add_24_regular, size: 18),
-              label: const Text('Add another session'),
+              label: Text('Add another session'.tr),
               style: OutlinedButton.styleFrom(
                 foregroundColor: RequestColors.textPrimary,
                 side: const BorderSide(color: RequestColors.textPrimary),
@@ -110,10 +110,10 @@ class _EmptyBar extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Center(
+      child: Center(
         child: Text(
-          'No added request',
-          style: TextStyle(
+          'No added request'.tr,
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: RequestColors.textPrimary,

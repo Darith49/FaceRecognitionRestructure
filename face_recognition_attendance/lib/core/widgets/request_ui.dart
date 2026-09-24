@@ -88,7 +88,7 @@ class RequestScaffold extends StatelessWidget {
                       ),
                       if (backLabel != null)
                         Text(
-                          backLabel!,
+                          backLabel!.tr,
                           style: const TextStyle(
                             fontSize: 17,
                             color: RequestColors.primary,
@@ -101,7 +101,7 @@ class RequestScaffold extends StatelessWidget {
             : null,
         leadingWidth: showBackButton ? (backLabel != null ? 120 : 44) : null,
         title: Text(
-          title,
+          title.tr,
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w600,
@@ -159,7 +159,7 @@ class RequestMenuCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      title,
+                      title.tr,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -168,7 +168,7 @@ class RequestMenuCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      subtitle,
+                      subtitle.tr,
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
@@ -202,7 +202,7 @@ class RequestLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
-        text,
+        text.tr,
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
@@ -250,7 +250,7 @@ class RequestField extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            value,
+            value.tr,
             style: TextStyle(
               fontSize: 15,
               fontWeight: valueWeight,
@@ -314,7 +314,7 @@ class RequestButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label),
+            Text(label.tr),
             if (icon != null) ...[
               const SizedBox(width: 8),
               Icon(icon, size: 20),
@@ -372,7 +372,7 @@ class RequestSnack {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                message,
+                message.tr,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -405,7 +405,7 @@ class RequestSnack {
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text(message),
+              content: Text(message.tr),
               behavior: SnackBarBehavior.floating,
               backgroundColor: bgColor,
               margin: const EdgeInsets.all(16),
@@ -470,7 +470,7 @@ class RequestDateField extends StatelessWidget {
           height: 48,
           child: Center(
             child: Text(
-              current == null ? placeholder : DateText.ymd(current),
+              current == null ? placeholder.tr : DateText.ymd(current),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
@@ -529,7 +529,7 @@ class RequestDropdownField<T> extends StatelessWidget {
           hint: hint == null
               ? null
               : Text(
-                  hint!,
+                  hint!.tr,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -572,7 +572,7 @@ class RequestTextArea extends StatelessWidget {
         color: isDark ? AppColors.darkText : RequestColors.textPrimary,
       ),
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: hint.tr,
         hintStyle: TextStyle(
           fontSize: 15,
           color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
@@ -636,7 +636,7 @@ class AppleSegmentedControl extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  tabs[i],
+                  tabs[i].tr,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
@@ -668,11 +668,11 @@ class ChangePill extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           child: Text(
-            'Change',
-            style: TextStyle(
+            'Change'.tr,
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: RequestColors.primary,

@@ -43,11 +43,11 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
     final reason = _reasonController.text.trim();
 
     if (date == null) {
-      RequestSnack.show(messenger, 'Pick a date first.');
+      RequestSnack.show(messenger, 'Pick a date first.'.tr);
       return;
     }
     if (reason.isEmpty) {
-      RequestSnack.show(messenger, 'Enter the reason for your request.');
+      RequestSnack.show(messenger, 'Enter the reason for your request.'.tr);
       return;
     }
 
@@ -57,7 +57,7 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
     if (!added) {
       RequestSnack.show(
         messenger,
-        'You already have a request for that date and schedule.',
+        'You already have a request for that date and schedule.'.tr,
       );
       return;
     }
@@ -77,7 +77,7 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
   @override
   Widget build(BuildContext context) {
     return RequestScaffold(
-      title: 'Request Permission',
+      title: 'Request Permission'.tr,
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -87,13 +87,13 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const RequestLabel('Pick Date'),
+                    RequestLabel('Pick Date'.tr),
                     RequestDateField(
                       value: _date,
                       onChanged: (date) => setState(() => _date = date),
                     ),
                     const SizedBox(height: 16),
-                    const RequestLabel('Schedule'),
+                    RequestLabel('Schedule'.tr),
                     RequestDropdownField<String>(
                       value: _schedule,
                       items: kSessionSchedules
@@ -108,17 +108,17 @@ class _RequestPermissionScreenState extends State<RequestPermissionScreen> {
                           setState(() => _schedule = schedule),
                     ),
                     const SizedBox(height: 16),
-                    const RequestLabel('Reason'),
+                    RequestLabel('Reason'.tr),
                     RequestTextArea(controller: _reasonController),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 12),
-            RequestButton(label: 'Add', onPressed: _add),
+            RequestButton(label: 'Add'.tr, onPressed: _add),
             const SizedBox(height: 10),
             RequestButton(
-              label: 'Back to session list',
+              label: 'Back to session list'.tr,
               filled: false,
               onPressed: _goToSessionList,
             ),

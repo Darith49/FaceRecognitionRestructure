@@ -22,18 +22,23 @@ class NavigationScreen extends GetView<NavigationController> {
       extendBody: true,
       edgeFade: true,
       body: Obx(() {
-        return IndexedStack(
-          index: controller.currentIndex.value,
-          children: const [
-            HomeScreen(),
-            ScheduleScreen(),
-            MyteamScreen(),
-            RequestScreen(),
-            ProfileScreen(),
-          ],
+        final loc = Get.locale?.toString() ?? 'en_US';
+        return KeyedSubtree(
+          key: ValueKey(loc),
+          child: IndexedStack(
+            index: controller.currentIndex.value,
+            children: const [
+              HomeScreen(),
+              ScheduleScreen(),
+              MyteamScreen(),
+              RequestScreen(),
+              ProfileScreen(),
+            ],
+          ),
         );
       }),
       bottomBar: Obx(() {
+        final _ = Get.locale;
         final currentIndex = controller.currentIndex.value;
         final isProfileSelected = currentIndex == 4;
 

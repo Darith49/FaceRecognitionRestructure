@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
+import 'package:get/get.dart';
 
 /// Pending = shown in "Pending", Approved / Rejected = shown in "History".
 enum LeaveStatus { pending, approved, rejected }
@@ -8,11 +9,11 @@ extension LeaveStatusLabel on LeaveStatus {
   String get label {
     switch (this) {
       case LeaveStatus.pending:
-        return 'Pending';
+        return 'Pending'.tr;
       case LeaveStatus.approved:
-        return 'Approved';
+        return 'Approved'.tr;
       case LeaveStatus.rejected:
-        return 'Rejected';
+        return 'Rejected'.tr;
     }
   }
 }
@@ -111,21 +112,21 @@ class LeaveRequest {
   String get scheduleLabel {
     if (session == 1) {
       if (leaveMode == 'early_leave' && earlyLeaveTime != null && earlyLeaveTime!.isNotEmpty) {
-        return 'Section 1 • Leave early at ${_formatTimeStr(earlyLeaveTime!)}';
+        return '${'Section 1'.tr} • ${'Leave Early'.tr} ${_formatTimeStr(earlyLeaveTime!)}';
       }
-      return 'Section 1 (Morning: 07:00 – 11:00 AM)';
+      return '${'Section 1'.tr} (${'Morning'.tr}: 07:00 – 11:00 AM)';
     } else if (session == 2) {
       if (leaveMode == 'early_leave' && earlyLeaveTime != null && earlyLeaveTime!.isNotEmpty) {
-        return 'Section 2 • Leave early at ${_formatTimeStr(earlyLeaveTime!)}';
+        return '${'Section 2'.tr} • ${'Leave Early'.tr} ${_formatTimeStr(earlyLeaveTime!)}';
       }
-      return 'Section 2 (Afternoon: 01:00 – 05:00 PM)';
+      return '${'Section 2'.tr} (${'Afternoon'.tr}: 01:00 – 05:00 PM)';
     } else if (session == 0) {
-      return 'Full Day (Both Sections)';
+      return 'Full Day (Both Sections)'.tr;
     }
     if (dayType == 'Time' && fromTime != null && toTime != null) {
       return '${DateText.time(fromTime!)} - ${DateText.time(toTime!)}';
     }
-    return dayType;
+    return dayType.tr;
   }
 
   factory LeaveRequest.fromJson(Map<String, dynamic> json) {

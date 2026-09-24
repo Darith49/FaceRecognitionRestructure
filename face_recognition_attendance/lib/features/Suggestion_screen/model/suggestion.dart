@@ -1,4 +1,5 @@
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
+import 'package:get/get.dart';
 
 /// Pending = the employee submitted it, no manager/leader/CEO has reviewed it yet.
 /// Seen = a manager/leader/CEO reviewed it. Seen suggestions can no longer be edited.
@@ -8,9 +9,9 @@ extension SuggestionStatusLabel on SuggestionStatus {
   String get label {
     switch (this) {
       case SuggestionStatus.pending:
-        return 'Pending';
+        return 'Pending'.tr;
       case SuggestionStatus.seen:
-        return 'Seen';
+        return 'Seen'.tr;
     }
   }
 }

@@ -98,8 +98,8 @@ class _ClockScreenState extends State<ClockScreen>
   @override
   Widget build(BuildContext context) {
     return RequestScaffold(
-      title: 'Clock Attendance',
-      backLabel: 'Requests',
+      title: 'Clock Attendance'.tr,
+      backLabel: 'Requests'.tr,
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 32),
         child: Column(
@@ -207,7 +207,7 @@ class _ClockGreetingHeader extends StatelessWidget {
               ? Get.find<LoginController>()
               : null;
           final user = loginController?.currentuser.value;
-          final role = user?.role.name ?? 'Employee';
+          final role = user?.role.name.tr ?? 'Employee'.tr;
 
           return Row(
             children: [
@@ -293,7 +293,7 @@ class _ClockGreetingHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${controller.greeting} • Have a productive day',
+                      '${controller.greeting} • ${'Have a productive day'.tr}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: RequestColors.textSecondary,
@@ -401,7 +401,7 @@ class _ClockAttendanceCard extends StatelessWidget {
                 // Session 1 Tile (Morning)
                 _ClockSessionTile(
                   sessionNumber: 1,
-                  sessionName: 'MORNING',
+                  sessionName: 'MORNING'.tr,
                   icon: FluentIcons.weather_sunny_24_filled,
                   iconColor: const Color(0xFFF59E0B),
                   checkInTime: controller.session1CheckInText,
@@ -418,7 +418,7 @@ class _ClockAttendanceCard extends StatelessWidget {
                 // Session 2 Tile (Afternoon)
                 _ClockSessionTile(
                   sessionNumber: 2,
-                  sessionName: 'AFTERNOON',
+                  sessionName: 'AFTERNOON'.tr,
                   icon: FluentIcons.weather_moon_24_filled,
                   iconColor: const Color(0xFF6366F1),
                   checkInTime: controller.session2CheckInText,
@@ -456,9 +456,9 @@ class _ClockAttendanceCard extends StatelessWidget {
                                     : RequestColors.textSecondary,
                               ),
                               const SizedBox(width: 6),
-                              const Text(
-                                'TOTAL HOURS WORKED',
-                                style: TextStyle(
+                              Text(
+                                'TOTAL HOURS WORKED'.tr,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: RequestColors.textSecondary,
@@ -498,16 +498,17 @@ class _ClockAttendanceCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${(controller.goalProgress * 100).toInt()}% of 8.0h goal',
+                            '${(controller.goalProgress * 100).toInt()}% ${'of 8.0h goal'.tr}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: RequestColors.textSecondary,
                             ),
                           ),
                           Text(
-                            controller.remainingGoalText == 'Done!'
-                                ? 'Goal Reached!'
-                                : '${controller.remainingGoalText} remaining',
+                            controller.remainingGoalText == 'Done!' ||
+                                    controller.remainingGoalText == 'Done!'.tr
+                                ? 'Goal Reached!'.tr
+                                : '${controller.remainingGoalText} ${'remaining'.tr}',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -534,7 +535,7 @@ class _ClockAttendanceCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () => Get.toNamed(AppRoutes.request),
               icon: const Icon(FluentIcons.note_edit_24_regular, size: 20),
-              label: const Text('Request Time Adjustment'),
+              label: Text('Request Time Adjustment'.tr),
               style: OutlinedButton.styleFrom(
                 foregroundColor: RequestColors.textPrimary,
                 side: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -569,9 +570,9 @@ class _ClockGoalBadge extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Text(
-            'GOAL',
-            style: TextStyle(
+          Text(
+            'GOAL'.tr,
+            style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: RequestColors.textSecondary,
@@ -580,7 +581,7 @@ class _ClockGoalBadge extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '${controller.goalHours.toStringAsFixed(1)} hrs',
+            '${controller.goalHours.toStringAsFixed(1)} ${'hrs'.tr}',
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -660,7 +661,7 @@ class _ClockSessionTile extends StatelessWidget {
                   Icon(icon, size: 16, color: iconColor),
                   const SizedBox(width: 8),
                   Text(
-                    'SESSION $sessionNumber • $sessionName',
+                    '${'SESSION'.tr} $sessionNumber • ${sessionName.tr}',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -679,7 +680,7 @@ class _ClockSessionTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  statusText,
+                  statusText.tr,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -694,9 +695,9 @@ class _ClockSessionTile extends StatelessWidget {
             children: [
               Expanded(
                 child: _ClockSessionStatItem(
-                  label: 'CHECK IN',
+                  label: 'CHECK IN'.tr,
                   value: checkInTime,
-                  subLabel: 'Scheduled $scheduledIn',
+                  subLabel: '${'Scheduled'.tr} $scheduledIn',
                   isFilled: checkInTime != '-- : --',
                 ),
               ),
@@ -707,9 +708,9 @@ class _ClockSessionTile extends StatelessWidget {
               ),
               Expanded(
                 child: _ClockSessionStatItem(
-                  label: 'CHECK OUT',
+                  label: 'CHECK OUT'.tr,
                   value: checkOutTime,
-                  subLabel: 'Scheduled $scheduledOut',
+                  subLabel: '${'Scheduled'.tr} $scheduledOut',
                   isFilled: checkOutTime != '-- : --',
                 ),
               ),
@@ -802,9 +803,9 @@ class _ClockWifiStatusPill extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Office Wi-Fi Connected • Main HQ',
-            style: TextStyle(
+          Text(
+            'Office Wi-Fi Connected • Main HQ'.tr,
+            style: const TextStyle(
               fontSize: 13,
               color: RequestColors.textSecondary,
               fontWeight: FontWeight.w500,

@@ -1,4 +1,5 @@
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
+import 'package:get/get.dart';
 
 class NotificationItem {
   final int id;
@@ -49,10 +50,10 @@ class NotificationItem {
 
   String get timeAgo {
     final diff = DateTime.now().difference(createdAt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inMinutes < 1) return 'Just now'.tr;
+    if (diff.inMinutes < 60) return '${diff.inMinutes}${'m ago'.tr}';
+    if (diff.inHours < 24) return '${diff.inHours}${'h ago'.tr}';
+    if (diff.inDays < 7) return '${diff.inDays}${'d ago'.tr}';
     return DateText.monthShortDay(createdAt);
   }
 }

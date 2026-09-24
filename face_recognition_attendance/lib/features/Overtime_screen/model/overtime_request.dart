@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
+import 'package:get/get.dart';
 
 /// Pending = awaiting approval, Approved = confirmed.
 enum OvertimeStatus { pending, approved }
@@ -8,9 +9,9 @@ extension OvertimeStatusLabel on OvertimeStatus {
   String get label {
     switch (this) {
       case OvertimeStatus.pending:
-        return 'Pending';
+        return 'Pending'.tr;
       case OvertimeStatus.approved:
-        return 'Approved';
+        return 'Approved'.tr;
     }
   }
 }
@@ -52,14 +53,14 @@ class OvertimeRequest {
   /// "1 hour" / "1 hour 30 minutes" / "2 hours"
   String get durationLabel {
     final minutes = duration.inMinutes;
-    if (minutes <= 0) return '0 minutes';
+    if (minutes <= 0) return '0 minutes'.tr;
 
     final hours = minutes ~/ 60;
     final remaining = minutes % 60;
     final parts = <String>[];
-    if (hours > 0) parts.add('$hours hour${hours == 1 ? '' : 's'}');
+    if (hours > 0) parts.add('$hours ${hours == 1 ? 'hour'.tr : 'hours'.tr}');
     if (remaining > 0) {
-      parts.add('$remaining minute${remaining == 1 ? '' : 's'}');
+      parts.add('$remaining ${remaining == 1 ? 'minute'.tr : 'minutes'.tr}');
     }
     return parts.join(' ');
   }

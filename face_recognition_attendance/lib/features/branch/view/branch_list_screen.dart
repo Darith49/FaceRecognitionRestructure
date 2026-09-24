@@ -44,7 +44,7 @@ class BranchListScreen extends StatelessWidget {
                       }
                     },
                     icon: const Icon(Icons.add_location_alt_rounded),
-                    label: const Text('Add New Branch'),
+                    label: Text('Add New Branch'.tr),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: RequestColors.primary,
                       foregroundColor: Colors.white,
@@ -63,13 +63,13 @@ class BranchListScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.location_off_rounded, size: 54, color: Colors.grey.shade400),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No branches found',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        Text(
+                          'No branches found'.tr,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Create a branch to configure geofence attendance.',
+                          'Create a branch to configure geofence attendance.'.tr,
                           style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                         ),
                       ],

@@ -80,9 +80,9 @@ class CreateHubScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isCeo
+                              (isCeo
                                   ? 'CEO Hub'
-                                  : (isManager ? 'Manager Hub' : 'Leader Hub'),
+                                  : (isManager ? 'Manager Hub' : 'Leader Hub')).tr,
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
@@ -92,11 +92,11 @@ class CreateHubScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              isCeo
+                              (isCeo
                                   ? 'Executive Administration & Shifts'
                                   : (isManager
                                       ? 'Organization & Team Actions'
-                                      : 'Team Growth & Invites'),
+                                      : 'Team Growth & Invites')).tr,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -109,11 +109,11 @@ class CreateHubScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      isCeo
+                      (isCeo
                           ? 'Manage organizational departments, change user session times, and coordinate staff.'
                           : (isManager
                               ? 'Create departments and invite Leaders or Employees to your organization.'
-                              : 'Invite new Employees to join your operational team.'),
+                              : 'Invite new Employees to join your operational team.')).tr,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white.withValues(alpha: 0.9),
@@ -127,9 +127,9 @@ class CreateHubScreen extends StatelessWidget {
               const SizedBox(height: 28),
 
               // Actions Section Title
-              const Text(
-                'QUICK ACTIONS',
-                style: TextStyle(
+              Text(
+                'QUICK ACTIONS'.tr,
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.6,
@@ -169,9 +169,9 @@ class CreateHubScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Directories Section Title
-              const Text(
-                'DIRECTORIES',
-                style: TextStyle(
+              Text(
+                'DIRECTORIES'.tr,
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.6,
@@ -259,7 +259,7 @@ class _HubActionTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      title.tr,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -268,7 +268,7 @@ class _HubActionTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      subtitle,
+                      subtitle.tr,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,

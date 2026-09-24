@@ -79,7 +79,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                       }
                     },
                     icon: const Icon(FluentIcons.person_add_24_regular),
-                    label: const Text('Invite New Employee'),
+                    label: Text('Invite New Employee'.tr),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: RequestColors.primary,
                       foregroundColor: Colors.white,
@@ -100,7 +100,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
-                          label: Text('All (${allEmployees.length})'),
+                          label: Text('${'All'.tr} (${allEmployees.length})'),
                           selected: _selectedBranchFilter == null,
                           onSelected: (_) => setState(() => _selectedBranchFilter = null),
                           selectedColor: RequestColors.primary.withValues(alpha: 0.15),

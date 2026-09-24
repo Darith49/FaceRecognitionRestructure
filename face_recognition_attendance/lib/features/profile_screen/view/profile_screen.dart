@@ -8,6 +8,7 @@ import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/controller/schedule_controller.dart';
+import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -90,7 +91,7 @@ class ProfileScreen extends StatelessWidget {
                             children: [
                               _buildAvatarImage(
                                 user?.profileUrl,
-                                user?.fullname ?? 'User',
+                                user?.fullname ?? 'User'.tr,
                               ),
                               // Online status indicator
                               Positioned(
@@ -168,7 +169,7 @@ class ProfileScreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
-                                    user!.role.name.toUpperCase(),
+                                    user!.role.name.tr.toUpperCase(),
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
@@ -203,8 +204,8 @@ class ProfileScreen extends StatelessWidget {
                                     const SizedBox(width: 6),
                                     Text(
                                       isRegistered
-                                          ? 'Face ID Registered'
-                                          : 'Face ID Not Registered',
+                                          ? 'Face ID Registered'.tr
+                                          : 'Face ID Not Registered'.tr,
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: isRegistered
@@ -228,7 +229,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // ATTENDANCE CALENDAR Section
-              _SectionLabel('ATTENDANCE CALENDAR'),
+              _SectionLabel('ATTENDANCE CALENDAR'.tr),
               const SizedBox(height: 8),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
@@ -238,7 +239,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // FACE BIOMETRICS Section
-              _SectionLabel('FACE BIOMETRICS'),
+              _SectionLabel('FACE BIOMETRICS'.tr),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -248,11 +249,11 @@ class ProfileScreen extends StatelessWidget {
                     icon: FluentIcons.camera_24_regular,
                     iconColor: const Color(0xFF7C3AED),
                     title: isRegistered
-                        ? 'Update Registered Face'
-                        : 'Register Face',
+                        ? 'Update Registered Face'.tr
+                        : 'Register Face'.tr,
                     subtitle: isRegistered
-                        ? 'Face biometrics enrolled • Tap to re-scan'
-                        : 'Face biometrics required • Tap to enroll now',
+                        ? 'Face biometrics enrolled • Tap to re-scan'.tr
+                        : 'Face biometrics required • Tap to enroll now'.tr,
                     onTap: () async {
                       final res = await Get.toNamed(
                         AppRoutes.faceCapture,
@@ -269,15 +270,15 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // PREFERENCES Section
-              _SectionLabel('PREFERENCES'),
+              _SectionLabel('PREFERENCES'.tr),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _SettingsTile(
                   icon: FluentIcons.local_language_24_regular,
                   iconColor: RequestColors.primary,
-                  title: 'Settings & Language',
-                  subtitle: 'English (US) • Notifications',
+                  title: 'Settings & Language'.tr,
+                  subtitle: 'English (US) • Notifications'.tr,
                   onTap: () => Get.toNamed(AppRoutes.settings),
                 ),
               ),
@@ -290,9 +291,9 @@ class ProfileScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'ROLE-BASED PANEL ACCESS',
-                      style: TextStyle(
+                    Text(
+                      'ROLE-BASED PANEL ACCESS'.tr,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: RequestColors.textSecondary,
@@ -300,8 +301,8 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'All Authorized',
-                      style: TextStyle(
+                      'All Authorized'.tr,
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: RequestColors.primary,
@@ -318,11 +319,11 @@ class ProfileScreen extends StatelessWidget {
                 child: PermissionView(
                   targetPermission: AppPermission.accessCeoPanel,
                   child: _RolePanelCard(
-                    title: 'CEO Control Panel',
-                    subtitle: 'Full system oversight and executive controls',
+                    title: 'CEO Control Panel'.tr,
+                    subtitle: 'Full system oversight and executive controls'.tr,
                     icon: FluentIcons.sparkle_24_filled,
                     gradient: const [Color(0xFF7C3AED), Color(0xFF9333EA)],
-                    badgeText: 'ACTIVE',
+                    badgeText: 'ACTIVE'.tr,
                     onTap: () => Get.toNamed(AppRoutes.ceoPanel),
                   ),
                 ),
@@ -336,13 +337,13 @@ class ProfileScreen extends StatelessWidget {
                 child: PermissionView(
                   targetPermission: AppPermission.accessManagerPanel,
                   child: _RoleListTile(
-                    title: 'Manager Portal',
-                    subtitle: 'Team management & approval workflows',
+                    title: 'Manager Portal'.tr,
+                    subtitle: 'Team management & approval workflows'.tr,
                     icon: FluentIcons.shield_badge_24_regular,
                     iconColor: RequestColors.primary,
                     onTap: () => Get.snackbar(
-                      'Manager Action',
-                      'Manager Portal',
+                      'Manager Action'.tr,
+                      'Manager Portal'.tr,
                       snackPosition: SnackPosition.TOP,
                     ),
                   ),
@@ -357,13 +358,13 @@ class ProfileScreen extends StatelessWidget {
                 child: PermissionView(
                   targetPermission: AppPermission.accessLeaderPanel,
                   child: _RoleListTile(
-                    title: 'Leader View',
-                    subtitle: 'Direct team oversight & task delegation',
+                    title: 'Leader View'.tr,
+                    subtitle: 'Direct team oversight & task delegation'.tr,
                     icon: FluentIcons.people_team_24_regular,
                     iconColor: RequestColors.gold,
                     onTap: () => Get.snackbar(
-                      'Leader Action',
-                      'Leader View',
+                      'Leader Action'.tr,
+                      'Leader View'.tr,
                       snackPosition: SnackPosition.TOP,
                     ),
                   ),
@@ -378,13 +379,13 @@ class ProfileScreen extends StatelessWidget {
                 child: PermissionView(
                   targetPermission: AppPermission.accessEmployeePanel,
                   child: _RoleListTile(
-                    title: 'Employee Workspace',
-                    subtitle: 'Personal dashboard & self-service tools',
+                    title: 'Employee Workspace'.tr,
+                    subtitle: 'Personal dashboard & self-service tools'.tr,
                     icon: FluentIcons.person_24_regular,
                     iconColor: RequestColors.approvedStatus,
                     onTap: () => Get.snackbar(
-                      'Employee Action',
-                      'Employee Workspace',
+                      'Employee Action'.tr,
+                      'Employee Workspace'.tr,
                       snackPosition: SnackPosition.TOP,
                     ),
                   ),
@@ -394,7 +395,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 28),
 
               // ACCOUNT Section
-              _SectionLabel('ACCOUNT'),
+              _SectionLabel('ACCOUNT'.tr),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -414,13 +415,13 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(FluentIcons.sign_out_24_regular, color: RequestColors.danger, size: 22),
-            SizedBox(width: 10),
+            const Icon(FluentIcons.sign_out_24_regular, color: RequestColors.danger, size: 22),
+            const SizedBox(width: 10),
             Text(
-              'Log Out',
-              style: TextStyle(
+              'Log Out'.tr,
+              style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
                 color: RequestColors.textPrimary,
@@ -428,17 +429,17 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-        content: const Text(
-          'Are you sure you want to log out of your account?',
-          style: TextStyle(fontSize: 14, color: RequestColors.textSecondary),
+        content: Text(
+          'Are you sure you want to log out of your account?'.tr,
+          style: const TextStyle(fontSize: 14, color: RequestColors.textSecondary),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
+            child: Text(
+              'Cancel'.tr,
+              style: const TextStyle(
                 color: RequestColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
@@ -458,9 +459,9 @@ class ProfileScreen extends StatelessWidget {
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
-            child: const Text(
-              'Log Out',
-              style: TextStyle(fontWeight: FontWeight.w700),
+            child: Text(
+              'Log Out'.tr,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -550,22 +551,22 @@ class _LogoutTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Log Out',
-                      style: TextStyle(
+                      'Log Out'.tr,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: RequestColors.danger,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Sign out of your session on this device',
-                      style: TextStyle(
+                      'Sign out of your session on this device'.tr,
+                      style: const TextStyle(
                         fontSize: 13,
                         color: RequestColors.textSecondary,
                       ),
@@ -897,31 +898,6 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
 
   PageController? _pageController;
 
-  static const List<String> _monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  static const List<String> _weekdayLabels = [
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
-
   Color _statusColor(DayStatus s) => switch (s) {
     DayStatus.worked => RequestColors.approvedStatus,
     DayStatus.workday => const Color(0xFF2E7D32),
@@ -933,13 +909,13 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
   };
 
   String _statusLabel(DayStatus s) => switch (s) {
-    DayStatus.worked => 'Worked',
-    DayStatus.workday => 'Workday',
-    DayStatus.absent => 'Absent',
-    DayStatus.dayOff => 'Day off',
-    DayStatus.overtime => 'Overtime',
-    DayStatus.leave => 'Leave',
-    DayStatus.none => 'No record',
+    DayStatus.worked => 'Worked'.tr,
+    DayStatus.workday => 'Workday'.tr,
+    DayStatus.absent => 'Absent'.tr,
+    DayStatus.dayOff => 'Day off'.tr,
+    DayStatus.overtime => 'Overtime'.tr,
+    DayStatus.leave => 'Leave'.tr,
+    DayStatus.none => 'No record'.tr,
   };
 
   IconData _statusIcon(DayStatus s) => switch (s) {
@@ -1015,8 +991,8 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
 
   void _showAbsenceReasonSheet(BuildContext context, DateTime day) {
     final info = _getAbsenceReason(day);
-    final month = _monthNames[day.month - 1];
-    final weekday = _weekdayLabels[day.weekday - 1];
+    final month = DateText.monthName(day.month);
+    final weekday = DateText.weekdayShort(day.weekday);
 
     showModalBottomSheet(
       context: context,
@@ -1071,9 +1047,9 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Absence Permission Info',
-                          style: TextStyle(
+                        Text(
+                          'Absence Permission Info'.tr,
+                          style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
                             color: RequestColors.textPrimary,
@@ -1105,18 +1081,18 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                         ),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           FluentIcons.checkmark_circle_24_regular,
                           size: 13,
                           color: RequestColors.approvedText,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
-                          'Permitted',
-                          style: TextStyle(
+                          'Permitted'.tr,
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: RequestColors.approvedText,
@@ -1143,8 +1119,8 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                   children: [
                     _infoRow(
                       icon: FluentIcons.document_bullet_list_24_regular,
-                      label: 'Leave Type',
-                      value: info.leaveType,
+                      label: 'Leave Type'.tr,
+                      value: info.leaveType.tr,
                       isBold: true,
                     ),
                     const Divider(
@@ -1154,8 +1130,8 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     ),
                     _infoRow(
                       icon: FluentIcons.comment_24_regular,
-                      label: 'Reason',
-                      value: info.reason,
+                      label: 'Reason'.tr,
+                      value: info.reason.tr,
                     ),
                     const Divider(
                       height: 18,
@@ -1164,8 +1140,8 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     ),
                     _infoRow(
                       icon: FluentIcons.shield_checkmark_24_regular,
-                      label: 'Approved By',
-                      value: info.approvedBy,
+                      label: 'Approved By'.tr,
+                      value: info.approvedBy.tr,
                     ),
                     const Divider(
                       height: 18,
@@ -1174,8 +1150,8 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     ),
                     _infoRow(
                       icon: FluentIcons.clock_24_regular,
-                      label: 'Time Range',
-                      value: info.timeRange,
+                      label: 'Time Range'.tr,
+                      value: info.timeRange.tr,
                     ),
                     const Divider(
                       height: 18,
@@ -1184,8 +1160,8 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     ),
                     _infoRow(
                       icon: FluentIcons.attach_24_regular,
-                      label: 'Documentation',
-                      value: info.documentNote,
+                      label: 'Documentation'.tr,
+                      value: info.documentNote.tr,
                     ),
                   ],
                 ),
@@ -1200,18 +1176,18 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                   color: RequestColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       FluentIcons.info_24_regular,
                       size: 18,
                       color: RequestColors.primary,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'This absence has verified management permission and does not reduce attendance rating.',
-                        style: TextStyle(
+                        'This absence has verified management permission and does not reduce attendance rating.'.tr,
+                        style: const TextStyle(
                           fontSize: 12,
                           color: RequestColors.primary,
                           fontWeight: FontWeight.w500,
@@ -1238,9 +1214,9 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text(
-                    'Got It',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  child: Text(
+                    'Got It'.tr,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -1394,9 +1370,9 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Calendar View',
-                      style: TextStyle(
+                    Text(
+                      'Calendar View'.tr,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
                         color: RequestColors.textPrimary,
@@ -1404,7 +1380,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${_monthNames[focusedDay.month - 1]} ${focusedDay.year}',
+                      DateText.monthYear(focusedDay),
                       style: const TextStyle(
                         color: RequestColors.textSecondary,
                         fontSize: 12,
@@ -1447,7 +1423,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     _buildDayCell(day, selectedDay),
                 dowBuilder: (context, day) => Center(
                   child: Text(
-                    _weekdayLabels[day.weekday - 1],
+                    DateText.weekdayShort(day.weekday),
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -1500,7 +1476,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${_weekdayLabels[selectedDay.weekday - 1]}, ${_monthNames[selectedDay.month - 1]} ${selectedDay.day}',
+                            '${DateText.weekdayShort(selectedDay.weekday)}, ${DateText.monthName(selectedDay.month)} ${selectedDay.day}',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -1510,8 +1486,8 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                           if (isAbsent)
                             Text(
                               selectedStatus == DayStatus.leave
-                                  ? 'Tap to view leave details'
-                                  : 'Tap to view permission reason',
+                                  ? 'Tap to view leave details'.tr
+                                  : 'Tap to view permission reason'.tr,
                               style: TextStyle(
                                 fontSize: 11,
                                 color: selectedColor,
@@ -1564,11 +1540,11 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
               spacing: 14,
               runSpacing: 8,
               children: [
-                _legendDot(_statusColor(DayStatus.worked), 'Worked'),
-                _legendDot(_statusColor(DayStatus.absent), 'Absent'),
-                _legendDot(_statusColor(DayStatus.dayOff), 'Day off'),
-                _legendDot(_statusColor(DayStatus.overtime), 'Overtime'),
-                _legendDot(_statusColor(DayStatus.leave), 'Leave'),
+                _legendDot(_statusColor(DayStatus.worked), 'Worked'.tr),
+                _legendDot(_statusColor(DayStatus.absent), 'Absent'.tr),
+                _legendDot(_statusColor(DayStatus.dayOff), 'Day off'.tr),
+                _legendDot(_statusColor(DayStatus.overtime), 'Overtime'.tr),
+                _legendDot(_statusColor(DayStatus.leave), 'Leave'.tr),
               ],
             ),
           ],

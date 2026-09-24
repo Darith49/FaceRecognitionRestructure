@@ -191,7 +191,13 @@ class HomeController extends GetxController {
   }
 
   String get greeting {
+    final isKhmer = Get.locale?.languageCode == 'km';
     final hour = now.value.hour;
+    if (isKhmer) {
+      if (hour < 12) return 'អរុណសួស្តី';
+      if (hour < 17) return 'ទិវាសួស្តី';
+      return 'សាយណ្ហសួស្តី';
+    }
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
@@ -217,22 +223,22 @@ class HomeController extends GetxController {
       state.value == CheckState.checkedOut;
 
   String get session1StatusText {
-    if (session1CheckOut.value != null) return 'Completed';
-    if (session1CheckIn.value != null) return 'In Progress';
-    if (session1ApiStatus.value == 'absent') return 'Absent';
-    if (session1ApiStatus.value == 'open') return 'Open';
-    return 'Upcoming';
+    if (session1CheckOut.value != null) return 'Completed'.tr;
+    if (session1CheckIn.value != null) return 'In Progress'.tr;
+    if (session1ApiStatus.value == 'absent') return 'Absent'.tr;
+    if (session1ApiStatus.value == 'open') return 'Open'.tr;
+    return 'Upcoming'.tr;
   }
 
   String get session2StatusText {
-    if (session2CheckOut.value != null) return 'Completed';
-    if (session2CheckIn.value != null) return 'In Progress';
-    if (session2ApiStatus.value == 'absent') return 'Absent';
-    if (session2ApiStatus.value == 'open') return 'Open';
+    if (session2CheckOut.value != null) return 'Completed'.tr;
+    if (session2CheckIn.value != null) return 'In Progress'.tr;
+    if (session2ApiStatus.value == 'absent') return 'Absent'.tr;
+    if (session2ApiStatus.value == 'open') return 'Open'.tr;
     if (session1CheckOut.value != null || session1ApiStatus.value == 'absent') {
-      return 'Ready';
+      return 'Ready'.tr;
     }
-    return 'Upcoming';
+    return 'Upcoming'.tr;
   }
 
   // ─── Time Text Getters ──────────────────────────────────────────────────────
@@ -331,61 +337,72 @@ class HomeController extends GetxController {
 
   String get buttonLabel {
     if (!hasFaceRegistered) {
-      return 'Register Face';
+      return 'Register Face'.tr;
     }
     switch (state.value) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
-        return 'Check In';
+        return 'Check In'.tr;
       case CheckState.session1CheckedIn:
       case CheckState.checkedIn:
-        return 'Check Out';
+        return 'Check Out'.tr;
       case CheckState.session2NotCheckedIn:
-        return 'Check In';
+        return 'Check In'.tr;
       case CheckState.session2CheckedIn:
-        return 'Check Out';
+        return 'Check Out'.tr;
       case CheckState.completed:
       case CheckState.checkedOut:
-        return 'Completed';
+        return 'Completed'.tr;
     }
   }
 
   String get buttonSubtext {
     if (!hasFaceRegistered) {
-      return 'Enroll your face first';
+      return 'Enroll your face first'.tr;
     }
     switch (state.value) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
-        return 'Session 1 • Face or Tap ID';
+        return 'Session 1 • Face or Tap ID'.tr;
       case CheckState.session1CheckedIn:
       case CheckState.checkedIn:
-        return 'Session 1 • Tap to check out';
+        return 'Session 1 • Tap to check out'.tr;
       case CheckState.session2NotCheckedIn:
-        return 'Session 2 • Face or Tap ID';
+        return 'Session 2 • Face or Tap ID'.tr;
       case CheckState.session2CheckedIn:
-        return 'Session 2 • Tap to finish shift';
+        return 'Session 2 • Tap to finish shift'.tr;
       case CheckState.completed:
       case CheckState.checkedOut:
-        return 'All Sessions Recorded';
+        return 'All Sessions Recorded'.tr;
     }
   }
 
   String get nextScheduleText {
+    final isKm = Get.locale?.languageCode == 'km';
     switch (state.value) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
-        return 'Next schedule: Today, $session1SchedIn AM (Session 1)';
+        return isKm
+            ? 'កាលវិភាគបន្ទាប់: ថ្ងៃនេះ $session1SchedIn ព្រឹក (វេនទី ១)'
+            : 'Next schedule: Today, $session1SchedIn AM (Session 1)';
       case CheckState.session1CheckedIn:
       case CheckState.checkedIn:
-        return 'Scheduled check out: $session1SchedOut PM (Session 1)';
+        return isKm
+            ? 'ម៉ោងចេញតាមកាលវិភាគ: $session1SchedOut រសៀល (វេនទី ១)'
+            : 'Scheduled check out: $session1SchedOut PM (Session 1)';
       case CheckState.session2NotCheckedIn:
-        return 'Next schedule: Today, $session2SchedIn PM (Session 2)';
+        return isKm
+            ? 'កាលវិភាគបន្ទាប់: ថ្ងៃនេះ $session2SchedIn រសៀល (វេនទី ២)'
+            : 'Next schedule: Today, $session2SchedIn PM (Session 2)';
       case CheckState.session2CheckedIn:
-        return 'Scheduled check out: $session2SchedOut PM (Session 2)';
+        return isKm
+            ? 'ម៉ោងចេញតាមកាលវិភាគ: $session2SchedOut រសៀល (វេនទី ២)'
+            : 'Scheduled check out: $session2SchedOut PM (Session 2)';
       case CheckState.completed:
       case CheckState.checkedOut:
-        return 'Next schedule: Tomorrow, $session1SchedIn AM (Session 1)';
+        return isKm
+            ? 'កាលវិភាគបន្ទាប់: ថ្ងៃស្អែក $session1SchedIn ព្រឹក (វេនទី ១)'
+            : 'Next schedule: Tomorrow, $session1SchedIn AM (Session 1)';
     }
   }
 

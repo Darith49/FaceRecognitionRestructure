@@ -75,18 +75,18 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     if (wasApproved) {
       final confirmed = await Get.dialog<bool>(
         AlertDialog(
-          title: const Text('Change this approved request?'),
-          content: const Text(
-            'After you save, the request goes back to Pending and needs approval again.',
+          title: Text('Change this approved request?'.tr),
+          content: Text(
+            'After you save, the request goes back to Pending and needs approval again.'.tr,
           ),
           actions: [
             TextButton(
               onPressed: () => Get.back(result: false),
-              child: const Text('Keep as approved'),
+              child: Text('Keep as approved'.tr),
             ),
             TextButton(
               onPressed: () => Get.back(result: true),
-              child: const Text('Yes, change it'),
+              child: Text('Yes, change it'.tr),
             ),
           ],
         ),
@@ -121,20 +121,20 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
 
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Cancel this request?'),
-        content: const Text(
-          'The request will be removed from your pending list.',
+        title: Text('Cancel this request?'.tr),
+        content: Text(
+          'The request will be removed from your pending list.'.tr,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Keep request'),
+            child: Text('Keep request'.tr),
           ),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: const Text(
-              'Yes, cancel',
-              style: TextStyle(color: RequestColors.danger),
+            child: Text(
+              'Yes, cancel'.tr,
+              style: const TextStyle(color: RequestColors.danger),
             ),
           ),
         ],
@@ -152,9 +152,9 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   Widget build(BuildContext context) {
     final request = _request;
     if (request == null) {
-      return const RequestScaffold(
+      return RequestScaffold(
         title: 'Permission',
-        body: Center(child: Text('This request could not be found.')),
+        body: Center(child: Text('This request could not be found.'.tr)),
       );
     }
 
@@ -252,7 +252,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               child: ElevatedButton.icon(
                 onPressed: _confirmCancel,
                 icon: const Icon(FluentIcons.dismiss_circle_24_regular, size: 18),
-                label: const Text('Cancel Request'),
+                label: Text('Cancel Request'.tr),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: RequestColors.danger,
                   foregroundColor: Colors.white,
@@ -290,14 +290,14 @@ class _LockedNote extends StatelessWidget {
         color: RequestColors.pendingBackground,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(FluentIcons.lock_closed_24_regular, size: 18, color: RequestColors.pendingText),
-          SizedBox(width: 8),
+          const Icon(FluentIcons.lock_closed_24_regular, size: 18, color: RequestColors.pendingText),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'This date has already passed, so the request can no longer be changed.',
-              style: TextStyle(fontSize: 12, color: RequestColors.pendingText),
+              'This date has already passed, so the request can no longer be changed.'.tr,
+              style: const TextStyle(fontSize: 12, color: RequestColors.pendingText),
             ),
           ),
         ],

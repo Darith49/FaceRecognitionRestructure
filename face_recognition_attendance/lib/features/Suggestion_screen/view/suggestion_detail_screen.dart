@@ -79,18 +79,18 @@ class _SuggestionDetailScreenState extends State<SuggestionDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Mark as seen?'),
-        content: const Text(
-          'The employee will no longer be able to edit this suggestion.',
+        title: Text('Mark as seen?'.tr),
+        content: Text(
+          'The employee will no longer be able to edit this suggestion.'.tr,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'.tr),
           ),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: const Text('Mark as seen'),
+            child: Text('Mark as seen'.tr),
           ),
         ],
       ),
@@ -203,7 +203,7 @@ class _SuggestionDetailScreenState extends State<SuggestionDetailScreen> {
       textAlignVertical: TextAlignVertical.top,
       style: const TextStyle(fontSize: 14, color: RequestColors.textPrimary),
       decoration: InputDecoration(
-        hintText: 'Your Message',
+        hintText: 'Your Message'.tr,
         hintStyle: const TextStyle(
           fontSize: 14,
           color: RequestColors.textSecondary,

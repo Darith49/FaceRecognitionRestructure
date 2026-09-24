@@ -37,18 +37,18 @@ Future<bool> confirmDeleteSuggestion(BuildContext context) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Delete suggestion?'),
-      content: const Text('This cannot be undone.'),
+      title: Text('Delete suggestion?'.tr),
+      content: Text('This cannot be undone.'.tr),
       actions: [
         TextButton(
           onPressed: () => Get.back(result: false),
-          child: const Text('Cancel'),
+          child: Text('Cancel'.tr),
         ),
         TextButton(
           onPressed: () => Get.back(result: true),
-          child: const Text(
-            'Delete',
-            style: TextStyle(color: RequestColors.danger),
+          child: Text(
+            'Delete'.tr,
+            style: const TextStyle(color: RequestColors.danger),
           ),
         ),
       ],

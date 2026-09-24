@@ -15,9 +15,9 @@ class LeaveDetailScreen extends GetView<LeaveController> {
     final request = args is String ? controller.findById(args) : null;
 
     if (request == null) {
-      return const RequestScaffold(
+      return RequestScaffold(
         title: 'Leave',
-        body: Center(child: Text('This request could not be found.')),
+        body: Center(child: Text('This request could not be found.'.tr)),
       );
     }
 
@@ -38,7 +38,7 @@ class LeaveDetailScreen extends GetView<LeaveController> {
           const SizedBox(height: 14),
           RequestField(
             label: 'Total Days',
-            value: '${request.dayCount} day${request.dayCount == 1 ? '' : 's'}',
+            value: '${request.dayCount} ${request.dayCount == 1 ? 'day'.tr : 'days'.tr}',
           ),
           const SizedBox(height: 14),
           RequestField(label: 'Reason', value: request.reason, multiline: true),

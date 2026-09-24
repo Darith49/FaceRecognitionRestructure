@@ -20,10 +20,10 @@ class SuggestionStatusScreen extends GetView<SuggestionController> {
         final items = controller.suggestions;
 
         if (items.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
-              'No suggestions yet',
-              style: TextStyle(
+              'No suggestions yet'.tr,
+              style: const TextStyle(
                 fontSize: 13,
                 color: RequestColors.textSecondary,
               ),

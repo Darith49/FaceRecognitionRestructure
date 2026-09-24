@@ -10,22 +10,23 @@ class SettingsScreen extends GetView<SettingsController> {
 
   @override
   Widget build(BuildContext context) {
-    return RequestScaffold(
-      title: 'Face Attendance Settings',
-      backLabel: '',
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ============== LANGUAGE SECTION ==============
-            _SectionLabel('LANGUAGE / ភាសា'),
-            const SizedBox(height: 8),
-            Container(
-              decoration: appleCardDecoration(),
-              clipBehavior: Clip.antiAlias,
-              child: GetBuilder<SettingsController>(
-                builder: (ctrl) => Column(
+    return GetBuilder<SettingsController>(
+      key: ValueKey(Get.locale?.toString()),
+      builder: (ctrl) => RequestScaffold(
+        title: 'Face Attendance Settings'.tr,
+        backLabel: '',
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ============== LANGUAGE SECTION ==============
+              const _SectionLabel('LANGUAGE / ភាសា'),
+              const SizedBox(height: 8),
+              Container(
+                decoration: appleCardDecoration(),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
                   children: [
                     _LanguageTile(
                       title: 'settings_language_english'.tr,
@@ -43,23 +44,22 @@ class SettingsScreen extends GetView<SettingsController> {
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Text(
-                'App content and interface language',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: RequestColors.textSecondary,
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'App content and interface language'.tr,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: RequestColors.textSecondary,
+                  ),
                 ),
               ),
-            ),
 
             const SizedBox(height: 28),
 
             // ============== ABOUT SECTION ==============
-            _SectionLabel('ABOUT'),
+            _SectionLabel('ABOUT'.tr),
             const SizedBox(height: 8),
             Container(
               decoration: appleCardDecoration(),
@@ -85,9 +85,9 @@ class SettingsScreen extends GetView<SettingsController> {
                             color: RequestColors.approvedStatus.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            'Latest',
-                            style: TextStyle(
+                          child: Text(
+                            'Latest'.tr,
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: RequestColors.approvedStatus,
@@ -99,19 +99,19 @@ class SettingsScreen extends GetView<SettingsController> {
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   _AboutRow(
-                    title: 'Terms of Service',
+                    title: 'Terms of Service'.tr,
                     showChevron: true,
                     onTap: () {},
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   _AboutRow(
-                    title: 'Privacy Policy',
+                    title: 'Privacy Policy'.tr,
                     showChevron: true,
                     onTap: () {},
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
                   _AboutRow(
-                    title: 'Support & Documentation',
+                    title: 'Support & Documentation'.tr,
                     showChevron: true,
                     onTap: () {},
                   ),
@@ -131,9 +131,9 @@ class SettingsScreen extends GetView<SettingsController> {
                     color: RequestColors.primary,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Face Attendance Security Suite',
-                    style: TextStyle(
+                  Text(
+                    'Face Attendance Security Suite'.tr,
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: RequestColors.textSecondary,
@@ -154,7 +154,7 @@ class SettingsScreen extends GetView<SettingsController> {
           ],
         ),
       ),
-    );
+    ),);
   }
 }
 
@@ -168,7 +168,7 @@ class _SectionLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 2),
       child: Text(
-        text,
+        text.tr,
         style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -260,7 +260,7 @@ class _AboutRow extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                title,
+                title.tr,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,

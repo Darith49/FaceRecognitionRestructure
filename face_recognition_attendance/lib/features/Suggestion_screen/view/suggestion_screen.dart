@@ -87,9 +87,9 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Anything we can do better?',
-                    style: TextStyle(
+                  Text(
+                    'Anything we can do better?'.tr,
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: RequestColors.textPrimary,
@@ -97,9 +97,9 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Even the smallest suggestion can help us improve together',
-                    style: TextStyle(
+                  Text(
+                    'Even the smallest suggestion can help us improve together'.tr,
+                    style: const TextStyle(
                       fontSize: 14,
                       color: RequestColors.textSecondary,
                     ),
@@ -108,9 +108,9 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                   const SizedBox(height: 20),
 
                   // Category section
-                  const Text(
-                    'CATEGORY',
-                    style: TextStyle(
+                  Text(
+                    'CATEGORY'.tr,
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: RequestColors.textSecondary,
@@ -138,7 +138,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                                 : Border.all(color: const Color(0xFFE5E5EA)),
                           ),
                           child: Text(
-                            _categories[i],
+                            _categories[i].tr,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -155,9 +155,9 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                   const SizedBox(height: 20),
 
                   // Your Suggestion
-                  const Text(
-                    'YOUR SUGGESTION',
-                    style: TextStyle(
+                  Text(
+                    'YOUR SUGGESTION'.tr,
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: RequestColors.textSecondary,
@@ -178,7 +178,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                         color: RequestColors.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Share your thoughts, suggestions, or concerns...',
+                        hintText: 'Share your thoughts, suggestions, or concerns...'.tr,
                         hintStyle: const TextStyle(
                           fontSize: 15,
                           color: RequestColors.textSecondary,
@@ -198,11 +198,13 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Constructive feedback is shared directly with ops',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: RequestColors.textSecondary,
+                      Expanded(
+                        child: Text(
+                          'Constructive feedback is shared directly with ops'.tr,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: RequestColors.textSecondary,
+                          ),
                         ),
                       ),
                       Text(
@@ -227,18 +229,18 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Submit anonymously',
-                                style: TextStyle(
+                              Text(
+                                'Submit anonymously'.tr,
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: RequestColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              const Text(
-                                'Your identity will not be attached',
-                                style: TextStyle(
+                              Text(
+                                'Your identity will not be attached'.tr,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: RequestColors.textSecondary,
                                 ),

@@ -282,7 +282,7 @@ class LoginScreen extends GetView<LoginController> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'FAST DEMO ACCESS',
+                                'FAST DEMO ACCESS'.tr,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -299,7 +299,7 @@ class LoginScreen extends GetView<LoginController> {
                               SizedBox(
                                 width: 70,
                                 child: Text(
-                                  'Role',
+                                  'Role'.tr,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -309,7 +309,7 @@ class LoginScreen extends GetView<LoginController> {
                               ),
                               Expanded(
                                 child: Text(
-                                  'Email',
+                                  'auth_email'.tr,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -318,7 +318,7 @@ class LoginScreen extends GetView<LoginController> {
                                 ),
                               ),
                               Text(
-                                'Pass',
+                                'Pass'.tr,
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -382,7 +382,7 @@ class LoginScreen extends GetView<LoginController> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  role,
+                  role.tr,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 12,

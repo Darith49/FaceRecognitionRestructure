@@ -26,7 +26,7 @@ class RequestListScreen extends GetView<PermissionController> {
         if (items.isEmpty) {
           return Center(
             child: Text(
-              isPending ? 'No pending requests' : 'No approved requests',
+              (isPending ? 'No pending requests' : 'No approved requests').tr,
               style: const TextStyle(
                 fontSize: 13,
                 color: RequestColors.textSecondary,

@@ -21,9 +21,9 @@ class AttendanceScreen extends GetView<AttendanceController> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const _SectionTitle('Overview'),
+          _SectionTitle('Overview'.tr),
           const SizedBox(height: 10),
-          const _Caption('Department'),
+          _Caption('Department'.tr),
           Obx(
             () {
               final deptList = controller.departments.isNotEmpty
@@ -55,7 +55,7 @@ class AttendanceScreen extends GetView<AttendanceController> {
             },
           ),
           const SizedBox(height: 16),
-          const _Caption('Date'),
+          _Caption('Date'.tr),
           Row(
             children: [
               Expanded(
@@ -64,13 +64,13 @@ class AttendanceScreen extends GetView<AttendanceController> {
                     value: controller.month.value == 0
                         ? null
                         : controller.month.value,
-                    hint: 'Month',
+                    hint: 'Month'.tr,
                     fillColor: RequestColors.softSurface,
                     icon: Icons.keyboard_arrow_down_rounded,
                     items: [
-                      const DropdownMenuItem<int>(
+                      DropdownMenuItem<int>(
                         value: 0,
-                        child: Text('All months'),
+                        child: Text('All months'.tr),
                       ),
                       for (var m = 1; m <= 12; m++)
                         DropdownMenuItem<int>(
@@ -92,13 +92,13 @@ class AttendanceScreen extends GetView<AttendanceController> {
                     value: controller.year.value == 0
                         ? null
                         : controller.year.value,
-                    hint: 'Year',
+                    hint: 'Year'.tr,
                     fillColor: RequestColors.softSurface,
                     icon: Icons.keyboard_arrow_down_rounded,
                     items: [
-                      const DropdownMenuItem<int>(
+                      DropdownMenuItem<int>(
                         value: 0,
-                        child: Text('All years'),
+                        child: Text('All years'.tr),
                       ),
                       for (final y in controller.years)
                         DropdownMenuItem<int>(value: y, child: Text('$y')),
@@ -113,7 +113,7 @@ class AttendanceScreen extends GetView<AttendanceController> {
             ],
           ),
           const SizedBox(height: 28),
-          const _SectionTitle('Total Sessions'),
+          _SectionTitle('Total Sessions'.tr),
           const SizedBox(height: 10),
           Obx(
             () => Row(
@@ -121,7 +121,7 @@ class AttendanceScreen extends GetView<AttendanceController> {
               children: [
                 Expanded(
                   child: _CountCard(
-                    title: 'Absent',
+                    title: 'Absent'.tr,
                     code: 'A',
                     codeColor: _absentColor,
                     count: controller.countOf(AttendanceType.absent),
@@ -130,7 +130,7 @@ class AttendanceScreen extends GetView<AttendanceController> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _CountCard(
-                    title: 'Waive',
+                    title: 'Waive'.tr,
                     code: 'W',
                     codeColor: _waiveColor,
                     count: controller.countOf(AttendanceType.waive),
@@ -142,7 +142,7 @@ class AttendanceScreen extends GetView<AttendanceController> {
           const SizedBox(height: 12),
           Obx(
             () => _CountCard(
-              title: 'Absent with Permission',
+              title: 'Absent with Permission'.tr,
               code: 'AP',
               codeColor: _permissionColor,
               count: controller.countOf(AttendanceType.absentWithPermission),
@@ -256,7 +256,7 @@ class _CountCard extends StatelessWidget {
                   text: '$count',
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-                TextSpan(text: count == 1 ? ' Session' : ' Sessions'),
+                TextSpan(text: count == 1 ? ' Session'.tr : ' Sessions'.tr),
               ],
             ),
             style: const TextStyle(

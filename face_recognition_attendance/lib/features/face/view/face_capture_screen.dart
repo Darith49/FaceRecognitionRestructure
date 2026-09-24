@@ -362,13 +362,13 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Success!',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                'Success!'.tr,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                message,
+                message.tr,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
               ),
@@ -422,7 +422,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       Icon(Icons.verified_user_rounded, size: 16, color: Colors.green.shade700),
                       const SizedBox(width: 6),
                       Text(
-                        'Biometric Match: ${((resultData['similarity'] as num) * 100).toStringAsFixed(1)}%',
+                        '${'Biometric Match:'.tr} ${((resultData['similarity'] as num) * 100).toStringAsFixed(1)}%',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -449,9 +449,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  child: Text(
+                    'Done'.tr,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -492,7 +492,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                title,
+                title.tr,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
@@ -502,7 +502,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                message,
+                message.tr,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -524,7 +524,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Biometric Match:', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                          Text('Biometric Match:'.tr, style: const TextStyle(fontSize: 12, color: Colors.black54)),
                           Text(
                             '${((details['similarity'] as num) * 100).toStringAsFixed(1)}% (Req: 80%)',
                             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
@@ -536,7 +536,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Liveness Score:', style: TextStyle(fontSize: 12, color: Colors.black54)),
+                            Text('Liveness Score:'.tr, style: const TextStyle(fontSize: 12, color: Colors.black54)),
                             Text(
                               '${((details['liveness'] as num) * 100).toStringAsFixed(1)}% (Req: 70%)',
                               style: TextStyle(
@@ -563,7 +563,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  child: Text('Try Again'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
               ),
             ],
@@ -609,7 +609,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                title,
+                title.tr,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 18,
@@ -626,7 +626,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                   border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Text(
-                  message,
+                  message.tr,
                   textAlign: TextAlign.left,
                   style: TextStyle(
                     fontSize: 13,
@@ -653,9 +653,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Understood',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  child: Text(
+                    'Understood'.tr,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -667,16 +667,16 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
   }
 
   String _getActionTitle() {
-    final sessionSuffix = _session != null ? ' (Section $_session)' : '';
+    final sessionSuffix = _session != null ? ' (${'Section'.tr} $_session)' : '';
     switch (_action) {
       case 'register':
-        return 'Register Face';
+        return 'Register Face'.tr;
       case 'check_in':
-        return 'Check In$sessionSuffix';
+        return '${'Check In'.tr}$sessionSuffix';
       case 'check_out':
-        return 'Check Out$sessionSuffix';
+        return '${'Check Out'.tr}$sessionSuffix';
       default:
-        return 'Face Attendance';
+        return 'Face Attendance'.tr;
     }
   }
 
@@ -731,8 +731,8 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                     const SizedBox(height: 18),
                     Text(
                       _statusText.isNotEmpty
-                          ? _statusText
-                          : 'Camera loading or permission required',
+                          ? _statusText.tr
+                          : 'Camera loading or permission required'.tr,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white,
@@ -743,8 +743,8 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                     const SizedBox(height: 10),
                     Text(
                       _action == 'register'
-                          ? 'Please ensure your camera is connected and permitted to enroll your face biometric.'
-                          : 'You can capture using your webcam or upload a clear photo of your face directly from your computer.',
+                          ? 'Please ensure your camera is connected and permitted to enroll your face biometric.'.tr
+                          : 'You can capture using your webcam or upload a clear photo of your face directly from your computer.'.tr,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white60,
@@ -757,7 +757,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       ElevatedButton.icon(
                         onPressed: _pickAndUploadPhoto,
                         icon: const Icon(Icons.upload_file_rounded),
-                        label: Text('Upload Photo for ${_getActionTitle()}'),
+                        label: Text('${'Upload Photo for'.tr} ${_getActionTitle()}'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: RequestColors.primary,
                           foregroundColor: Colors.white,
@@ -775,9 +775,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                     TextButton.icon(
                       onPressed: _initCamera,
                       icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white70),
-                      label: const Text(
-                        'Retry Camera Connection',
-                        style: TextStyle(color: Colors.white70),
+                      label: Text(
+                        'Retry Camera Connection'.tr,
+                        style: const TextStyle(color: Colors.white70),
                       ),
                     ),
                   ],
@@ -844,8 +844,8 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                           const SizedBox(width: 4),
                           Text(
                             _currentPosition != null
-                                ? 'GPS Ready'
-                                : 'Locating...',
+                                ? 'GPS Ready'.tr
+                                : 'Locating...'.tr,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -929,9 +929,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                           color: Colors.white,
                           size: 17,
                         ),
-                        label: const Text(
-                          'Upload Photo Instead',
-                          style: TextStyle(
+                        label: Text(
+                          'Upload Photo Instead'.tr,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

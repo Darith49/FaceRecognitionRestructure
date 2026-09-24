@@ -42,7 +42,7 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
 
                 // Title
                 Text(
-                  'Forgot password?',
+                  'Forgot password?'.tr,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
@@ -56,7 +56,7 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
 
                 // Description
                 Text(
-                  'Enter your email and we\'ll send you a link to reset your password.',
+                  'Enter your email and we\'ll send you a link to reset your password.'.tr,
                   style: TextStyle(
                     fontSize: 15,
                     color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
@@ -226,9 +226,9 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Send reset link',
-                              style: TextStyle(
+                          : Text(
+                              'Send reset link'.tr,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -250,9 +250,9 @@ class ForgotpasswordScreen extends GetView<ForgotpasswordController> {
                       size: 14,
                       color: AppColors.primary,
                     ),
-                    label: const Text(
-                      'Back to login',
-                      style: TextStyle(
+                    label: Text(
+                      'Back to login'.tr,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,

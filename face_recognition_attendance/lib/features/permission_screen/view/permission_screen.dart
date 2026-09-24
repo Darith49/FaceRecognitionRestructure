@@ -12,14 +12,14 @@ class PermissionScreen extends GetView<PermissionController> {
   @override
   Widget build(BuildContext context) {
     return RequestScaffold(
-      title: 'Permission',
+      title: 'Permission'.tr,
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           RequestMenuCard(
             icon: FluentIcons.clipboard_task_list_ltr_24_regular,
             iconBackground: const Color(0xFFF4B07A),
-            title: 'Attendance',
+            title: 'Attendance'.tr,
             subtitle: 'P / AP / W',
             onTap: () => Get.toNamed(AppRoutes.attendance),
           ),
@@ -27,8 +27,8 @@ class PermissionScreen extends GetView<PermissionController> {
           RequestMenuCard(
             icon: FluentIcons.mail_24_regular,
             iconBackground: const Color(0xFFC97B7B),
-            title: 'Request Permission',
-            subtitle: 'Request Permission',
+            title: 'Request Permission'.tr,
+            subtitle: 'Request Permission'.tr,
             onTap: _openRequestPermission,
           ),
         ],

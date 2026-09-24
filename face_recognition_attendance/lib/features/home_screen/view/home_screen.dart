@@ -277,7 +277,7 @@ class _GreetingHeader extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          role,
+                          role.tr,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -289,7 +289,7 @@ class _GreetingHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${controller.greeting} • Have a productive day',
+                    '${controller.greeting} • ${'Have a productive day'.tr}',
                     style: const TextStyle(
                       fontSize: 13,
                       color: RequestColors.textSecondary,
@@ -427,7 +427,7 @@ class _AttendanceCard extends StatelessWidget {
                 // Session 1 Tile (Morning)
                 _SessionTile(
                   sessionNumber: 1,
-                  sessionName: 'MORNING',
+                  sessionName: 'MORNING'.tr,
                   icon: FluentIcons.weather_sunny_24_filled,
                   iconColor: const Color(0xFFF59E0B),
                   checkInTime: controller.session1CheckInText,
@@ -444,7 +444,7 @@ class _AttendanceCard extends StatelessWidget {
                 // Session 2 Tile (Afternoon)
                 _SessionTile(
                   sessionNumber: 2,
-                  sessionName: 'AFTERNOON',
+                  sessionName: 'AFTERNOON'.tr,
                   icon: FluentIcons.weather_moon_24_filled,
                   iconColor: const Color(0xFF6366F1),
                   checkInTime: controller.session2CheckInText,
@@ -485,9 +485,9 @@ class _AttendanceCard extends StatelessWidget {
                                     : RequestColors.textSecondary,
                               ),
                               const SizedBox(width: 6),
-                              const Text(
-                                'TOTAL HOURS WORKED',
-                                style: TextStyle(
+                              Text(
+                                'TOTAL HOURS WORKED'.tr,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: RequestColors.textSecondary,
@@ -527,7 +527,7 @@ class _AttendanceCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${(controller.goalProgress * 100).toInt()}% of 8.0h goal',
+                            '${(controller.goalProgress * 100).toInt()}% ${'of 8.0h goal'.tr}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: RequestColors.textSecondary,
@@ -535,8 +535,8 @@ class _AttendanceCard extends StatelessWidget {
                           ),
                           Text(
                             controller.remainingGoalText == 'Done!'
-                                ? 'Goal Reached!'
-                                : '${controller.remainingGoalText} remaining',
+                                ? 'Goal Reached!'.tr
+                                : '${controller.remainingGoalText} ${'remaining'.tr}',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -563,7 +563,7 @@ class _AttendanceCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () => Get.toNamed(AppRoutes.request),
               icon: const Icon(FluentIcons.note_edit_24_regular, size: 20),
-              label: const Text('Request Time Adjustment'),
+              label: Text('Request Time Adjustment'.tr),
               style: OutlinedButton.styleFrom(
                 foregroundColor: RequestColors.textPrimary,
                 side: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -598,9 +598,9 @@ class _GoalBadge extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Text(
-            'GOAL',
-            style: TextStyle(
+          Text(
+            'GOAL'.tr,
+            style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: RequestColors.textSecondary,
@@ -609,7 +609,7 @@ class _GoalBadge extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '${controller.goalHours.toStringAsFixed(1)} hrs',
+            '${controller.goalHours.toStringAsFixed(1)} ${'hrs'.tr}',
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -692,7 +692,7 @@ class _SessionTile extends StatelessWidget {
                   Icon(icon, size: 16, color: iconColor),
                   const SizedBox(width: 8),
                   Text(
-                    'SESSION $sessionNumber • $sessionName',
+                    '${'SESSION'.tr} $sessionNumber • ${sessionName.tr}',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -713,7 +713,7 @@ class _SessionTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  statusText,
+                  statusText.tr,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -728,9 +728,9 @@ class _SessionTile extends StatelessWidget {
             children: [
               Expanded(
                 child: _SessionStatItem(
-                  label: 'CHECK IN',
+                  label: 'CHECK IN'.tr,
                   value: checkInTime,
-                  subLabel: 'Scheduled $scheduledIn',
+                  subLabel: '${'Scheduled'.tr} $scheduledIn',
                   isFilled: checkInTime != '-- : --',
                 ),
               ),
@@ -741,9 +741,9 @@ class _SessionTile extends StatelessWidget {
               ),
               Expanded(
                 child: _SessionStatItem(
-                  label: 'CHECK OUT',
+                  label: 'CHECK OUT'.tr,
                   value: checkOutTime,
-                  subLabel: 'Scheduled $scheduledOut',
+                  subLabel: '${'Scheduled'.tr} $scheduledOut',
                   isFilled: checkOutTime != '-- : --',
                 ),
               ),
@@ -836,9 +836,9 @@ class _WifiStatusPill extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Office Wi-Fi Connected • Main HQ',
-            style: TextStyle(
+          Text(
+            'Office Wi-Fi Connected • Main HQ'.tr,
+            style: const TextStyle(
               fontSize: 13,
               color: RequestColors.textSecondary,
               fontWeight: FontWeight.w500,
@@ -1136,7 +1136,7 @@ class _CeoActionPanel extends StatelessWidget {
                   () => _CeoStatCard(
                     icon: FluentIcons.building_bank_24_regular,
                     color: const Color(0xFF0F766E),
-                    label: 'Branches',
+                    label: 'Branches'.tr,
                     count: controller.branchController.branches.length,
                     onTap: () => Get.toNamed(AppRoutes.branchList),
                   ),
@@ -1148,7 +1148,7 @@ class _CeoActionPanel extends StatelessWidget {
                   () => _CeoStatCard(
                     icon: FluentIcons.building_multiple_24_regular,
                     color: const Color(0xFF1D4ED8),
-                    label: 'Departments',
+                    label: 'Departments'.tr,
                     count: controller.departmentController.departments.length,
                     onTap: () => Get.toNamed(AppRoutes.departmentList),
                   ),
@@ -1160,7 +1160,7 @@ class _CeoActionPanel extends StatelessWidget {
                   () => _CeoStatCard(
                     icon: FluentIcons.people_team_24_regular,
                     color: const Color(0xFFB45309),
-                    label: 'Employees',
+                    label: 'Employees'.tr,
                     count: controller.employeeController.employees.length,
                     onTap: () => Get.toNamed(AppRoutes.employeeList),
                   ),
@@ -1196,22 +1196,22 @@ class _CeoActionPanel extends StatelessWidget {
                 children: [
                   const Icon(FluentIcons.sparkle_24_filled, color: Colors.white, size: 26),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'CEO Control Panel',
-                          style: TextStyle(
+                          'CEO Control Panel'.tr,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          'Full telemetry, biometric controls & organization oversight',
-                          style: TextStyle(fontSize: 11, color: Color(0xFFDDD6FE)),
+                          'Full telemetry, biometric controls & organization oversight'.tr,
+                          style: const TextStyle(fontSize: 11, color: Color(0xFFDDD6FE)),
                         ),
                       ],
                     ),
@@ -1249,22 +1249,22 @@ class _CeoActionPanel extends StatelessWidget {
                       size: 26,
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'CEO Management',
-                            style: TextStyle(
+                            'CEO Management'.tr,
+                            style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
                               color: RequestColors.textPrimary,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
-                            'Quick administrative actions',
-                            style: TextStyle(
+                            'Quick administrative actions'.tr,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: RequestColors.textSecondary,
                             ),
@@ -1282,8 +1282,8 @@ class _CeoActionPanel extends StatelessWidget {
                 _CeoActionTile(
                   icon: FluentIcons.building_bank_link_24_regular,
                   iconBg: const Color(0xFF0F766E),
-                  title: 'Create Branch',
-                  subtitle: 'Set up branch location & GPS geofence',
+                  title: 'Create Branch'.tr,
+                  subtitle: 'Set up branch location & GPS geofence'.tr,
                   onTap: () async {
                     final result = await Get.toNamed(AppRoutes.createBranch);
                     if (result == true) {
@@ -1297,8 +1297,8 @@ class _CeoActionPanel extends StatelessWidget {
                 _CeoActionTile(
                   icon: FluentIcons.building_multiple_24_regular,
                   iconBg: const Color(0xFF1D4ED8),
-                  title: 'Create Department',
-                  subtitle: 'Add department to an existing branch',
+                  title: 'Create Department'.tr,
+                  subtitle: 'Add department to an existing branch'.tr,
                   onTap: () async {
                     final result = await Get.toNamed(
                       AppRoutes.createDepartment,
@@ -1314,8 +1314,8 @@ class _CeoActionPanel extends StatelessWidget {
                 _CeoActionTile(
                   icon: FluentIcons.person_add_24_regular,
                   iconBg: const Color(0xFFB45309),
-                  title: 'Create User',
-                  subtitle: 'Invite Manager, Leader, or Employee',
+                  title: 'Create User'.tr,
+                  subtitle: 'Invite Manager, Leader, or Employee'.tr,
                   onTap: () async {
                     final result = await Get.toNamed(AppRoutes.createEmployee);
                     if (result == true) {
@@ -1366,9 +1366,9 @@ class _CeoAttendanceCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Executive Attendance',
-                        style: TextStyle(
+                      Text(
+                        'Executive Attendance'.tr,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: RequestColors.textPrimary,
@@ -1380,13 +1380,13 @@ class _CeoAttendanceCard extends StatelessWidget {
                         String statusDesc;
                         Color statusColor;
                         if (state == CheckState.completed || state == CheckState.checkedOut) {
-                          statusDesc = 'All Shifts Recorded';
+                          statusDesc = 'All Shifts Recorded'.tr;
                           statusColor = RequestColors.approvedStatus;
                         } else if (state == CheckState.session1CheckedIn || state == CheckState.session2CheckedIn) {
-                          statusDesc = 'Clocked In • Shift in progress';
+                          statusDesc = 'Clocked In • Shift in progress'.tr;
                           statusColor = RequestColors.primary;
                         } else {
-                          statusDesc = 'Ready to Clock In';
+                          statusDesc = 'Ready to Clock In'.tr;
                           statusColor = RequestColors.textSecondary;
                         }
                         return Row(
@@ -1422,19 +1422,19 @@ class _CeoAttendanceCard extends StatelessWidget {
                       color: RequestColors.primary.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Full View',
-                          style: TextStyle(
+                          'Full View'.tr,
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: RequestColors.primary,
                           ),
                         ),
-                        SizedBox(width: 2),
-                        Icon(
+                        const SizedBox(width: 2),
+                        const Icon(
                           FluentIcons.chevron_right_24_regular,
                           size: 16,
                           color: RequestColors.primary,
@@ -1459,9 +1459,9 @@ class _CeoAttendanceCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'TODAY\'S SHIFT',
-                          style: TextStyle(
+                        Text(
+                          'TODAY\'S SHIFT'.tr,
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: RequestColors.textSecondary,
@@ -1488,9 +1488,9 @@ class _CeoAttendanceCard extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        const Text(
-                          'WORKED',
-                          style: TextStyle(
+                        Text(
+                          'WORKED'.tr,
+                          style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                             color: RequestColors.textSecondary,
@@ -1526,11 +1526,11 @@ class _CeoAttendanceCard extends StatelessWidget {
 
               if (!hasFace) {
                 btnColor = const Color(0xFF7C3AED);
-                btnText = 'Register Face First';
+                btnText = 'Register Face First'.tr;
                 btnIcon = FluentIcons.camera_24_filled;
               } else if (isDone) {
                 btnColor = RequestColors.approvedStatus;
-                btnText = 'Completed for Today';
+                btnText = 'Completed for Today'.tr;
                 btnIcon = FluentIcons.checkmark_circle_24_filled;
               } else {
                 switch (state) {
@@ -1538,19 +1538,19 @@ class _CeoAttendanceCard extends StatelessWidget {
                   case CheckState.notCheckedIn:
                   case CheckState.session2NotCheckedIn:
                     btnColor = RequestColors.primary;
-                    btnText = 'Clock In (${controller.buttonSubtext})';
+                    btnText = '${'Clock In'.tr} (${controller.buttonSubtext})';
                     btnIcon = FluentIcons.door_arrow_left_24_regular;
                     break;
                   case CheckState.session1CheckedIn:
                   case CheckState.checkedIn:
                   case CheckState.session2CheckedIn:
                     btnColor = RequestColors.danger;
-                    btnText = 'Clock Out (${controller.buttonSubtext})';
+                    btnText = '${'Clock Out'.tr} (${controller.buttonSubtext})';
                     btnIcon = FluentIcons.sign_out_24_regular;
                     break;
                   default:
                     btnColor = RequestColors.primary;
-                    btnText = 'Clock In';
+                    btnText = 'Clock In'.tr;
                     btnIcon = FluentIcons.door_arrow_left_24_regular;
                 }
               }
@@ -1763,17 +1763,17 @@ class _RecentCreatedOverview extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(
+                        const Icon(
                           FluentIcons.building_bank_24_regular,
                           size: 20,
                           color: Color(0xFF0F766E),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
-                          'Created Branches',
-                          style: TextStyle(
+                          'Created Branches'.tr,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: RequestColors.textPrimary,
@@ -1783,9 +1783,9 @@ class _RecentCreatedOverview extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () => Get.toNamed(AppRoutes.branchList),
-                      child: const Text(
-                        'View All',
-                        style: TextStyle(
+                      child: Text(
+                        'View All'.tr,
+                        style: const TextStyle(
                           fontSize: 13,
                           color: RequestColors.primary,
                           fontWeight: FontWeight.w600,
@@ -1824,7 +1824,7 @@ class _RecentCreatedOverview extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    'Radius: ${b.radius.toInt()}m geofence',
+                                    '${'Radius'.tr}: ${b.radius.toInt()}m ${'geofence'.tr}',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: RequestColors.textSecondary,
@@ -1834,7 +1834,7 @@ class _RecentCreatedOverview extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '${b.employeeCount} staff',
+                              '${b.employeeCount} ${'staff'.tr}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -1875,17 +1875,17 @@ class _RecentCreatedOverview extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(
+                        const Icon(
                           FluentIcons.building_multiple_24_regular,
                           size: 20,
                           color: Color(0xFF1D4ED8),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
-                          'Created Departments',
-                          style: TextStyle(
+                          'Created Departments'.tr,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: RequestColors.textPrimary,
@@ -1895,9 +1895,9 @@ class _RecentCreatedOverview extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () => Get.toNamed(AppRoutes.departmentList),
-                      child: const Text(
-                        'View All',
-                        style: TextStyle(
+                      child: Text(
+                        'View All'.tr,
+                        style: const TextStyle(
                           fontSize: 13,
                           color: RequestColors.primary,
                           fontWeight: FontWeight.w600,
@@ -1948,7 +1948,7 @@ class _RecentCreatedOverview extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '${d.employeeCount} staff',
+                              '${d.employeeCount} ${'staff'.tr}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -1989,17 +1989,17 @@ class _RecentCreatedOverview extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(
+                        const Icon(
                           FluentIcons.people_team_24_regular,
                           size: 20,
                           color: Color(0xFFB45309),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
-                          'Invited Users',
-                          style: TextStyle(
+                          'Invited Users'.tr,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: RequestColors.textPrimary,
@@ -2009,9 +2009,9 @@ class _RecentCreatedOverview extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () => Get.toNamed(AppRoutes.employeeList),
-                      child: const Text(
-                        'View All',
-                        style: TextStyle(
+                      child: Text(
+                        'View All'.tr,
+                        style: const TextStyle(
                           fontSize: 13,
                           color: RequestColors.primary,
                           fontWeight: FontWeight.w600,
@@ -2079,7 +2079,7 @@ class _RecentCreatedOverview extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                e.role.name.toUpperCase(),
+                                e.role.name.tr.toUpperCase(),
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,

@@ -44,7 +44,7 @@ class DepartmentListScreen extends StatelessWidget {
                       }
                     },
                     icon: const Icon(Icons.add_business_rounded),
-                    label: const Text('Add New Department'),
+                    label: Text('Add New Department'.tr),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: RequestColors.primary,
                       foregroundColor: Colors.white,
@@ -63,13 +63,13 @@ class DepartmentListScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.domain_disabled_rounded, size: 54, color: Colors.grey.shade400),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No departments found',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        Text(
+                          'No departments found'.tr,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Add departments to organize teams within branches.',
+                          'Add departments to organize teams within branches.'.tr,
                           style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                         ),
                       ],

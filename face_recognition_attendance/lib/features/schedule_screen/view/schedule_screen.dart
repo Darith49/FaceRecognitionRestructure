@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/controller/schedule_controller.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
@@ -37,31 +38,6 @@ class ScheduleScreen extends GetView<ScheduleController> {
   /// true  = opened on top of another page with AppRoutes.schedule.
   final bool showBackButton;
 
-  static const List<String> _monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  static const List<String> _weekdayLabels = [
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
-
   // ------------------------------- helpers ---------------------------------
 
   Color _statusColor(DayStatus s) => switch (s) {
@@ -75,13 +51,13 @@ class ScheduleScreen extends GetView<ScheduleController> {
   };
 
   String _statusLabel(DayStatus s) => switch (s) {
-    DayStatus.worked => 'Worked',
-    DayStatus.workday => 'Workday',
-    DayStatus.absent => 'Absent',
-    DayStatus.dayOff => 'Day off',
-    DayStatus.overtime => 'Overtime',
-    DayStatus.leave => 'Leave',
-    DayStatus.none => 'No record',
+    DayStatus.worked => 'Worked'.tr,
+    DayStatus.workday => 'Workday'.tr,
+    DayStatus.absent => 'Absent'.tr,
+    DayStatus.dayOff => 'Day off'.tr,
+    DayStatus.overtime => 'Overtime'.tr,
+    DayStatus.leave => 'Leave'.tr,
+    DayStatus.none => 'No record'.tr,
   };
 
   IconData _statusIcon(DayStatus s) => switch (s) {
@@ -99,7 +75,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
   @override
   Widget build(BuildContext context) {
     return RequestScaffold(
-      title: 'Schedule',
+      title: 'Schedule'.tr,
       showBackButton: showBackButton,
       body: ListView(
         // Extra space at the bottom in the tab, so the floating bar does not cover the cards.
@@ -108,17 +84,15 @@ class ScheduleScreen extends GetView<ScheduleController> {
           _buildSummaryCard(),
           const SizedBox(height: 24),
           Obx(() {
-            final monthIndex = controller.focusedDay.value.month - 1;
-            final mName = (monthIndex >= 0 && monthIndex < _monthNames.length)
-                ? _monthNames[monthIndex]
-                : controller.monthName.value;
-            return _SectionTitle('$mName Performance');
+            final month = controller.focusedDay.value.month;
+            final mName = DateText.monthName(month);
+            return _SectionTitle('$mName ${'Performance'.tr}');
           }),
           _buildStatsGrid(),
           const SizedBox(height: 24),
           _buildCalendarCard(),
           const SizedBox(height: 24),
-          const _SectionTitle('Work Schedule'),
+          _SectionTitle('Work Schedule'.tr),
           _buildTabBar(),
           const SizedBox(height: 14),
           _buildTabContent(),
@@ -171,7 +145,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "You're on track",
+                                "You're on track".tr,
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.85),
                                   fontWeight: FontWeight.w600,
@@ -191,7 +165,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                                       ),
                                     ),
                                     TextSpan(
-                                      text: ' / $goal days worked',
+                                      text: ' / $goal ${'days worked'.tr}',
                                       style: TextStyle(
                                         color: Colors.white.withValues(
                                           alpha: 0.85,
@@ -228,7 +202,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '$percent% complete',
+                          '$percent% ${'complete'.tr}',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 12,
@@ -236,7 +210,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                           ),
                         ),
                         Text(
-                          '$remaining days to go',
+                          '$remaining ${'days to go'.tr}',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 12,
@@ -284,7 +258,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
               children: [
                 Expanded(
                   child: _statCard(
-                    label: 'Days Goal',
+                    label: 'Days Goal'.tr,
                     value: '$daysGoal',
                     icon: FluentIcons.flag_24_regular,
                     color: RequestColors.primary,
@@ -293,7 +267,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _statCard(
-                    label: 'Days Worked',
+                    label: 'Days Worked'.tr,
                     value: '$daysWorked',
                     icon: FluentIcons.checkmark_circle_24_regular,
                     color: RequestColors.approvedStatus,
@@ -309,17 +283,17 @@ class ScheduleScreen extends GetView<ScheduleController> {
               children: [
                 Expanded(
                   child: _statCard(
-                    label: 'Days Absent',
+                    label: 'Days Absent'.tr,
                     value: '$daysAbsent',
                     icon: FluentIcons.calendar_cancel_24_regular,
                     color: RequestColors.danger,
-                    badge: 'Limit $absenceLimit',
+                    badge: '${'Limit'.tr} $absenceLimit',
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _statCard(
-                    label: 'On-Time Rate',
+                    label: 'On-Time Rate'.tr,
                     value: '$onTimeRate%',
                     icon: FluentIcons.timer_24_regular,
                     color: RequestColors.gold,
@@ -412,9 +386,9 @@ class ScheduleScreen extends GetView<ScheduleController> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Calendar View',
-                    style: TextStyle(
+                  Text(
+                    'Calendar View'.tr,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 16,
                       color: RequestColors.textPrimary,
@@ -424,7 +398,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                   Obx(() {
                     final focused = controller.focusedDay.value;
                     return Text(
-                      '${_monthNames[focused.month - 1]} ${focused.year}',
+                      DateText.monthYear(focused),
                       style: const TextStyle(
                         color: RequestColors.textSecondary,
                         fontSize: 12,
@@ -468,7 +442,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                     _buildDayCell(day, selected),
                 dowBuilder: (context, day) => Center(
                   child: Text(
-                    _weekdayLabels[day.weekday - 1],
+                    DateText.weekdayShort(day.weekday),
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -489,10 +463,10 @@ class ScheduleScreen extends GetView<ScheduleController> {
             spacing: 14,
             runSpacing: 8,
             children: [
-              _legendDot(_statusColor(DayStatus.worked), 'Worked'),
-              _legendDot(_statusColor(DayStatus.absent), 'Absent'),
-              _legendDot(_statusColor(DayStatus.dayOff), 'Day off'),
-              _legendDot(_statusColor(DayStatus.overtime), 'Overtime'),
+              _legendDot(_statusColor(DayStatus.worked), 'Worked'.tr),
+              _legendDot(_statusColor(DayStatus.absent), 'Absent'.tr),
+              _legendDot(_statusColor(DayStatus.dayOff), 'Day off'.tr),
+              _legendDot(_statusColor(DayStatus.overtime), 'Overtime'.tr),
             ],
           ),
         ],
@@ -569,8 +543,6 @@ class ScheduleScreen extends GetView<ScheduleController> {
       final selectedDay = controller.selectedDay.value;
       final status = controller.statusFor(selectedDay);
       final color = _statusColor(status);
-      final weekday = _weekdayLabels[selectedDay.weekday - 1];
-      final month = _monthNames[selectedDay.month - 1];
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -585,7 +557,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                '$weekday, $month ${selectedDay.day}',
+                '${DateText.weekdayShort(selectedDay.weekday)}, ${DateText.monthName(selectedDay.month)} ${selectedDay.day}',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -685,7 +657,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                                   ? Colors.white
                                   : RequestColors.textSecondary,
                             ),
-                            child: Text(tabs[i]),
+                            child: Text(tabs[i].tr),
                           ),
                         ),
                       ),
@@ -706,7 +678,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
 
       if (current == 0) {
         if (controller.schedule.isEmpty) {
-          return _buildEmptySchedule('No scheduled shifts found for this period.');
+          return _buildEmptySchedule('No scheduled shifts found for this period.'.tr);
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -806,9 +778,9 @@ class ScheduleScreen extends GetView<ScheduleController> {
               color: RequestColors.teal.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
-              'Day off',
-              style: TextStyle(
+            child: Text(
+              'Day off'.tr,
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: RequestColors.teal,
@@ -878,7 +850,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              leave.status.capitalizeFirst ?? 'Approved',
+              (leave.status.capitalizeFirst ?? 'Approved').tr,
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -903,9 +875,9 @@ class ScheduleScreen extends GetView<ScheduleController> {
             size: 36,
           ),
           const SizedBox(height: 14),
-          const Text(
-            'No Shifts Scheduled',
-            style: TextStyle(
+          Text(
+            'No Shifts Scheduled'.tr,
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
               color: RequestColors.textPrimary,
@@ -940,9 +912,9 @@ class ScheduleScreen extends GetView<ScheduleController> {
             size: 36,
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Nothing here yet',
-            style: TextStyle(
+          Text(
+            'Nothing here yet'.tr,
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
               color: RequestColors.textPrimary,
@@ -951,8 +923,8 @@ class ScheduleScreen extends GetView<ScheduleController> {
           const SizedBox(height: 4),
           Text(
             isHoliday
-                ? 'Public holidays will appear here once they are added.'
-                : 'Your leave days will appear here once they are approved.',
+                ? 'Public holidays will appear here once they are added.'.tr
+                : 'Your leave days will appear here once they are approved.'.tr,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 12,
@@ -1016,7 +988,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        '${day.totalHours} hrs',
+                        '${day.totalHours} ${'hrs'.tr}',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,

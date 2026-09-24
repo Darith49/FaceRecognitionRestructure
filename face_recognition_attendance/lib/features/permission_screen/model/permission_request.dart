@@ -1,4 +1,5 @@
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
+import 'package:get/get.dart';
 
 /// Pending = shown in "Unauthorized", Approved = shown in "Authorized".
 enum RequestStatus { pending, approved }
@@ -7,9 +8,9 @@ extension RequestStatusLabel on RequestStatus {
   String get label {
     switch (this) {
       case RequestStatus.pending:
-        return 'Pending';
+        return 'Pending'.tr;
       case RequestStatus.approved:
-        return 'Approved';
+        return 'Approved'.tr;
     }
   }
 }

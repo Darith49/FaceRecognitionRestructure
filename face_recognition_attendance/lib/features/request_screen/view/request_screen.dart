@@ -138,9 +138,9 @@ class RequestScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'PENDING APPROVALS',
-                            style: TextStyle(
+                          Text(
+                            'PENDING APPROVALS'.tr,
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: RequestColors.textSecondary,
@@ -155,7 +155,7 @@ class RequestScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
-                                '${controller.totalPending.value} Pending',
+                                '${controller.totalPending.value} ${'Pending'.tr}',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -173,14 +173,14 @@ class RequestScreen extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: appleCardDecoration(),
-                          child: const Row(
+                          child: Row(
                             children: [
-                              Icon(FluentIcons.checkmark_circle_24_regular,
+                              const Icon(FluentIcons.checkmark_circle_24_regular,
                                   color: RequestColors.approvedStatus, size: 20),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Text(
-                                'No requests pending your review.',
-                                style: TextStyle(fontSize: 13, color: RequestColors.textSecondary),
+                                'No requests pending your review.'.tr,
+                                style: const TextStyle(fontSize: 13, color: RequestColors.textSecondary),
                               ),
                             ],
                           ),
@@ -190,10 +190,10 @@ class RequestScreen extends StatelessWidget {
                       for (final l in leaves)
                         _buildApprovalCard(
                           context: context,
-                          type: 'Leave Request',
+                          type: 'Leave Request'.tr,
                           icon: FluentIcons.beach_24_regular,
                           iconColor: RequestColors.gold,
-                          employeeName: l['employee_name']?.toString() ?? 'Employee',
+                          employeeName: l['employee_name']?.toString() ?? 'Employee'.tr,
                           detail: () {
                             final sess = l['session'] as num? ?? 1;
                             final mode = l['leave_mode']?.toString() ?? 'full_section';
@@ -201,16 +201,16 @@ class RequestScreen extends StatelessWidget {
                             final dateStr = l['from_date']?.toString() ?? '';
                             if (sess == 1) {
                               return mode == 'early_leave' && earlyTime.isNotEmpty
-                                  ? 'Section 1 • Early leave at $earlyTime ($dateStr)'
-                                  : 'Section 1 (Morning) on $dateStr';
+                                  ? '${'Section 1'.tr} • ${'Early leave at'.tr} $earlyTime ($dateStr)'
+                                  : '${'Section 1 (Morning)'.tr} ${'on'.tr} $dateStr';
                             } else if (sess == 2) {
                               return mode == 'early_leave' && earlyTime.isNotEmpty
-                                  ? 'Section 2 • Early leave at $earlyTime ($dateStr)'
-                                  : 'Section 2 (Afternoon) on $dateStr';
+                                  ? '${'Section 2'.tr} • ${'Early leave at'.tr} $earlyTime ($dateStr)'
+                                  : '${'Section 2 (Afternoon)'.tr} ${'on'.tr} $dateStr';
                             } else if (sess == 0) {
-                              return 'Full Day Leave on $dateStr';
+                              return '${'Full Day Leave'.tr} ${'on'.tr} $dateStr';
                             }
-                            return '${l['day_type'] ?? l['leave_type']}: $dateStr';
+                            return '${(l['day_type'] ?? l['leave_type']).toString().tr}: $dateStr';
                           }(),
                           reason: l['reason']?.toString() ?? '',
                           onApprove: () => controller.reviewLeave(l['id'], true, context),
@@ -219,10 +219,10 @@ class RequestScreen extends StatelessWidget {
                       for (final o in overtimes)
                         _buildApprovalCard(
                           context: context,
-                          type: 'Overtime Request',
+                          type: 'Overtime Request'.tr,
                           icon: FluentIcons.clock_24_regular,
                           iconColor: const Color(0xFF7C3AED),
-                          employeeName: o['employee_name']?.toString() ?? 'Employee',
+                          employeeName: o['employee_name']?.toString() ?? 'Employee'.tr,
                           detail: '${o['date']} (${o['start_time']} - ${o['end_time']})',
                           reason: o['reason']?.toString() ?? '',
                           onApprove: () => controller.reviewOvertime(o['id'], true, context),
@@ -231,10 +231,10 @@ class RequestScreen extends StatelessWidget {
                       for (final p in perms)
                         _buildApprovalCard(
                           context: context,
-                          type: 'Permission Request',
+                          type: 'Permission Request'.tr,
                           icon: FluentIcons.person_available_24_regular,
                           iconColor: RequestColors.primary,
-                          employeeName: p['employee_name']?.toString() ?? 'Employee',
+                          employeeName: p['employee_name']?.toString() ?? 'Employee'.tr,
                           detail: '${p['date']} (${p['schedule_time']})',
                           reason: p['reason']?.toString() ?? '',
                           onApprove: () => controller.reviewPermission(p['id'], true, context),
@@ -256,9 +256,9 @@ class RequestScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'CLOCK ATTENDANCE',
-                          style: TextStyle(
+                        Text(
+                          'CLOCK ATTENDANCE'.tr,
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: RequestColors.textSecondary,
@@ -267,9 +267,9 @@ class RequestScreen extends StatelessWidget {
                         ),
                         GestureDetector(
                           onTap: () => Get.toNamed(AppRoutes.clock),
-                          child: const Text(
-                            'Full View',
-                            style: TextStyle(
+                          child: Text(
+                            'Full View'.tr,
+                            style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: RequestColors.primary,
@@ -286,11 +286,11 @@ class RequestScreen extends StatelessWidget {
               ),
 
               // MANAGEMENT & SERVICES Section
-              const Padding(
-                padding: EdgeInsets.only(left: 20),
+              Padding(
+                padding: const EdgeInsets.only(left: 20),
                 child: Text(
-                  'MANAGEMENT & SERVICES',
-                  style: TextStyle(
+                  'MANAGEMENT & SERVICES'.tr,
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: RequestColors.textSecondary,
@@ -309,28 +309,28 @@ class RequestScreen extends StatelessWidget {
                       _ServiceRow(
                         icon: FluentIcons.calendar_ltr_24_regular,
                         iconColor: RequestColors.primary,
-                        title: 'My Schedule',
+                        title: 'My Schedule'.tr,
                         onTap: () => Get.toNamed(AppRoutes.schedule),
                       ),
                       const Divider(height: 1, indent: 56),
                       _ServiceRow(
                         icon: FluentIcons.beach_24_regular,
                         iconColor: RequestColors.approvedStatus,
-                        title: 'Leave Request',
+                        title: 'Leave Request'.tr,
                         onTap: () => Get.toNamed(AppRoutes.leave),
                       ),
                       const Divider(height: 1, indent: 56),
                       _ServiceRow(
                         icon: FluentIcons.clock_24_regular,
                         iconColor: RequestColors.gold,
-                        title: 'Overtime',
+                        title: 'Overtime'.tr,
                         onTap: () => Get.toNamed(AppRoutes.overtime),
                       ),
                       const Divider(height: 1, indent: 56),
                       _ServiceRow(
                         icon: FluentIcons.lightbulb_24_regular,
                         iconColor: RequestColors.gold,
-                        title: 'Suggestion Box',
+                        title: 'Suggestion Box'.tr,
                         onTap: () => Get.toNamed(AppRoutes.suggestion),
                       ),
                     ],
@@ -349,11 +349,11 @@ class RequestScreen extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () => Get.toNamed(AppRoutes.permission),
-                    child: const Padding(
-                      padding: EdgeInsets.all(14),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
                       child: Row(
                         children: [
-                          Padding(
+                          const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 4),
                             child: Icon(
                               FluentIcons.person_passkey_24_regular,
@@ -361,23 +361,23 @@ class RequestScreen extends StatelessWidget {
                               color: Color(0xFF7C3AED),
                             ),
                           ),
-                          SizedBox(width: 14),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Permission & Authorization',
-                                  style: TextStyle(
+                                  'Permission & Authorization'.tr,
+                                  style: const TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                     color: RequestColors.textPrimary,
                                   ),
                                 ),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Text(
-                                  'Request permissions or authorization changes',
-                                  style: TextStyle(
+                                  'Request permissions or authorization changes'.tr,
+                                  style: const TextStyle(
                                     fontSize: 13,
                                     color: RequestColors.textSecondary,
                                   ),
@@ -386,8 +386,8 @@ class RequestScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Apply',
-                            style: TextStyle(
+                            'Apply'.tr,
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: RequestColors.primary,
@@ -414,9 +414,9 @@ class RequestScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'REQUEST ACTIVITY',
-                      style: TextStyle(
+                    Text(
+                      'REQUEST ACTIVITY'.tr,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: RequestColors.textSecondary,
@@ -425,9 +425,9 @@ class RequestScreen extends StatelessWidget {
                     ),
                     GestureDetector(
                       onTap: () => Get.toNamed(AppRoutes.requestInformation),
-                      child: const Text(
-                        'History',
-                        style: TextStyle(
+                      child: Text(
+                        'History'.tr,
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: RequestColors.primary,
@@ -450,9 +450,9 @@ class RequestScreen extends StatelessWidget {
                         return _ActivityRow(
                           icon: FluentIcons.clock_24_regular,
                           iconColor: RequestColors.gold,
-                          title: 'Unauthorized',
-                          subtitle: 'Pending review',
-                          badgeText: '${pendingList.length} Pending',
+                          title: 'Unauthorized'.tr,
+                          subtitle: 'Pending review'.tr,
+                          badgeText: '${pendingList.length} ${'Pending'.tr}',
                           badgeColor: RequestColors.gold,
                           onTap: () => Get.toNamed(AppRoutes.requestUnauthorized),
                         );
@@ -463,9 +463,9 @@ class RequestScreen extends StatelessWidget {
                         return _ActivityRow(
                           icon: FluentIcons.checkmark_circle_24_regular,
                           iconColor: RequestColors.approvedStatus,
-                          title: 'Authorized',
-                          subtitle: 'Completed & archived',
-                          badgeText: '${approvedList.length} Total',
+                          title: 'Authorized'.tr,
+                          subtitle: 'Completed & archived'.tr,
+                          badgeText: '${approvedList.length} ${'Total'.tr}',
                           badgeColor: RequestColors.approvedStatus,
                           onTap: () => Get.toNamed(AppRoutes.requestAuthorized),
                         );
@@ -544,7 +544,7 @@ class RequestScreen extends StatelessWidget {
             if (reason.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
-                'Reason: $reason',
+                '${'Reason'.tr}: $reason',
                 style: const TextStyle(
                   fontSize: 12,
                   color: RequestColors.textSecondary,
@@ -564,7 +564,7 @@ class RequestScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     minimumSize: Size.zero,
                   ),
-                  child: const Text('Reject', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  child: Text('Reject'.tr, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -576,7 +576,7 @@ class RequestScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     minimumSize: Size.zero,
                   ),
-                  child: const Text('Approve', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  child: Text('Approve'.tr, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
@@ -610,11 +610,11 @@ class _RequestClockAttendanceCard extends StatelessWidget {
 
         if (!hasFace) {
           buttonColor = const Color(0xFF7C3AED);
-          buttonLabel = 'Register Face';
+          buttonLabel = 'Register Face'.tr;
           buttonIcon = FluentIcons.person_star_24_regular;
         } else if (isDone) {
           buttonColor = RequestColors.approvedStatus;
-          buttonLabel = 'Completed';
+          buttonLabel = 'Completed'.tr;
           buttonIcon = FluentIcons.checkmark_24_regular;
         } else {
           switch (state) {
@@ -622,19 +622,19 @@ class _RequestClockAttendanceCard extends StatelessWidget {
             case CheckState.notCheckedIn:
             case CheckState.session2NotCheckedIn:
               buttonColor = RequestColors.primary;
-              buttonLabel = 'Check In';
+              buttonLabel = 'Check In'.tr;
               buttonIcon = FluentIcons.fingerprint_24_regular;
               break;
             case CheckState.session1CheckedIn:
             case CheckState.checkedIn:
             case CheckState.session2CheckedIn:
               buttonColor = RequestColors.danger;
-              buttonLabel = 'Check Out';
+              buttonLabel = 'Check Out'.tr;
               buttonIcon = FluentIcons.sign_out_24_regular;
               break;
             default:
               buttonColor = RequestColors.primary;
-              buttonLabel = 'Check In';
+              buttonLabel = 'Check In'.tr;
               buttonIcon = FluentIcons.fingerprint_24_regular;
           }
         }
@@ -646,15 +646,15 @@ class _RequestClockAttendanceCard extends StatelessWidget {
           case CheckState.notCheckedIn:
           case CheckState.session1CheckedIn:
           case CheckState.checkedIn:
-            sessionLabel = 'Session 1 • Morning';
+            sessionLabel = 'Session 1 • Morning'.tr;
             break;
           case CheckState.session2NotCheckedIn:
           case CheckState.session2CheckedIn:
-            sessionLabel = 'Session 2 • Afternoon';
+            sessionLabel = 'Session 2 • Afternoon'.tr;
             break;
           case CheckState.completed:
           case CheckState.checkedOut:
-            sessionLabel = 'All Sessions Done';
+            sessionLabel = 'All Sessions Done'.tr;
             break;
         }
 
@@ -681,9 +681,9 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Clock Attendance',
-                            style: TextStyle(
+                          Text(
+                            'Clock Attendance'.tr,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: RequestColors.textPrimary,
@@ -711,7 +711,7 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        isDone ? 'Done' : (hasFace ? 'Active' : 'Setup'),
+                        isDone ? 'Done'.tr : (hasFace ? 'Active'.tr : 'Setup'.tr),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -731,7 +731,7 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                     // Session 1
                     Expanded(
                       child: _MiniSessionTile(
-                        label: 'SESSION 1',
+                        label: 'SESSION 1'.tr,
                         icon: FluentIcons.weather_sunny_24_filled,
                         iconColor: const Color(0xFFF59E0B),
                         checkIn: homeCtrl.session1CheckInText,
@@ -744,7 +744,7 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                     // Session 2
                     Expanded(
                       child: _MiniSessionTile(
-                        label: 'SESSION 2',
+                        label: 'SESSION 2'.tr,
                         icon: FluentIcons.weather_moon_24_filled,
                         iconColor: const Color(0xFF6366F1),
                         checkIn: homeCtrl.session2CheckInText,
@@ -778,7 +778,7 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${(homeCtrl.goalProgress * 100).toInt()}% of ${homeCtrl.goalHours.toStringAsFixed(0)}h',
+                          '${(homeCtrl.goalProgress * 100).toInt()}% ${'of'.tr} ${homeCtrl.goalHours.toStringAsFixed(0)}h',
                           style: const TextStyle(
                             fontSize: 11,
                             color: RequestColors.textSecondary,
@@ -912,9 +912,9 @@ class _MiniSessionTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'IN',
-                      style: TextStyle(
+                    Text(
+                      'IN'.tr,
+                      style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
                         color: RequestColors.textSecondary,
@@ -938,9 +938,9 @@ class _MiniSessionTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'OUT',
-                      style: TextStyle(
+                    Text(
+                      'OUT'.tr,
+                      style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
                         color: RequestColors.textSecondary,

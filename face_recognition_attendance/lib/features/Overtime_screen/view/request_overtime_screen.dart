@@ -92,13 +92,13 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
 
   String get _durationBadgeText {
     final minutes = _duration.inMinutes;
-    if (minutes <= 0) return '0 HOURS';
+    if (minutes <= 0) return '0 HOURS'.tr;
     final hours = minutes / 60.0;
     if (hours == hours.truncateToDouble()) {
       final h = hours.toInt();
-      return '$h ${h == 1 ? 'HOUR' : 'HOURS'}';
+      return '$h ${h == 1 ? 'HOUR'.tr : 'HOURS'.tr}';
     }
-    return '${hours.toStringAsFixed(1)} HOURS';
+    return '${hours.toStringAsFixed(1)} ${'HOURS'.tr}';
   }
 
   Future<void> _pickDate() async {
@@ -198,21 +198,18 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
-                'Overtime Guidelines',
-                style: TextStyle(
+              Text(
+                'Overtime Guidelines'.tr,
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: RequestColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                '• Standard monthly overtime quota is 20 hours per employee.\n'
-                '• Overtime requests must specify clear business justification and tasks worked.\n'
-                '• Requests are reviewed and approved by your direct supervisor within 24 hours.\n'
-                '• Monthly reports can be downloaded in PDF format from the History tab.',
-                style: TextStyle(
+              Text(
+                'overtime_guidelines_body'.tr,
+                style: const TextStyle(
                   fontSize: 14,
                   height: 1.6,
                   color: RequestColors.textSecondary,
@@ -349,7 +346,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
       backLabel: 'Requests',
       actions: [
         IconButton(
-          tooltip: 'Download PDF Report',
+          tooltip: 'Download PDF Report'.tr,
           icon: const Icon(
             FluentIcons.arrow_download_24_regular,
             color: RequestColors.primary,
@@ -358,9 +355,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         ),
         TextButton(
           onPressed: _showHelpDialog,
-          child: const Text(
-            'Help',
-            style: TextStyle(
+          child: Text(
+            'Help'.tr,
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: RequestColors.primary,
@@ -419,9 +416,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'MONTH ALLOWANCE',
-                  style: TextStyle(
+                Text(
+                  'MONTH ALLOWANCE'.tr,
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: RequestColors.textSecondary,
@@ -435,7 +432,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${displayHours}h of 20h Used',
+                    '$displayHours${'h of 20h Used'.tr}',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -470,14 +467,14 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${(progress * 100).toInt()}% Quota Filled',
+                  '${(progress * 100).toInt()}% ${'Quota Filled'.tr}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: RequestColors.textSecondary,
                   ),
                 ),
                 Text(
-                  '${remaining.toStringAsFixed(1)} hrs remaining',
+                  '${remaining.toStringAsFixed(1)} ${'hrs remaining'.tr}',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -497,9 +494,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // DATE Section
-        const Text(
-          'DATE',
-          style: TextStyle(
+        Text(
+          'DATE'.tr,
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: RequestColors.textSecondary,
@@ -518,9 +515,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         const SizedBox(height: 18),
 
         // SHIFT INTERVAL Section
-        const Text(
-          'SHIFT INTERVAL',
-          style: TextStyle(
+        Text(
+          'SHIFT INTERVAL'.tr,
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: RequestColors.textSecondary,
@@ -573,9 +570,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                 ),
               ),
               const SizedBox(width: 4),
-              const Text(
-                'Total Duration:',
-                style: TextStyle(
+              Text(
+                'Total Duration:'.tr,
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: RequestColors.textPrimary,
@@ -607,9 +604,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'REASON FOR OVERTIME',
-              style: TextStyle(
+            Text(
+              'REASON FOR OVERTIME'.tr,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: RequestColors.textSecondary,
@@ -638,16 +635,16 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
               fontSize: 15,
               color: RequestColors.textPrimary,
             ),
-            decoration: const InputDecoration(
-              hintText: 'Please write your detailed reason here...',
-              hintStyle: TextStyle(
+            decoration: InputDecoration(
+              hintText: 'Please write your detailed reason here...'.tr,
+              hintStyle: const TextStyle(
                 fontSize: 14,
                 color: RequestColors.textSecondary,
               ),
               filled: true,
               fillColor: Colors.white,
-              contentPadding: EdgeInsets.all(16),
-              border: OutlineInputBorder(
+              contentPadding: const EdgeInsets.all(16),
+              border: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(14)),
                 borderSide: BorderSide.none,
               ),
@@ -659,9 +656,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         const SizedBox(height: 16),
 
         // SUPPORTING DOCUMENTS Section
-        const Text(
-          'SUPPORTING DOCUMENTS',
-          style: TextStyle(
+        Text(
+          'SUPPORTING DOCUMENTS'.tr,
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: RequestColors.textSecondary,
@@ -722,8 +719,8 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                       const SizedBox(height: 2),
                       Text(
                         _attachmentSize != null
-                            ? '${(_attachmentSize! / 1024).toStringAsFixed(1)} KB • Tap Change to replace'
-                            : 'Document Attached',
+                            ? '${(_attachmentSize! / 1024).toStringAsFixed(1)} ${'KB • Tap Change to replace'.tr}'
+                            : 'Document Attached'.tr,
                         style: const TextStyle(
                           fontSize: 12,
                           color: RequestColors.textSecondary,
@@ -738,13 +735,13 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                     visualDensity: VisualDensity.compact,
                     foregroundColor: RequestColors.primary,
                   ),
-                  child: const Text('Change', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text('Change'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 IconButton(
                   onPressed: _removeAttachment,
                   icon: const Icon(FluentIcons.dismiss_circle_24_regular, size: 20, color: RequestColors.danger),
                   visualDensity: VisualDensity.compact,
-                  tooltip: 'Remove',
+                  tooltip: 'Remove'.tr,
                 ),
               ],
             ),
@@ -765,21 +762,23 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                   width: 1.5,
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     FluentIcons.arrow_upload_24_regular,
                     size: 22,
                     color: RequestColors.primary,
                   ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Attach Work Log or Task Screenshot (PDF, JPG, PNG)',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: RequestColors.primary,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'Attach Work Log or Task Screenshot (PDF, JPG, PNG)'.tr,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: RequestColors.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -799,10 +798,11 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
 
         const SizedBox(height: 10),
 
-        const Center(
+        Center(
           child: Text(
-            'Requests are subject to manager approval within 24 hours.',
-            style: TextStyle(
+            'Requests are subject to manager approval within 24 hours.'.tr,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
               fontSize: 12,
               color: RequestColors.textSecondary,
             ),
@@ -883,27 +883,27 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 20),
               alignment: Alignment.center,
-              child: const Column(
+              child: Column(
                 children: [
-                  Icon(
+                  const Icon(
                     FluentIcons.history_24_regular,
                     size: 36,
                     color: RequestColors.gold,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
-                    'No Overtime Requests',
-                    style: TextStyle(
+                    'No Overtime Requests'.tr,
+                    style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
                       color: RequestColors.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
                   Text(
-                    'Submitted overtime logs and approval updates will appear here.',
+                    'Submitted overtime logs and approval updates will appear here.'.tr,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: RequestColors.textSecondary,
                     ),
@@ -1033,9 +1033,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                           if (isPending) ...[
                             TextButton(
                               onPressed: () => _controller.cancelRequest(req.id),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(
+                              child: Text(
+                                'Cancel'.tr,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: RequestColors.danger,
                                   fontWeight: FontWeight.w600,
@@ -1065,9 +1065,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: const Text(
-                                'Edit',
-                                style: TextStyle(
+                              child: Text(
+                                'Edit'.tr,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1084,9 +1084,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                                 size: 16,
                                 color: RequestColors.primary,
                               ),
-                              label: const Text(
-                                'View Details',
-                                style: TextStyle(
+                              label: Text(
+                                'View Details'.tr,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: RequestColors.primary,
@@ -1139,7 +1139,7 @@ class _OvertimeItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  title.tr,
                   style: const TextStyle(
                     fontSize: 12,
                     color: RequestColors.textSecondary,
@@ -1195,7 +1195,7 @@ class _IntervalRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  title.tr,
                   style: const TextStyle(
                     fontSize: 12,
                     color: RequestColors.textSecondary,

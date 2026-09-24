@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// A modern face scanning overlay.
 /// Draws a semi-transparent dark background with a clear oval punched out in the center,
@@ -95,9 +96,9 @@ class _FaceOverlayPainter extends CustomPainter {
 
     // 4. Draw guidance label
     final textPainter = TextPainter(
-      text: const TextSpan(
-        text: 'Align your face within the frame',
-        style: TextStyle(
+      text: TextSpan(
+        text: 'Align your face within the frame'.tr,
+        style: const TextStyle(
           color: Colors.white,
           fontSize: 15,
           fontWeight: FontWeight.w600,

@@ -343,7 +343,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    s['title'] as String,
+                    (s['title'] as String).tr,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -352,7 +352,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    s['subtitle'] as String,
+                    (s['label'] as String).tr,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
@@ -389,7 +389,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               const Icon(FluentIcons.options_24_regular, size: 18, color: RequestColors.primary),
               const SizedBox(width: 8),
               Text(
-                'Leave Option for $secName',
+                '${'Leave Option for'.tr} ${secName.tr}',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -415,7 +415,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        'Full $secName',
+                        '${'Full'.tr} ${secName.tr}',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -441,7 +441,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        'Leave Early',
+                        'Leave Early'.tr,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -476,9 +476,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Departure Time',
-                            style: TextStyle(fontSize: 11, color: RequestColors.textSecondary),
+                          Text(
+                            'Departure Time'.tr,
+                            style: const TextStyle(fontSize: 11, color: RequestColors.textSecondary),
                           ),
                           Text(
                             _earlyLeaveTime.format(context),
@@ -491,9 +491,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
                         ],
                       ),
                     ),
-                    const Text(
-                      'Change',
-                      style: TextStyle(
+                    Text(
+                      'Change'.tr,
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: RequestColors.primary,
@@ -505,7 +505,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'You are requesting to leave early at ${_earlyLeaveTime.format(context)} during $secName ($shiftHours).',
+              '${'Leave Early'.tr}: ${_earlyLeaveTime.format(context)} (${secName.tr} $shiftHours)',
               style: const TextStyle(fontSize: 12, color: RequestColors.textSecondary),
             ),
           ] else ...[
@@ -515,7 +515,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Full absence from $secName ($shiftHours) will be excused upon approval.',
+                    'Full Day Leave excuses both morning (Section 1) and afternoon (Section 2) shifts.'.tr,
                     style: const TextStyle(fontSize: 12, color: RequestColors.textSecondary),
                   ),
                 ),
@@ -531,9 +531,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Target Workday',
-          style: TextStyle(
+        Text(
+          'Target Workday'.tr,
+          style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: RequestColors.textPrimary,
@@ -545,17 +545,17 @@ class _LeaveScreenState extends State<LeaveScreen> {
           iconColor: RequestColors.primary,
           dateText: DateText.fullDate(_selectedDate),
           subtitle: DateUtils.isSameDay(_selectedDate, DateTime.now())
-              ? 'Today • Workday'
-              : 'Selected Date',
+              ? 'Today • Workday'.tr
+              : 'Selected Date'.tr,
           onTapChange: _pickDate,
         ),
 
         const SizedBox(height: 18),
 
         // Section to Leave
-        const Text(
-          'Work Section to Leave',
-          style: TextStyle(
+        Text(
+          'Work Section to Leave'.tr,
+          style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: RequestColors.textPrimary,
@@ -577,14 +577,14 @@ class _LeaveScreenState extends State<LeaveScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: RequestColors.primary.withValues(alpha: 0.2)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(FluentIcons.info_24_regular, size: 16, color: RequestColors.primary),
-                SizedBox(width: 8),
+                const Icon(FluentIcons.info_24_regular, size: 16, color: RequestColors.primary),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Full Day Leave excuses both morning (Section 1) and afternoon (Section 2) shifts.',
-                    style: TextStyle(fontSize: 12, color: RequestColors.textPrimary),
+                    'Full Day Leave excuses both morning (Section 1) and afternoon (Section 2) shifts.'.tr,
+                    style: const TextStyle(fontSize: 12, color: RequestColors.textPrimary),
                   ),
                 ),
               ],
@@ -599,14 +599,14 @@ class _LeaveScreenState extends State<LeaveScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             RichText(
-              text: const TextSpan(
-                text: 'Reason ',
-                style: TextStyle(
+              text: TextSpan(
+                text: '${'Reason'.tr} ',
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: RequestColors.textPrimary,
                 ),
-                children: [
+                children: const [
                   TextSpan(
                     text: '*',
                     style: TextStyle(
@@ -617,9 +617,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 ],
               ),
             ),
-            const Text(
-              'Max 250 characters',
-              style: TextStyle(
+            Text(
+              'Max 250 characters'.tr,
+              style: const TextStyle(
                 fontSize: 12,
                 color: RequestColors.textSecondary,
               ),
@@ -638,16 +638,16 @@ class _LeaveScreenState extends State<LeaveScreen> {
               fontSize: 15,
               color: RequestColors.textPrimary,
             ),
-            decoration: const InputDecoration(
-              hintText: 'Please provide details about your leave request...',
-              hintStyle: TextStyle(
+            decoration: InputDecoration(
+              hintText: 'Please provide details about your leave request...'.tr,
+              hintStyle: const TextStyle(
                 fontSize: 14,
                 color: RequestColors.textSecondary,
               ),
               filled: true,
               fillColor: Colors.white,
-              contentPadding: EdgeInsets.all(16),
-              border: OutlineInputBorder(
+              contentPadding: const EdgeInsets.all(16),
+              border: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(14)),
                 borderSide: BorderSide.none,
               ),
@@ -712,8 +712,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       const SizedBox(height: 2),
                       Text(
                         _attachmentSize != null
-                            ? '${(_attachmentSize! / 1024).toStringAsFixed(1)} KB • Tap Change to replace'
-                            : 'Document Attached',
+                            ? '${(_attachmentSize! / 1024).toStringAsFixed(1)} KB'
+                            : 'Document Attached'.tr,
                         style: const TextStyle(
                           fontSize: 12,
                           color: RequestColors.textSecondary,
@@ -728,13 +728,13 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     visualDensity: VisualDensity.compact,
                     foregroundColor: RequestColors.primary,
                   ),
-                  child: const Text('Change', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text('Change'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 IconButton(
                   onPressed: _removeAttachment,
                   icon: const Icon(FluentIcons.dismiss_circle_24_regular, size: 20, color: RequestColors.danger),
                   visualDensity: VisualDensity.compact,
-                  tooltip: 'Remove',
+                  tooltip: 'Remove'.tr,
                 ),
               ],
             ),
@@ -755,18 +755,18 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   width: 1.5,
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     FluentIcons.arrow_upload_24_regular,
                     size: 22,
                     color: RequestColors.primary,
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
-                    'Attach Document or Image (PDF, JPG, PNG)',
-                    style: TextStyle(
+                    'Attach Document or Image (PDF, JPG, PNG)'.tr,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: RequestColors.primary,
@@ -782,17 +782,17 @@ class _LeaveScreenState extends State<LeaveScreen> {
         // Submit Button (Apple style pill)
         RequestButton(
           label: _isSubmitting
-              ? 'Submitting...'
-              : (_isEditing ? 'Update Leave Request' : 'Submit Leave Request'),
+              ? 'Submitting...'.tr
+              : (_isEditing ? 'Update Leave Request'.tr : 'Submit Leave Request'.tr),
           onPressed: _isSubmitting ? null : _submit,
         ),
 
         const SizedBox(height: 10),
 
-        const Center(
+        Center(
           child: Text(
-            'Requests require approval from your direct manager',
-            style: TextStyle(
+            'Requests require approval from your direct manager'.tr,
+            style: const TextStyle(
               fontSize: 12,
               color: RequestColors.textSecondary,
             ),
@@ -844,7 +844,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       ),
                     ),
                     child: Text(
-                      '$f ($count)',
+                      '${f.tr} ($count)',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -873,8 +873,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   const SizedBox(height: 14),
                   Text(
                     _historyFilter == 'All'
-                        ? 'No Leave Requests Yet'
-                        : 'No $_historyFilter Requests',
+                        ? 'No Leave Requests Yet'.tr
+                        : '${_historyFilter.tr} (0)',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -882,10 +882,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Your submitted leave requests will appear here with live review status.',
+                  Text(
+                    'Your submitted leave requests will appear here with live review status.'.tr,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
                       color: RequestColors.textSecondary,
                     ),
@@ -1014,7 +1014,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            'Review note: ${req.reviewNotes}',
+                            '${'Review note:'.tr} ${req.reviewNotes}',
                             style: TextStyle(
                               fontSize: 12,
                               color: isRejected ? RequestColors.danger : RequestColors.textPrimary,
@@ -1035,9 +1035,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
                           if (isPending) ...[
                             TextButton(
                               onPressed: () => _confirmCancel(req.id),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(
+                              child: Text(
+                                'Cancel'.tr,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: RequestColors.danger,
                                   fontWeight: FontWeight.w600,
@@ -1075,9 +1075,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: const Text(
-                                'Edit',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              child: Text(
+                                'Edit'.tr,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                               ),
                             ),
                           ] else ...[
@@ -1091,9 +1091,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
                                 size: 16,
                                 color: RequestColors.primary,
                               ),
-                              label: const Text(
-                                'View Details',
-                                style: TextStyle(
+                              label: Text(
+                                'View Details'.tr,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: RequestColors.primary,
@@ -1117,12 +1117,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Request'),
-        content: const Text('Are you sure you want to cancel this leave request?'),
+        title: Text('Cancel Request'.tr),
+        content: Text('Are you sure you want to cancel this leave request?'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Keep'),
+            child: Text('Keep'.tr),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1133,7 +1133,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               backgroundColor: RequestColors.danger,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Yes, Cancel'),
+            child: Text('Yes, Cancel'.tr),
           ),
         ],
       ),
@@ -1183,7 +1183,7 @@ class _DateSelectionCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  subtitle.tr,
                   style: const TextStyle(
                     fontSize: 12,
                     color: RequestColors.textSecondary,

@@ -163,19 +163,19 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
     final s2EndMin = _timeToMinutes(_s2End);
 
     if (s1StartMin >= s1EndMin) {
-      _validationError = 'Session 1: End time must be after start time.';
+      _validationError = 'Session 1: End time must be after start time.'.tr;
       return;
     }
     if (s2StartMin < s1EndMin) {
-      _validationError = 'Session 2: Cannot start before Session 1 ends.';
+      _validationError = 'Session 2: Cannot start before Session 1 ends.'.tr;
       return;
     }
     if (s2StartMin >= s2EndMin) {
-      _validationError = 'Session 2: End time must be after start time.';
+      _validationError = 'Session 2: End time must be after start time.'.tr;
       return;
     }
     if (_selectedDays.isEmpty) {
-      _validationError = 'Please select at least one active work day.';
+      _validationError = 'Please select at least one active work day.'.tr;
       return;
     }
 
@@ -243,8 +243,8 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
       if (success && mounted) {
         Navigator.of(context).pop(true);
         Get.snackbar(
-          'Session Updated',
-          'Work schedule for ${widget.memberName} was successfully updated.',
+          'Session Updated'.tr,
+          'Work schedule was successfully updated.'.tr,
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.shade700,
           colorText: Colors.white,
@@ -309,9 +309,9 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Change Session Time',
-                        style: TextStyle(
+                      Text(
+                        'Change Session Time'.tr,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: RequestColors.textPrimary,
@@ -319,7 +319,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${widget.memberName} • ${widget.memberRole}',
+                        '${widget.memberName} • ${widget.memberRole.tr}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -371,10 +371,10 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                           size: 22,
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Total Daily Scheduled Work:',
-                            style: TextStyle(
+                            'Total Daily Scheduled Work:'.tr,
+                            style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: RequestColors.textPrimary,
@@ -404,7 +404,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
 
                   // Session 1 (Morning)
                   _buildSessionCard(
-                    title: 'Session 1 (Morning Shift)',
+                    title: 'Session 1 (Morning Shift)'.tr,
                     icon: FluentIcons.weather_sunny_24_filled,
                     iconColor: const Color(0xFFD97706),
                     startVal: _s1Start,
@@ -426,7 +426,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
 
                   // Session 2 (Afternoon)
                   _buildSessionCard(
-                    title: 'Session 2 (Afternoon Shift)',
+                    title: 'Session 2 (Afternoon Shift)'.tr,
                     icon: FluentIcons.weather_moon_24_filled,
                     iconColor: const Color(0xFF2563EB),
                     startVal: _s2Start,
@@ -450,9 +450,9 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'ACTIVE WORK DAYS',
-                        style: TextStyle(
+                      Text(
+                        'ACTIVE WORK DAYS'.tr,
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.6,
@@ -461,14 +461,14 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                       ),
                       Row(
                         children: [
-                          _presetLink('Mon-Fri', () {
+                          _presetLink('Mon-Fri'.tr, () {
                             setState(() {
                               _selectedDays = {'mon', 'tue', 'wed', 'thu', 'fri'};
                               _validate();
                             });
                           }),
                           const SizedBox(width: 8),
-                          _presetLink('All', () {
+                          _presetLink('All'.tr, () {
                             setState(() {
                               _selectedDays = {'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'};
                               _validate();
@@ -487,7 +487,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                     children: _allDays.map((day) {
                       final isSelected = _selectedDays.contains(day['code']);
                       return FilterChip(
-                        label: Text(day['label']!),
+                        label: Text(day['label']!.tr),
                         selected: isSelected,
                         onSelected: (selected) {
                           setState(() {
@@ -573,9 +573,9 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                             ),
                             side: BorderSide(color: Colors.grey.shade300),
                           ),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(
+                          child: Text(
+                            'Cancel'.tr,
+                            style: const TextStyle(
                               color: RequestColors.textSecondary,
                               fontWeight: FontWeight.w600,
                               fontSize: 15,
@@ -605,9 +605,9 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                                     strokeWidth: 2.2,
                                   ),
                                 )
-                              : const Text(
-                                  'Save Session Schedule',
-                                  style: TextStyle(
+                              : Text(
+                                  'Save Session Schedule'.tr,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 15,
@@ -686,7 +686,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
             children: [
               Expanded(
                 child: _timeField(
-                  label: 'Start (Check-in)',
+                  label: 'Start (Check-in)'.tr,
                   displayValue: _formatDisplayTime(startVal),
                   onTap: onPickStart,
                 ),
@@ -701,7 +701,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
               ),
               Expanded(
                 child: _timeField(
-                  label: 'End (Check-out)',
+                  label: 'End (Check-out)'.tr,
                   displayValue: _formatDisplayTime(endVal),
                   onTap: onPickEnd,
                 ),

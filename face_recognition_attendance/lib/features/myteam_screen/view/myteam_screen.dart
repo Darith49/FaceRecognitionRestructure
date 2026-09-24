@@ -70,7 +70,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
   @override
   Widget build(BuildContext context) {
     return RequestScaffold(
-      title: 'My Team',
+      title: 'My Team'.tr,
       showBackButton: false,
       body: Obx(() {
         if (_controller.isLoading.value) {
@@ -119,7 +119,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                     // Pinned Section
                     if (pinned.isNotEmpty) ...[
                       _SectionHeader(
-                        'Pinned',
+                        'Pinned'.tr,
                         badge: '${pinned.length}/${MyTeamController.maxPins}',
                         badgeColor: pinned.length >= MyTeamController.maxPins
                             ? RequestColors.gold
@@ -137,7 +137,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                     // Current Tab Section
                     if (currentTab != null) ...[
                       _SectionHeader(
-                        currentTab.title,
+                        currentTab.title.tr,
                         badge: '${filteredItems.length}',
                       ),
                       if (filteredItems.isNotEmpty)
@@ -186,7 +186,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
         decoration: InputDecoration(
           filled: true,
           fillColor: Colors.white,
-          hintText: 'Search by name, role, or branch',
+          hintText: 'Search by name, role, or branch'.tr,
           hintStyle: const TextStyle(
             color: RequestColors.textSecondary,
             fontSize: 14,
@@ -271,7 +271,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      tab.title,
+                      tab.title.tr,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
@@ -384,7 +384,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        member.displayRole,
+                        member.displayRole.tr,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -416,8 +416,8 @@ class _MyteamScreenState extends State<MyteamScreen> {
                 const SizedBox(height: 4),
                 Text(
                   member.branchName != null && member.branchName!.isNotEmpty
-                      ? 'Branch: ${member.branchName}'
-                      : member.organizationSubtitle,
+                      ? '${'Branch'.tr}: ${member.branchName}'
+                      : member.organizationSubtitle.tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -540,7 +540,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        member.displayRole,
+                        member.displayRole.tr,
                         style: TextStyle(
                           fontSize: 11,
                           color: color,
@@ -552,7 +552,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  member.organizationSubtitle,
+                  member.organizationSubtitle.tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -647,7 +647,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        'Manager: ${branch.managerName}',
+                        '${'Manager'.tr}: ${branch.managerName}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -661,7 +661,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${branch.totalEmployees} Employees • ${branch.totalDepartments} Departments',
+                  '${branch.totalEmployees} ${'Employees'.tr} • ${branch.totalDepartments} ${'Departments'.tr}',
                   style: TextStyle(
                     fontSize: 11,
                     color: RequestColors.textSecondary.withValues(alpha: 0.8),
@@ -675,8 +675,8 @@ class _MyteamScreenState extends State<MyteamScreen> {
           _circleButton(
             icon: FluentIcons.call_24_regular,
             tooltip: branch.hasManagerPhone
-                ? 'Call ${branch.managerName}'
-                : 'No phone number available',
+                ? '${'Call'.tr} ${branch.managerName}'
+                : 'No phone number available'.tr,
             background: branch.hasManagerPhone
                 ? RequestColors.primary.withValues(alpha: 0.12)
                 : RequestColors.background,
@@ -750,7 +750,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
         if (_controller.isCeo && !member.isCeo) ...[
           _circleButton(
             icon: FluentIcons.clock_24_regular,
-            tooltip: 'Change Session Time',
+            tooltip: 'Change Session Time'.tr,
             background: onDark
                 ? Colors.white.withValues(alpha: 0.25)
                 : RequestColors.primary.withValues(alpha: 0.12),
@@ -761,7 +761,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
         ],
         _circleButton(
           icon: isPinned ? FluentIcons.pin_24_filled : FluentIcons.pin_24_regular,
-          tooltip: isPinned ? 'Unpin' : 'Pin',
+          tooltip: isPinned ? 'Unpin'.tr : 'Pin'.tr,
           background: pinBackground,
           iconColor: pinIconColor,
           onTap: () => _controller.togglePin(member, context),
@@ -769,7 +769,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
         const SizedBox(width: 8),
         _circleButton(
           icon: FluentIcons.call_24_regular,
-          tooltip: hasPhone ? 'Call ${member.fullname}' : 'No phone number available',
+          tooltip: hasPhone ? '${'Call'.tr} ${member.fullname}' : 'No phone number available'.tr,
           background: onDark
               ? Colors.white
               : (hasPhone
@@ -835,19 +835,19 @@ class _MyteamScreenState extends State<MyteamScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No team members found',
-            style: TextStyle(
+          Text(
+            'No team members found'.tr,
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
               color: RequestColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Try searching by a different name, role, or branch.',
+          Text(
+            'Try searching by a different name, role, or branch.'.tr,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: RequestColors.textSecondary),
+            style: const TextStyle(fontSize: 13, color: RequestColors.textSecondary),
           ),
         ],
       ),
@@ -876,9 +876,9 @@ class _MyteamScreenState extends State<MyteamScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Failed to load team data',
-              style: TextStyle(
+            Text(
+              'Failed to load team data'.tr,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: RequestColors.textPrimary,
@@ -897,7 +897,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
             ElevatedButton.icon(
               onPressed: () => _controller.fetchMyTeam(),
               icon: const Icon(FluentIcons.arrow_clockwise_24_regular, size: 18),
-              label: const Text('Retry'),
+              label: Text('Retry'.tr),
               style: ElevatedButton.styleFrom(
                 backgroundColor: RequestColors.primary,
                 foregroundColor: Colors.white,

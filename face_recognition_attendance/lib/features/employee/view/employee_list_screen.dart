@@ -10,6 +10,7 @@ import 'package:face_recognition_attendance/features/department/controller/depar
 import 'package:face_recognition_attendance/features/employee/controller/employee_controller.dart';
 import 'package:face_recognition_attendance/features/employee/model/employee_model.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/view/widgets/change_session_time_dialog.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -77,7 +78,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         _controller.fetchEmployees();
                       }
                     },
-                    icon: const Icon(Icons.person_add_alt_rounded),
+                    icon: const Icon(FluentIcons.person_add_24_regular),
                     label: const Text('Invite New Employee'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: RequestColors.primary,
@@ -152,7 +153,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                     padding: const EdgeInsets.only(top: 60),
                     child: Column(
                       children: [
-                        Icon(Icons.people_outline_rounded, size: 54, color: Colors.grey.shade400),
+                        Icon(FluentIcons.people_24_regular, size: 54, color: Colors.grey.shade400),
                         const SizedBox(height: 12),
                         const Text(
                           'No employees found',
@@ -188,7 +189,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.business_rounded, size: 16, color: Color(0xFF0F766E)),
+                            const Icon(FluentIcons.building_24_regular, size: 16, color: Color(0xFF0F766E)),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -275,7 +276,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                   Row(
                     children: [
                       if (e.departmentName.isNotEmpty) ...[
-                        Icon(Icons.apartment_rounded, size: 13, color: Colors.grey.shade600),
+                        Icon(FluentIcons.building_24_regular, size: 13, color: Colors.grey.shade600),
                         const SizedBox(width: 3),
                         Text(
                           e.departmentName,
@@ -284,7 +285,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         const SizedBox(width: 8),
                       ],
                       if (e.employeeId.isNotEmpty) ...[
-                        Icon(Icons.badge_outlined, size: 13, color: Colors.grey.shade600),
+                        Icon(FluentIcons.badge_24_regular, size: 13, color: Colors.grey.shade600),
                         const SizedBox(width: 3),
                         Text(
                           e.employeeId,
@@ -304,7 +305,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.schedule_rounded, size: 12, color: RequestColors.primary),
+                        const Icon(FluentIcons.clock_24_regular, size: 12, color: RequestColors.primary),
                         const SizedBox(width: 4),
                         Text(
                           '${_formatTime(e.section1Start)} - ${_formatTime(e.section1End)} • ${_formatTime(e.section2Start)} - ${_formatTime(e.section2End)} (${e.workDays.toUpperCase()})',
@@ -319,19 +320,19 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             Column(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.schedule_rounded, size: 20, color: Color(0xFFD97706)),
+                  icon: const Icon(FluentIcons.clock_24_regular, size: 20, color: Color(0xFFD97706)),
                   tooltip: 'Change Session Time',
                   visualDensity: VisualDensity.compact,
                   onPressed: () => _openChangeSessionTimeDialog(context, e),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.mark_email_read_outlined, size: 20, color: Colors.indigo),
+                  icon: const Icon(FluentIcons.mail_checkmark_24_regular, size: 20, color: Colors.indigo),
                   tooltip: 'Resend Invitation',
                   visualDensity: VisualDensity.compact,
                   onPressed: () => _controller.resendInvitation(e),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 20, color: RequestColors.primary),
+                  icon: const Icon(FluentIcons.edit_24_regular, size: 20, color: RequestColors.primary),
                   tooltip: 'Edit User',
                   visualDensity: VisualDensity.compact,
                   onPressed: () => _showEditEmployeeBottomSheet(context, e),
@@ -480,7 +481,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: RequestColors.textPrimary),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded),
+                          icon: const Icon(FluentIcons.dismiss_24_regular),
                           onPressed: () => Get.back(),
                         ),
                       ],
@@ -494,7 +495,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         filled: true,
                         fillColor: RequestColors.softSurface,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                        prefixIcon: const Icon(Icons.person_outline_rounded, color: RequestColors.primary),
+                        prefixIcon: const Icon(FluentIcons.person_24_regular, color: RequestColors.primary),
                       ),
                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter full name' : null,
                     ),
@@ -508,7 +509,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         filled: true,
                         fillColor: RequestColors.softSurface,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                        prefixIcon: const Icon(Icons.mail_outline_rounded, color: RequestColors.primary),
+                        prefixIcon: const Icon(FluentIcons.mail_24_regular, color: RequestColors.primary),
                       ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Please enter email';
@@ -522,7 +523,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                     RequestDropdownField<UserRole>(
                       value: selectedRole,
                       fillColor: RequestColors.softSurface,
-                      icon: Icons.keyboard_arrow_down_rounded,
+                      icon: FluentIcons.chevron_down_24_regular,
                       items: roleChoices
                           .map((r) => DropdownMenuItem<UserRole>(
                                 value: r,
@@ -542,7 +543,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         value: selectedBranchId,
                         hint: 'Select Branch',
                         fillColor: RequestColors.softSurface,
-                        icon: Icons.keyboard_arrow_down_rounded,
+                        icon: FluentIcons.chevron_down_24_regular,
                         items: branches
                             .map((b) => DropdownMenuItem<int>(
                                   value: b.id,
@@ -569,7 +570,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         value: selectedDeptId,
                         hint: 'Select Department',
                         fillColor: RequestColors.softSurface,
-                        icon: Icons.keyboard_arrow_down_rounded,
+                        icon: FluentIcons.chevron_down_24_regular,
                         items: depts
                             .map((d) => DropdownMenuItem<int>(
                                   value: d.id,
@@ -588,7 +589,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         filled: true,
                         fillColor: RequestColors.softSurface,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                        prefixIcon: const Icon(Icons.badge_outlined, color: RequestColors.primary),
+                        prefixIcon: const Icon(FluentIcons.badge_24_regular, color: RequestColors.primary),
                       ),
                     ),
                     const SizedBox(height: 18),
@@ -605,7 +606,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         children: [
                           const Row(
                             children: [
-                              Icon(Icons.schedule_rounded, size: 16, color: RequestColors.primary),
+                              Icon(FluentIcons.clock_24_regular, size: 16, color: RequestColors.primary),
                               SizedBox(width: 6),
                               Text('Work Shift Schedule', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: RequestColors.textPrimary)),
                             ],
@@ -626,7 +627,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.access_time_rounded, size: 14, color: RequestColors.primary),
+                                        const Icon(FluentIcons.clock_24_regular, size: 14, color: RequestColors.primary),
                                         const SizedBox(width: 4),
                                         Text('In: ${formatDisplay(s1Start)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                       ],
@@ -646,7 +647,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.access_time_rounded, size: 14, color: RequestColors.primary),
+                                        const Icon(FluentIcons.clock_24_regular, size: 14, color: RequestColors.primary),
                                         const SizedBox(width: 4),
                                         Text('Out: ${formatDisplay(s1End)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                       ],
@@ -672,7 +673,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.access_time_rounded, size: 14, color: RequestColors.primary),
+                                        const Icon(FluentIcons.clock_24_regular, size: 14, color: RequestColors.primary),
                                         const SizedBox(width: 4),
                                         Text('In: ${formatDisplay(s2Start)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                       ],
@@ -692,7 +693,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.access_time_rounded, size: 14, color: RequestColors.primary),
+                                        const Icon(FluentIcons.clock_24_regular, size: 14, color: RequestColors.primary),
                                         const SizedBox(width: 4),
                                         Text('Out: ${formatDisplay(s2End)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                       ],
@@ -748,7 +749,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                 },
                           icon: isResending.value
                               ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Icon(Icons.mark_email_read_outlined, size: 18),
+                              : const Icon(FluentIcons.mail_checkmark_24_regular, size: 18),
                           label: Text(isResending.value ? 'Resending...' : 'Resend Invitation Email'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.indigo,
@@ -797,7 +798,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                         snackPosition: SnackPosition.TOP,
                                         backgroundColor: Colors.green.shade600,
                                         colorText: Colors.white,
-                                        icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+                                        icon: const Icon(FluentIcons.checkmark_circle_24_regular, color: Colors.white),
                                         margin: const EdgeInsets.all(16),
                                         borderRadius: 12,
                                         duration: const Duration(seconds: 3),

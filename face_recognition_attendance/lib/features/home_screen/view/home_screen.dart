@@ -8,6 +8,7 @@ import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -311,7 +312,7 @@ class _GreetingHeader extends StatelessWidget {
                       border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
                     ),
                     child: const Icon(
-                      Icons.notifications_none_rounded,
+                      FluentIcons.alert_24_regular,
                       size: 20,
                       color: RequestColors.textSecondary,
                     ),
@@ -375,18 +376,10 @@ class _AttendanceCard extends StatelessWidget {
           Obx(
             () => Row(
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F7),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.access_time_rounded,
-                    color: RequestColors.textPrimary,
-                    size: 24,
-                  ),
+                const Icon(
+                  FluentIcons.clock_24_regular,
+                  color: RequestColors.textPrimary,
+                  size: 28,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -435,7 +428,7 @@ class _AttendanceCard extends StatelessWidget {
                 _SessionTile(
                   sessionNumber: 1,
                   sessionName: 'MORNING',
-                  icon: Icons.wb_sunny_rounded,
+                  icon: FluentIcons.weather_sunny_24_filled,
                   iconColor: const Color(0xFFF59E0B),
                   checkInTime: controller.session1CheckInText,
                   checkOutTime: controller.session1CheckOutText,
@@ -452,7 +445,7 @@ class _AttendanceCard extends StatelessWidget {
                 _SessionTile(
                   sessionNumber: 2,
                   sessionName: 'AFTERNOON',
-                  icon: Icons.wb_twilight_rounded,
+                  icon: FluentIcons.weather_moon_24_filled,
                   iconColor: const Color(0xFF6366F1),
                   checkInTime: controller.session2CheckInText,
                   checkOutTime: controller.session2CheckOutText,
@@ -485,7 +478,7 @@ class _AttendanceCard extends StatelessWidget {
                           Row(
                             children: [
                               Icon(
-                                Icons.timer_outlined,
+                                FluentIcons.timer_24_regular,
                                 size: 16,
                                 color: controller.goalProgress >= 1.0
                                     ? RequestColors.approvedStatus
@@ -569,7 +562,7 @@ class _AttendanceCard extends StatelessWidget {
             height: 44,
             child: OutlinedButton.icon(
               onPressed: () => Get.toNamed(AppRoutes.request),
-              icon: const Icon(Icons.edit_note_rounded, size: 20),
+              icon: const Icon(FluentIcons.note_edit_24_regular, size: 20),
               label: const Text('Request Time Adjustment'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: RequestColors.textPrimary,
@@ -696,15 +689,7 @@ class _SessionTile extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: iconColor.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 13, color: iconColor),
-                  ),
+                  Icon(icon, size: 16, color: iconColor),
                   const SizedBox(width: 8),
                   Text(
                     'SESSION $sessionNumber • $sessionName',
@@ -936,20 +921,20 @@ class _CheckInButtonState extends State<_CheckInButton>
 
   IconData _buttonIcon(CheckState state) {
     if (!widget.controller.hasFaceRegistered) {
-      return Icons.face_retouching_natural_rounded;
+      return FluentIcons.camera_24_regular;
     }
     switch (state) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
       case CheckState.session2NotCheckedIn:
-        return Icons.wifi_tethering_rounded;
+        return FluentIcons.wifi_1_24_regular;
       case CheckState.session1CheckedIn:
       case CheckState.checkedIn:
       case CheckState.session2CheckedIn:
-        return Icons.logout_rounded;
+        return FluentIcons.sign_out_24_regular;
       case CheckState.completed:
       case CheckState.checkedOut:
-        return Icons.check_rounded;
+        return FluentIcons.checkmark_24_regular;
     }
   }
 
@@ -1149,7 +1134,7 @@ class _CeoActionPanel extends StatelessWidget {
               Expanded(
                 child: Obx(
                   () => _CeoStatCard(
-                    icon: Icons.business_rounded,
+                    icon: FluentIcons.building_bank_24_regular,
                     color: const Color(0xFF0F766E),
                     label: 'Branches',
                     count: controller.branchController.branches.length,
@@ -1161,7 +1146,7 @@ class _CeoActionPanel extends StatelessWidget {
               Expanded(
                 child: Obx(
                   () => _CeoStatCard(
-                    icon: Icons.apartment_rounded,
+                    icon: FluentIcons.building_multiple_24_regular,
                     color: const Color(0xFF1D4ED8),
                     label: 'Departments',
                     count: controller.departmentController.departments.length,
@@ -1173,7 +1158,7 @@ class _CeoActionPanel extends StatelessWidget {
               Expanded(
                 child: Obx(
                   () => _CeoStatCard(
-                    icon: Icons.people_alt_rounded,
+                    icon: FluentIcons.people_team_24_regular,
                     color: const Color(0xFFB45309),
                     label: 'Employees',
                     count: controller.employeeController.employees.length,
@@ -1209,14 +1194,7 @@ class _CeoActionPanel extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.20),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
-                  ),
+                  const Icon(FluentIcons.sparkle_24_filled, color: Colors.white, size: 26),
                   const SizedBox(width: 14),
                   const Expanded(
                     child: Column(
@@ -1238,7 +1216,7 @@ class _CeoActionPanel extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
+                  const Icon(FluentIcons.chevron_right_24_regular, color: Colors.white70, size: 18),
                 ],
               ),
             ),
@@ -1265,17 +1243,10 @@ class _CeoActionPanel extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: RequestColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.admin_panel_settings_rounded,
-                        color: RequestColors.primary,
-                        size: 24,
-                      ),
+                    const Icon(
+                      FluentIcons.shield_badge_24_regular,
+                      color: RequestColors.primary,
+                      size: 26,
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
@@ -1309,7 +1280,7 @@ class _CeoActionPanel extends StatelessWidget {
 
                 // 1. Create Branch
                 _CeoActionTile(
-                  icon: Icons.add_business_rounded,
+                  icon: FluentIcons.building_bank_link_24_regular,
                   iconBg: const Color(0xFF0F766E),
                   title: 'Create Branch',
                   subtitle: 'Set up branch location & GPS geofence',
@@ -1324,7 +1295,7 @@ class _CeoActionPanel extends StatelessWidget {
 
                 // 2. Create Department
                 _CeoActionTile(
-                  icon: Icons.domain_add_rounded,
+                  icon: FluentIcons.building_multiple_24_regular,
                   iconBg: const Color(0xFF1D4ED8),
                   title: 'Create Department',
                   subtitle: 'Add department to an existing branch',
@@ -1341,7 +1312,7 @@ class _CeoActionPanel extends StatelessWidget {
 
                 // 3. Create User
                 _CeoActionTile(
-                  icon: Icons.person_add_alt_1_rounded,
+                  icon: FluentIcons.person_add_24_regular,
                   iconBg: const Color(0xFFB45309),
                   title: 'Create User',
                   subtitle: 'Invite Manager, Leader, or Employee',
@@ -1385,22 +1356,10 @@ class _CeoAttendanceCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.access_time_filled_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
+                const Icon(
+                  FluentIcons.clock_24_filled,
+                  color: Color(0xFF2563EB),
+                  size: 26,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1476,7 +1435,7 @@ class _CeoAttendanceCard extends StatelessWidget {
                         ),
                         SizedBox(width: 2),
                         Icon(
-                          Icons.chevron_right_rounded,
+                          FluentIcons.chevron_right_24_regular,
                           size: 16,
                           color: RequestColors.primary,
                         ),
@@ -1568,11 +1527,11 @@ class _CeoAttendanceCard extends StatelessWidget {
               if (!hasFace) {
                 btnColor = const Color(0xFF7C3AED);
                 btnText = 'Register Face First';
-                btnIcon = Icons.face_retouching_natural_rounded;
+                btnIcon = FluentIcons.camera_24_filled;
               } else if (isDone) {
                 btnColor = RequestColors.approvedStatus;
                 btnText = 'Completed for Today';
-                btnIcon = Icons.check_circle_rounded;
+                btnIcon = FluentIcons.checkmark_circle_24_filled;
               } else {
                 switch (state) {
                   case CheckState.session1NotCheckedIn:
@@ -1580,19 +1539,19 @@ class _CeoAttendanceCard extends StatelessWidget {
                   case CheckState.session2NotCheckedIn:
                     btnColor = RequestColors.primary;
                     btnText = 'Clock In (${controller.buttonSubtext})';
-                    btnIcon = Icons.login_rounded;
+                    btnIcon = FluentIcons.door_arrow_left_24_regular;
                     break;
                   case CheckState.session1CheckedIn:
                   case CheckState.checkedIn:
                   case CheckState.session2CheckedIn:
                     btnColor = RequestColors.danger;
                     btnText = 'Clock Out (${controller.buttonSubtext})';
-                    btnIcon = Icons.logout_rounded;
+                    btnIcon = FluentIcons.sign_out_24_regular;
                     break;
                   default:
                     btnColor = RequestColors.primary;
                     btnText = 'Clock In';
-                    btnIcon = Icons.login_rounded;
+                    btnIcon = FluentIcons.door_arrow_left_24_regular;
                 }
               }
 
@@ -1668,13 +1627,9 @@ class _CeoStatCard extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(height: 8),
               Text(
@@ -1732,13 +1687,9 @@ class _CeoActionTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: iconBg.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconBg, size: 22),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(icon, color: iconBg, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1765,8 +1716,8 @@ class _CeoActionTile extends StatelessWidget {
                 ),
               ),
               const Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
+                FluentIcons.chevron_right_24_regular,
+                size: 18,
                 color: RequestColors.textSecondary,
               ),
             ],
@@ -1815,7 +1766,7 @@ class _RecentCreatedOverview extends StatelessWidget {
                     const Row(
                       children: [
                         Icon(
-                          Icons.business_rounded,
+                          FluentIcons.building_bank_24_regular,
                           size: 20,
                           color: Color(0xFF0F766E),
                         ),
@@ -1851,16 +1802,11 @@ class _RecentCreatedOverview extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F766E)
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.location_on_rounded,
-                                size: 18,
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              child: Icon(
+                                FluentIcons.location_24_regular,
+                                size: 20,
                                 color: Color(0xFF0F766E),
                               ),
                             ),
@@ -1932,7 +1878,7 @@ class _RecentCreatedOverview extends StatelessWidget {
                     const Row(
                       children: [
                         Icon(
-                          Icons.domain_rounded,
+                          FluentIcons.building_multiple_24_regular,
                           size: 20,
                           color: Color(0xFF1D4ED8),
                         ),
@@ -1968,16 +1914,11 @@ class _RecentCreatedOverview extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1D4ED8)
-                                    .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.corporate_fare_rounded,
-                                size: 18,
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              child: Icon(
+                                FluentIcons.building_multiple_24_regular,
+                                size: 20,
                                 color: Color(0xFF1D4ED8),
                               ),
                             ),
@@ -2051,7 +1992,7 @@ class _RecentCreatedOverview extends StatelessWidget {
                     const Row(
                       children: [
                         Icon(
-                          Icons.people_alt_rounded,
+                          FluentIcons.people_team_24_regular,
                           size: 20,
                           color: Color(0xFFB45309),
                         ),

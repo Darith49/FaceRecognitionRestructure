@@ -1,5 +1,6 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/controller/schedule_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -84,13 +85,13 @@ class ScheduleScreen extends GetView<ScheduleController> {
   };
 
   IconData _statusIcon(DayStatus s) => switch (s) {
-    DayStatus.worked => Icons.check_circle_rounded,
-    DayStatus.workday => Icons.work_outline_rounded,
-    DayStatus.absent => Icons.cancel_rounded,
-    DayStatus.dayOff => Icons.weekend_rounded,
-    DayStatus.overtime => Icons.more_time_rounded,
-    DayStatus.leave => Icons.beach_access_rounded,
-    DayStatus.none => Icons.event_rounded,
+    DayStatus.worked => FluentIcons.checkmark_circle_24_regular,
+    DayStatus.workday => FluentIcons.briefcase_24_regular,
+    DayStatus.absent => FluentIcons.dismiss_circle_24_regular,
+    DayStatus.dayOff => FluentIcons.bed_24_regular,
+    DayStatus.overtime => FluentIcons.timer_24_regular,
+    DayStatus.leave => FluentIcons.beach_24_regular,
+    DayStatus.none => FluentIcons.calendar_ltr_24_regular,
   };
 
   // -------------------------------- build ----------------------------------
@@ -206,17 +207,12 @@ class ScheduleScreen extends GetView<ScheduleController> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.18),
-                          ),
-                          child: const Icon(
-                            Icons.emoji_events_rounded,
+                        const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(
+                            FluentIcons.trophy_24_filled,
                             color: Colors.white,
-                            size: 24,
+                            size: 32,
                           ),
                         ),
                       ],
@@ -290,7 +286,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                   child: _statCard(
                     label: 'Days Goal',
                     value: '$daysGoal',
-                    icon: Icons.flag_rounded,
+                    icon: FluentIcons.flag_24_regular,
                     color: RequestColors.primary,
                   ),
                 ),
@@ -299,7 +295,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                   child: _statCard(
                     label: 'Days Worked',
                     value: '$daysWorked',
-                    icon: Icons.check_circle_rounded,
+                    icon: FluentIcons.checkmark_circle_24_regular,
                     color: RequestColors.approvedStatus,
                   ),
                 ),
@@ -315,7 +311,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                   child: _statCard(
                     label: 'Days Absent',
                     value: '$daysAbsent',
-                    icon: Icons.event_busy_rounded,
+                    icon: FluentIcons.calendar_cancel_24_regular,
                     color: RequestColors.danger,
                     badge: 'Limit $absenceLimit',
                   ),
@@ -325,7 +321,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                   child: _statCard(
                     label: 'On-Time Rate',
                     value: '$onTimeRate%',
-                    icon: Icons.timer_rounded,
+                    icon: FluentIcons.timer_24_regular,
                     color: RequestColors.gold,
                   ),
                 ),
@@ -352,14 +348,9 @@ class ScheduleScreen extends GetView<ScheduleController> {
         children: [
           Row(
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Icon(icon, size: 18, color: color),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Icon(icon, size: 24, color: color),
               ),
               const Spacer(),
               if (badge != null)
@@ -445,11 +436,11 @@ class ScheduleScreen extends GetView<ScheduleController> {
               Row(
                 children: [
                   _navArrow(
-                    Icons.chevron_left_rounded,
+                    FluentIcons.chevron_left_24_regular,
                     controller.previousMonth,
                   ),
                   const SizedBox(width: 8),
-                  _navArrow(Icons.chevron_right_rounded, controller.nextMonth),
+                  _navArrow(FluentIcons.chevron_right_24_regular, controller.nextMonth),
                 ],
               ),
             ],
@@ -835,18 +826,12 @@ class ScheduleScreen extends GetView<ScheduleController> {
       decoration: _cardDecoration(radius: 18),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: RequestColors.gold.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.beach_access_rounded,
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Icon(
+              FluentIcons.beach_24_regular,
               color: RequestColors.gold,
-              size: 24,
+              size: 28,
             ),
           ),
           const SizedBox(width: 14),
@@ -912,18 +897,10 @@ class ScheduleScreen extends GetView<ScheduleController> {
       decoration: _cardDecoration(),
       child: Column(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: RequestColors.primary.withValues(alpha: 0.10),
-            ),
-            child: const Icon(
-              Icons.schedule_rounded,
-              color: RequestColors.primary,
-              size: 26,
-            ),
+          const Icon(
+            FluentIcons.clock_24_regular,
+            color: RequestColors.primary,
+            size: 36,
           ),
           const SizedBox(height: 14),
           const Text(
@@ -955,20 +932,12 @@ class ScheduleScreen extends GetView<ScheduleController> {
       decoration: _cardDecoration(),
       child: Column(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: RequestColors.primary.withValues(alpha: 0.10),
-            ),
-            child: Icon(
-              isHoliday
-                  ? Icons.celebration_rounded
-                  : Icons.beach_access_rounded,
-              color: RequestColors.primary,
-              size: 26,
-            ),
+          Icon(
+            isHoliday
+                ? FluentIcons.sparkle_24_filled
+                : FluentIcons.beach_24_regular,
+            color: RequestColors.primary,
+            size: 36,
           ),
           const SizedBox(height: 14),
           const Text(

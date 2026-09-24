@@ -2,6 +2,7 @@ import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/permission_screen/controller/permission_controller.dart';
 import 'package:face_recognition_attendance/features/permission_screen/model/permission_request.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -250,7 +251,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
                 onPressed: _confirmCancel,
-                icon: const Icon(Icons.cancel_outlined, size: 18),
+                icon: const Icon(FluentIcons.dismiss_circle_24_regular, size: 18),
                 label: const Text('Cancel Request'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: RequestColors.danger,
@@ -291,7 +292,7 @@ class _LockedNote extends StatelessWidget {
       ),
       child: const Row(
         children: [
-          Icon(Icons.lock_outline_rounded, size: 18, color: RequestColors.pendingText),
+          Icon(FluentIcons.lock_closed_24_regular, size: 18, color: RequestColors.pendingText),
           SizedBox(width: 8),
           Expanded(
             child: Text(

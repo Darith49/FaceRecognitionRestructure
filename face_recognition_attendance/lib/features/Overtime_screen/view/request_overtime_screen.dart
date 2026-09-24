@@ -8,6 +8,7 @@ import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/Overtime_screen/controller/overtime_controller.dart';
 import 'package:face_recognition_attendance/features/Overtime_screen/model/overtime_request.dart';
 import 'package:face_recognition_attendance/features/Overtime_screen/service/overtime_report_pdf.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -350,7 +351,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         IconButton(
           tooltip: 'Download PDF Report',
           icon: const Icon(
-            Icons.file_download_outlined,
+            FluentIcons.arrow_download_24_regular,
             color: RequestColors.primary,
           ),
           onPressed: () => _downloadReport(context),
@@ -507,7 +508,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         ),
         const SizedBox(height: 8),
         _OvertimeItemCard(
-          icon: Icons.calendar_today_rounded,
+          icon: FluentIcons.calendar_ltr_24_regular,
           iconColor: RequestColors.primary,
           title: 'Selected Date',
           value: DateText.fullDate(_date),
@@ -533,7 +534,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
           child: Column(
             children: [
               _IntervalRow(
-                icon: Icons.access_time_rounded,
+                icon: FluentIcons.clock_24_regular,
                 iconColor: RequestColors.gold,
                 title: 'From Time',
                 value: DateText.time(_fromTime),
@@ -541,7 +542,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
               ),
               const Divider(height: 1, indent: 56),
               _IntervalRow(
-                icon: Icons.access_time_rounded,
+                icon: FluentIcons.clock_24_regular,
                 iconColor: RequestColors.primary,
                 title: 'To Time',
                 value: DateText.time(_toTime),
@@ -563,20 +564,15 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
           ),
           child: Row(
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
+              const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: Icon(
+                  FluentIcons.clock_24_regular,
+                  size: 22,
                   color: RequestColors.gold,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.access_time_filled_rounded,
-                  size: 16,
-                  color: Colors.white,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 4),
               const Text(
                 'Total Duration:',
                 style: TextStyle(
@@ -693,27 +689,22 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: RequestColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
                   child: Icon(
                     _attachmentName!.toLowerCase().endsWith('.pdf')
-                        ? Icons.picture_as_pdf_rounded
+                        ? FluentIcons.document_pdf_24_regular
                         : (_attachmentName!.toLowerCase().endsWith('.png') ||
                                 _attachmentName!.toLowerCase().endsWith('.jpg') ||
                                 _attachmentName!.toLowerCase().endsWith('.jpeg') ||
                                 _attachmentName!.toLowerCase().endsWith('.webp'))
-                            ? Icons.image_rounded
-                            : Icons.description_rounded,
+                            ? FluentIcons.image_24_regular
+                            : FluentIcons.document_24_regular,
                     color: RequestColors.primary,
-                    size: 24,
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -751,7 +742,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                 ),
                 IconButton(
                   onPressed: _removeAttachment,
-                  icon: const Icon(Icons.close_rounded, size: 20, color: RequestColors.danger),
+                  icon: const Icon(FluentIcons.dismiss_circle_24_regular, size: 20, color: RequestColors.danger),
                   visualDensity: VisualDensity.compact,
                   tooltip: 'Remove',
                 ),
@@ -774,11 +765,11 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                   width: 1.5,
                 ),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(
-                    Icons.upload_file_rounded,
+                    FluentIcons.arrow_upload_24_regular,
                     size: 22,
                     color: RequestColors.primary,
                   ),
@@ -833,20 +824,15 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
             decoration: appleCardDecoration(radius: 14),
             child: Row(
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: RequestColors.primary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.picture_as_pdf_rounded,
+                const Padding(
+                  padding: EdgeInsets.only(right: 6),
+                  child: Icon(
+                    FluentIcons.document_pdf_24_regular,
                     color: RequestColors.primary,
-                    size: 20,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -871,7 +857,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () => _downloadReport(context),
-                  icon: const Icon(Icons.download_rounded, size: 16),
+                  icon: const Icon(FluentIcons.arrow_download_24_regular, size: 16),
                   label: const Text('Export'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: RequestColors.primary,
@@ -897,23 +883,15 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 20),
               alignment: Alignment.center,
-              child: Column(
+              child: const Column(
                 children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: RequestColors.gold.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.history_rounded,
-                      size: 30,
-                      color: RequestColors.gold,
-                    ),
+                  Icon(
+                    FluentIcons.history_24_regular,
+                    size: 36,
+                    color: RequestColors.gold,
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'No Overtime Requests',
                     style: TextStyle(
                       fontSize: 17,
@@ -921,8 +899,8 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                       color: RequestColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
+                  SizedBox(height: 6),
+                  Text(
                     'Submitted overtime logs and approval updates will appear here.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -955,19 +933,15 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                         children: [
                           Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: RequestColors.primary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.calendar_month_rounded,
-                                  size: 16,
+                              const Padding(
+                                padding: EdgeInsets.only(right: 6),
+                                child: Icon(
+                                  FluentIcons.calendar_ltr_24_regular,
+                                  size: 22,
                                   color: RequestColors.primary,
                                 ),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 4),
                               Text(
                                 DateText.fullDate(req.date),
                                 style: const TextStyle(
@@ -1106,7 +1080,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                                 arguments: req.id,
                               ),
                               icon: const Icon(
-                                Icons.arrow_forward_rounded,
+                                FluentIcons.arrow_right_24_regular,
                                 size: 16,
                                 color: RequestColors.primary,
                               ),
@@ -1155,16 +1129,11 @@ class _OvertimeItemCard extends StatelessWidget {
       decoration: appleCardDecoration(radius: 14),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: iconColor),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Icon(icon, size: 24, color: iconColor),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1216,16 +1185,11 @@ class _IntervalRow extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: iconColor),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Icon(icon, size: 24, color: iconColor),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

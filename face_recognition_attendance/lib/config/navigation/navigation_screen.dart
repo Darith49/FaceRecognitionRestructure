@@ -5,6 +5,7 @@ import 'package:face_recognition_attendance/features/myteam_screen/view/myteam_s
 import 'package:face_recognition_attendance/features/profile_screen/view/profile_screen.dart';
 import 'package:face_recognition_attendance/features/request_screen/view/request_screen.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/view/schedule_screen.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
@@ -49,31 +50,31 @@ class NavigationScreen extends GetView<NavigationController> {
               onTabSelected: (index) => controller.changePage(index),
               tabs: [
                 GlassTab(
-                  icon: const Icon(Icons.home_outlined),
-                  activeIcon: const Icon(Icons.home_rounded),
+                  icon: const Icon(FluentIcons.home_24_regular),
+                  activeIcon: const Icon(FluentIcons.home_24_filled),
                   label: 'nav_home'.tr,
                 ),
                 GlassTab(
-                  icon: const Icon(Icons.calendar_month_outlined),
-                  activeIcon: const Icon(Icons.calendar_month_rounded),
+                  icon: const Icon(FluentIcons.calendar_ltr_24_regular),
+                  activeIcon: const Icon(FluentIcons.calendar_ltr_24_filled),
                   label: 'nav_schedule'.tr,
                 ),
                 GlassTab(
-                  icon: const Icon(Icons.people_alt_outlined),
-                  activeIcon: const Icon(Icons.people_alt_rounded),
+                  icon: const Icon(FluentIcons.people_community_24_regular),
+                  activeIcon: const Icon(FluentIcons.people_community_24_filled),
                   label: 'nav_myteam'.tr,
                 ),
                 GlassTab(
-                  icon: const Icon(Icons.assignment_outlined),
-                  activeIcon: const Icon(Icons.assignment_rounded),
+                  icon: const Icon(FluentIcons.document_bullet_list_multiple_24_regular),
+                  activeIcon: const Icon(FluentIcons.document_bullet_list_multiple_24_filled),
                   label: 'nav_request'.tr,
                 ),
               ],
               extraButton: GlassTabBarExtraButton(
                 icon: Icon(
                   isProfileSelected
-                      ? Icons.person_rounded
-                      : Icons.person_outline_rounded,
+                      ? FluentIcons.person_24_filled
+                      : FluentIcons.person_24_regular,
                   size: 26,
                   color: isProfileSelected
                       ? AppColors.primary

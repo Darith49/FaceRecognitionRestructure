@@ -1,5 +1,6 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,7 +16,7 @@ class RequestInformationScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           RequestMenuCard(
-            icon: Icons.hourglass_top_rounded,
+            icon: FluentIcons.hourglass_half_24_regular,
             iconBackground: const Color(0xFFD08A2E),
             title: 'Unauthorized',
             subtitle: 'Pending Request',
@@ -23,7 +24,7 @@ class RequestInformationScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           RequestMenuCard(
-            icon: Icons.fact_check_outlined,
+            icon: FluentIcons.checkmark_circle_24_regular,
             iconBackground: const Color(0xFF4CB84B),
             title: 'Authorized',
             subtitle: 'Completed Request',

@@ -1,5 +1,6 @@
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -81,8 +82,8 @@ class RequestScaffold extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.chevron_left_rounded,
-                        size: 28,
+                        FluentIcons.chevron_left_24_regular,
+                        size: 24,
                         color: RequestColors.primary,
                       ),
                       if (backLabel != null)
@@ -147,16 +148,11 @@ class RequestMenuCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: iconBackground.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconBackground, size: 22),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(icon, color: iconBackground, size: 26),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,9 +178,9 @@ class RequestMenuCard extends StatelessWidget {
                 ),
               ),
               Icon(
-                Icons.chevron_right_rounded,
+                FluentIcons.chevron_right_24_regular,
                 color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                size: 22,
+                size: 20,
               ),
             ],
           ),
@@ -361,8 +357,8 @@ class RequestSnack {
         : (success ? const Color(0xFF16A34A) : RequestColors.textPrimary);
 
     final IconData icon = err
-        ? Icons.error_outline_rounded
-        : (success ? Icons.check_circle_outline_rounded : Icons.info_outline_rounded);
+        ? FluentIcons.error_circle_24_regular
+        : (success ? FluentIcons.checkmark_circle_24_regular : FluentIcons.info_24_regular);
 
     try {
       if (Get.isSnackbarOpen) {
@@ -372,14 +368,7 @@ class RequestSnack {
       Get.rawSnackbar(
         messageText: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.20),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: Colors.white, size: 18),
-            ),
+            Icon(icon, color: Colors.white, size: 22),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -504,7 +493,7 @@ class RequestDropdownField<T> extends StatelessWidget {
     required this.onChanged,
     this.hint,
     this.fillColor = Colors.white,
-    this.icon = Icons.arrow_drop_down,
+    this.icon = FluentIcons.chevron_down_24_regular,
   });
 
   final T? value;

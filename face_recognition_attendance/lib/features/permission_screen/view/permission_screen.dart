@@ -1,6 +1,7 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/permission_screen/controller/permission_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,7 +17,7 @@ class PermissionScreen extends GetView<PermissionController> {
         padding: const EdgeInsets.all(16),
         children: [
           RequestMenuCard(
-            icon: Icons.assignment_outlined,
+            icon: FluentIcons.clipboard_task_list_ltr_24_regular,
             iconBackground: const Color(0xFFF4B07A),
             title: 'Attendance',
             subtitle: 'P / AP / W',
@@ -24,7 +25,7 @@ class PermissionScreen extends GetView<PermissionController> {
           ),
           const SizedBox(height: 12),
           RequestMenuCard(
-            icon: Icons.mail_outline_rounded,
+            icon: FluentIcons.mail_24_regular,
             iconBackground: const Color(0xFFC97B7B),
             title: 'Request Permission',
             subtitle: 'Request Permission',

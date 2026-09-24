@@ -3,6 +3,7 @@ import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/permission_screen/controller/permission_controller.dart';
 import 'package:face_recognition_attendance/features/permission_screen/model/permission_request.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -24,7 +25,7 @@ class SessionListScreen extends GetView<PermissionController> {
                 AppRoutes.requestPermission,
                 arguments: {'fromSessionList': true},
               ),
-              icon: const Icon(Icons.add_rounded, size: 18),
+              icon: const Icon(FluentIcons.add_24_regular, size: 18),
               label: const Text('Add another session'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: RequestColors.textPrimary,
@@ -150,21 +151,21 @@ class _SessionTile extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _line(
-                              Icons.calendar_month_outlined,
+                              FluentIcons.calendar_ltr_24_regular,
                               DateText.ymd(session.date),
                               RequestColors.textPrimary,
                               FontWeight.w700,
                             ),
                             const SizedBox(height: 6),
                             _line(
-                              Icons.timer_outlined,
+                              FluentIcons.clock_24_regular,
                               session.schedule,
                               RequestColors.gold,
                               FontWeight.w600,
                             ),
                             const SizedBox(height: 6),
                             _line(
-                              Icons.edit_note_rounded,
+                              FluentIcons.notepad_24_regular,
                               session.reason,
                               RequestColors.textPrimary,
                               FontWeight.w500,
@@ -173,21 +174,12 @@ class _SessionTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Material(
-                        color: const Color(0xFFFFD9D2),
-                        borderRadius: BorderRadius.circular(10),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: onDelete,
-                          child: const SizedBox(
-                            width: 40,
-                            height: 40,
-                            child: Icon(
-                              Icons.delete_outline_rounded,
-                              color: RequestColors.danger,
-                              size: 20,
-                            ),
-                          ),
+                      IconButton(
+                        onPressed: onDelete,
+                        icon: const Icon(
+                          FluentIcons.delete_24_regular,
+                          color: RequestColors.danger,
+                          size: 20,
                         ),
                       ),
                     ],

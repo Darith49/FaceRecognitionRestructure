@@ -2,6 +2,7 @@ import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/utils/report_period.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -98,19 +99,11 @@ class _DownloadReportDialogState extends State<_DownloadReportDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Top PDF Icon Badge
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: RequestColors.primary.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.picture_as_pdf_rounded,
-                size: 26,
-                color: RequestColors.primary,
-              ),
+            // Top PDF Icon Badge (clean icon)
+            const Icon(
+              FluentIcons.document_pdf_24_regular,
+              size: 38,
+              color: RequestColors.primary,
             ),
 
             const SizedBox(height: 14),
@@ -142,7 +135,7 @@ class _DownloadReportDialogState extends State<_DownloadReportDialog> {
 
             // Option 1: This Month
             _AppleOptionTile(
-              icon: Icons.calendar_today_rounded,
+              icon: FluentIcons.calendar_ltr_24_regular,
               iconColor: RequestColors.primary,
               title: 'This Month',
               subtitle: DateText.monthYear(now),
@@ -154,7 +147,7 @@ class _DownloadReportDialogState extends State<_DownloadReportDialog> {
 
             // Option 2: Last Month
             _AppleOptionTile(
-              icon: Icons.event_repeat_rounded,
+              icon: FluentIcons.arrow_repeat_all_24_regular,
               iconColor: const Color(0xFF7C3AED),
               title: 'Last Month',
               subtitle: DateText.monthYear(lastMonthDate),
@@ -166,7 +159,7 @@ class _DownloadReportDialogState extends State<_DownloadReportDialog> {
 
             // Option 3: Custom Range
             _AppleOptionTile(
-              icon: Icons.date_range_rounded,
+              icon: FluentIcons.calendar_date_24_regular,
               iconColor: RequestColors.gold,
               title: 'Custom Range',
               subtitle: _custom != null
@@ -176,8 +169,9 @@ class _DownloadReportDialogState extends State<_DownloadReportDialog> {
               trailing: _custom != null
                   ? ChangePill(onTap: _pickCustomRange)
                   : const Icon(
-                      Icons.chevron_right_rounded,
+                      FluentIcons.chevron_right_24_regular,
                       color: RequestColors.textSecondary,
+                      size: 20,
                     ),
               onTap: () => _select(_PeriodOption.custom),
             ),
@@ -288,16 +282,11 @@ class _AppleOptionTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 18, color: iconColor),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(icon, size: 22, color: iconColor),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

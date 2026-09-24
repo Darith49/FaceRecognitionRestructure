@@ -9,6 +9,7 @@ import 'package:face_recognition_attendance/features/auth/model/user_model.dart'
 import 'package:face_recognition_attendance/features/branch/controller/branch_controller.dart';
 import 'package:face_recognition_attendance/features/department/controller/department_controller.dart';
 import 'package:face_recognition_attendance/features/employee/controller/employee_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -503,7 +504,7 @@ class HomeController extends GetxController {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Color(0xFFE65100), size: 28),
+            Icon(FluentIcons.warning_24_regular, color: Color(0xFFE65100), size: 28),
             SizedBox(width: 10),
             Expanded(
               child: Text(

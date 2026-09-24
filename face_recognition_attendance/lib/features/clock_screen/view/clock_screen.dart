@@ -7,6 +7,7 @@ import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/clock_screen/controller/clock_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -163,7 +164,7 @@ class _ClockScreenState extends State<ClockScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(
-                    Icons.calendar_today_rounded,
+                    FluentIcons.calendar_ltr_24_regular,
                     size: 14,
                     color: RequestColors.textSecondary,
                   ),
@@ -310,7 +311,7 @@ class _ClockGreetingHeader extends StatelessWidget {
                   border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
                 ),
                 child: const Icon(
-                  Icons.notifications_none_rounded,
+                  FluentIcons.alert_24_regular,
                   size: 18,
                   color: RequestColors.textSecondary,
                 ),
@@ -347,18 +348,10 @@ class _ClockAttendanceCard extends StatelessWidget {
           Obx(
             () => Row(
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F7),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.access_time_rounded,
-                    color: RequestColors.textPrimary,
-                    size: 24,
-                  ),
+                const Icon(
+                  FluentIcons.clock_24_regular,
+                  color: RequestColors.textPrimary,
+                  size: 28,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -409,7 +402,7 @@ class _ClockAttendanceCard extends StatelessWidget {
                 _ClockSessionTile(
                   sessionNumber: 1,
                   sessionName: 'MORNING',
-                  icon: Icons.wb_sunny_rounded,
+                  icon: FluentIcons.weather_sunny_24_filled,
                   iconColor: const Color(0xFFF59E0B),
                   checkInTime: controller.session1CheckInText,
                   checkOutTime: controller.session1CheckOutText,
@@ -426,7 +419,7 @@ class _ClockAttendanceCard extends StatelessWidget {
                 _ClockSessionTile(
                   sessionNumber: 2,
                   sessionName: 'AFTERNOON',
-                  icon: Icons.wb_twilight_rounded,
+                  icon: FluentIcons.weather_moon_24_filled,
                   iconColor: const Color(0xFF6366F1),
                   checkInTime: controller.session2CheckInText,
                   checkOutTime: controller.session2CheckOutText,
@@ -456,7 +449,7 @@ class _ClockAttendanceCard extends StatelessWidget {
                           Row(
                             children: [
                               Icon(
-                                Icons.timer_outlined,
+                                FluentIcons.timer_24_regular,
                                 size: 16,
                                 color: controller.goalProgress >= 1.0
                                     ? RequestColors.approvedStatus
@@ -540,7 +533,7 @@ class _ClockAttendanceCard extends StatelessWidget {
             height: 44,
             child: OutlinedButton.icon(
               onPressed: () => Get.toNamed(AppRoutes.request),
-              icon: const Icon(Icons.edit_note_rounded, size: 20),
+              icon: const Icon(FluentIcons.note_edit_24_regular, size: 20),
               label: const Text('Request Time Adjustment'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: RequestColors.textPrimary,
@@ -664,15 +657,7 @@ class _ClockSessionTile extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: iconColor.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 13, color: iconColor),
-                  ),
+                  Icon(icon, size: 16, color: iconColor),
                   const SizedBox(width: 8),
                   Text(
                     'SESSION $sessionNumber • $sessionName',
@@ -901,20 +886,20 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
 
   IconData _buttonIcon(CheckState state) {
     if (!widget.controller.hasFaceRegistered) {
-      return Icons.face_retouching_natural_rounded;
+      return FluentIcons.camera_24_regular;
     }
     switch (state) {
       case CheckState.session1NotCheckedIn:
       case CheckState.notCheckedIn:
       case CheckState.session2NotCheckedIn:
-        return Icons.wifi_tethering_rounded;
+        return FluentIcons.wifi_1_24_regular;
       case CheckState.session1CheckedIn:
       case CheckState.checkedIn:
       case CheckState.session2CheckedIn:
-        return Icons.logout_rounded;
+        return FluentIcons.sign_out_24_regular;
       case CheckState.completed:
       case CheckState.checkedOut:
-        return Icons.check_rounded;
+        return FluentIcons.checkmark_24_regular;
     }
   }
 

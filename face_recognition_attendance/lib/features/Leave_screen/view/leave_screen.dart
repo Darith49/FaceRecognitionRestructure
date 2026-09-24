@@ -5,6 +5,7 @@ import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/Leave_screen/controller/leave_controller.dart';
 import 'package:face_recognition_attendance/features/Leave_screen/model/leave_request.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -277,21 +278,21 @@ class _LeaveScreenState extends State<LeaveScreen> {
         'title': 'Section 1',
         'subtitle': '07:00 – 11:00 AM',
         'label': 'Morning',
-        'icon': Icons.wb_sunny_rounded,
+        'icon': FluentIcons.weather_sunny_24_regular,
       },
       {
         'id': 2,
         'title': 'Section 2',
         'subtitle': '01:00 – 05:00 PM',
         'label': 'Afternoon',
-        'icon': Icons.wb_twilight_rounded,
+        'icon': FluentIcons.weather_moon_24_regular,
       },
       {
         'id': 0,
         'title': 'Full Day',
         'subtitle': '07:00 – 17:00',
         'label': 'Both Shifts',
-        'icon': Icons.today_rounded,
+        'icon': FluentIcons.calendar_ltr_24_regular,
       },
     ];
 
@@ -385,7 +386,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.tune_rounded, size: 18, color: RequestColors.primary),
+              const Icon(FluentIcons.options_24_regular, size: 18, color: RequestColors.primary),
               const SizedBox(width: 8),
               Text(
                 'Leave Option for $secName',
@@ -466,15 +467,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: RequestColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.access_time_filled_rounded, size: 18, color: RequestColors.primary),
+                    const Padding(
+                      padding: EdgeInsets.only(right: 8),
+                      child: Icon(FluentIcons.clock_24_regular, size: 24, color: RequestColors.primary),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -514,7 +511,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
           ] else ...[
             Row(
               children: [
-                const Icon(Icons.info_outline_rounded, size: 14, color: RequestColors.textSecondary),
+                const Icon(FluentIcons.info_24_regular, size: 14, color: RequestColors.textSecondary),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -544,7 +541,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         ),
         const SizedBox(height: 8),
         _DateSelectionCard(
-          icon: Icons.calendar_month_rounded,
+          icon: FluentIcons.calendar_ltr_24_regular,
           iconColor: RequestColors.primary,
           dateText: DateText.fullDate(_selectedDate),
           subtitle: DateUtils.isSameDay(_selectedDate, DateTime.now())
@@ -582,7 +579,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
             ),
             child: const Row(
               children: [
-                Icon(Icons.info_outline_rounded, size: 16, color: RequestColors.primary),
+                Icon(FluentIcons.info_24_regular, size: 16, color: RequestColors.primary),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -682,27 +679,22 @@ class _LeaveScreenState extends State<LeaveScreen> {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: RequestColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
                   child: Icon(
                     _attachmentName!.toLowerCase().endsWith('.pdf')
-                        ? Icons.picture_as_pdf_rounded
+                        ? FluentIcons.document_pdf_24_regular
                         : (_attachmentName!.toLowerCase().endsWith('.png') ||
                                 _attachmentName!.toLowerCase().endsWith('.jpg') ||
                                 _attachmentName!.toLowerCase().endsWith('.jpeg') ||
                                 _attachmentName!.toLowerCase().endsWith('.webp'))
-                            ? Icons.image_rounded
-                            : Icons.description_rounded,
+                            ? FluentIcons.image_24_regular
+                            : FluentIcons.document_24_regular,
                     color: RequestColors.primary,
-                    size: 24,
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -740,7 +732,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 ),
                 IconButton(
                   onPressed: _removeAttachment,
-                  icon: const Icon(Icons.close_rounded, size: 20, color: RequestColors.danger),
+                  icon: const Icon(FluentIcons.dismiss_circle_24_regular, size: 20, color: RequestColors.danger),
                   visualDensity: VisualDensity.compact,
                   tooltip: 'Remove',
                 ),
@@ -763,11 +755,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   width: 1.5,
                 ),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(
-                    Icons.upload_file_rounded,
+                    FluentIcons.arrow_upload_24_regular,
                     size: 22,
                     color: RequestColors.primary,
                   ),
@@ -873,18 +865,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
               alignment: Alignment.center,
               child: Column(
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: RequestColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.event_note_rounded,
-                      size: 28,
-                      color: RequestColors.primary,
-                    ),
+                  const Icon(
+                    FluentIcons.calendar_empty_24_regular,
+                    size: 36,
+                    color: RequestColors.primary,
                   ),
                   const SizedBox(height: 14),
                   Text(
@@ -945,23 +929,19 @@ class _LeaveScreenState extends State<LeaveScreen> {
                         children: [
                           Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: RequestColors.primary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
                                 child: Icon(
                                   req.session == 1
-                                      ? Icons.wb_sunny_rounded
+                                      ? FluentIcons.weather_sunny_24_regular
                                       : (req.session == 2
-                                          ? Icons.wb_twilight_rounded
-                                          : Icons.calendar_month_rounded),
-                                  size: 16,
+                                          ? FluentIcons.weather_moon_24_regular
+                                          : FluentIcons.calendar_ltr_24_regular),
+                                  size: 22,
                                   color: RequestColors.primary,
                                 ),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 4),
                               Text(
                                 req.dateRangeLabel,
                                 style: const TextStyle(
@@ -1107,7 +1087,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                                 arguments: req.id,
                               ),
                               icon: const Icon(
-                                Icons.arrow_forward_rounded,
+                                FluentIcons.arrow_right_24_regular,
                                 size: 16,
                                 color: RequestColors.primary,
                               ),
@@ -1164,7 +1144,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
 /// Apple Date / Time card with change pill
 class _DateSelectionCard extends StatelessWidget {
   const _DateSelectionCard({
-    this.icon = Icons.calendar_today_rounded,
+    this.icon = FluentIcons.calendar_ltr_24_regular,
     this.iconColor = RequestColors.primary,
     required this.dateText,
     required this.subtitle,
@@ -1184,14 +1164,9 @@ class _DateSelectionCard extends StatelessWidget {
       decoration: appleCardDecoration(radius: 14),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: iconColor),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Icon(icon, size: 24, color: iconColor),
           ),
           const SizedBox(width: 12),
           Expanded(

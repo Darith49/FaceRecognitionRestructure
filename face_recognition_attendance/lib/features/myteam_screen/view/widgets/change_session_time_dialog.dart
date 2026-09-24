@@ -1,5 +1,6 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/model/my_team_model.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -247,7 +248,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.shade700,
           colorText: Colors.white,
-          icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+          icon: const Icon(FluentIcons.checkmark_circle_24_regular, color: Colors.white),
           margin: const EdgeInsets.all(16),
           borderRadius: 14,
           duration: const Duration(seconds: 3),
@@ -295,16 +296,12 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
             padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: RequestColors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.more_time_rounded,
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    FluentIcons.timer_24_regular,
                     color: RequestColors.primary,
-                    size: 24,
+                    size: 28,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -335,7 +332,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: RequestColors.textSecondary),
+                  icon: const Icon(FluentIcons.dismiss_24_regular, color: RequestColors.textSecondary),
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
               ],
@@ -369,7 +366,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.timelapse_rounded,
+                          FluentIcons.history_24_regular,
                           color: RequestColors.primary,
                           size: 22,
                         ),
@@ -408,7 +405,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                   // Session 1 (Morning)
                   _buildSessionCard(
                     title: 'Session 1 (Morning Shift)',
-                    icon: Icons.wb_sunny_rounded,
+                    icon: FluentIcons.weather_sunny_24_filled,
                     iconColor: const Color(0xFFD97706),
                     startVal: _s1Start,
                     endVal: _s1End,
@@ -430,7 +427,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                   // Session 2 (Afternoon)
                   _buildSessionCard(
                     title: 'Session 2 (Afternoon Shift)',
-                    icon: Icons.wb_twilight_rounded,
+                    icon: FluentIcons.weather_moon_24_filled,
                     iconColor: const Color(0xFF2563EB),
                     startVal: _s2Start,
                     endVal: _s2End,
@@ -539,7 +536,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
                       child: Row(
                         children: [
                           const Icon(
-                            Icons.error_outline_rounded,
+                            FluentIcons.error_circle_24_regular,
                             color: RequestColors.danger,
                             size: 20,
                           ),
@@ -697,7 +694,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10),
                 child: Icon(
-                  Icons.arrow_forward_rounded,
+                  FluentIcons.arrow_right_24_regular,
                   size: 16,
                   color: RequestColors.textSecondary,
                 ),
@@ -746,7 +743,7 @@ class _ChangeSessionTimeDialogState extends State<ChangeSessionTimeDialog> {
             Row(
               children: [
                 const Icon(
-                  Icons.access_time_rounded,
+                  FluentIcons.clock_24_regular,
                   size: 16,
                   color: RequestColors.primary,
                 ),

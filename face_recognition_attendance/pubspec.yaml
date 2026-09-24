@@ -51,6 +51,7 @@ dependencies:
   image: ^4.3.0
   shared_preferences: ^2.3.2
   sqlite3: ^3.6.0
+  fluentui_system_icons: ^1.1.273
 
 dev_dependencies:
   flutter_test:

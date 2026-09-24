@@ -1,4 +1,5 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../config/theme/app_colors.dart';
@@ -124,18 +125,10 @@ class SettingsScreen extends GetView<SettingsController> {
             Center(
               child: Column(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: RequestColors.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                    child: const Icon(
-                      Icons.qr_code_scanner_rounded,
-                      size: 20,
-                      color: RequestColors.primary,
-                    ),
+                  const Icon(
+                    FluentIcons.qr_code_24_regular,
+                    size: 26,
+                    color: RequestColors.primary,
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -233,7 +226,7 @@ class _LanguageTile extends StatelessWidget {
             ),
             if (isSelected)
               const Icon(
-                Icons.check_rounded,
+                FluentIcons.checkmark_24_regular,
                 color: AppColors.primary,
                 size: 22,
               ),
@@ -278,7 +271,7 @@ class _AboutRow extends StatelessWidget {
             ?trailing,
             if (showChevron)
               const Icon(
-                Icons.chevron_right_rounded,
+                FluentIcons.chevron_right_24_regular,
                 size: 20,
                 color: RequestColors.textSecondary,
               ),

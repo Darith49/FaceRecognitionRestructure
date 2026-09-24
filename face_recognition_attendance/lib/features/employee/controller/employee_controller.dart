@@ -2,6 +2,7 @@ import 'package:face_recognition_attendance/core/service/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/employee/model/employee_model.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -227,7 +228,7 @@ class EmployeeController extends GetxController {
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green.shade600,
         colorText: Colors.white,
-        icon: const Icon(Icons.mark_email_read_outlined, color: Colors.white),
+        icon: const Icon(FluentIcons.mail_checkmark_24_regular, color: Colors.white),
         margin: const EdgeInsets.all(16),
         borderRadius: 12,
         duration: const Duration(seconds: 3),

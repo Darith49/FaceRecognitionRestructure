@@ -4,6 +4,7 @@ import 'package:face_recognition_attendance/features/auth/model/enum_user_role.d
 import 'package:face_recognition_attendance/features/branch/controller/branch_controller.dart';
 import 'package:face_recognition_attendance/features/department/controller/department_controller.dart';
 import 'package:face_recognition_attendance/features/employee/controller/employee_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -175,7 +176,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green.shade600,
           colorText: Colors.white,
-          icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+          icon: const Icon(FluentIcons.checkmark_circle_24_regular, color: Colors.white),
           margin: const EdgeInsets.all(16),
           borderRadius: 12,
           duration: const Duration(seconds: 3),
@@ -214,7 +215,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    Icons.mark_email_read_outlined,
+                    FluentIcons.mail_checkmark_24_regular,
                     color: Colors.indigo.shade700,
                     size: 20,
                   ),
@@ -255,7 +256,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                   borderSide: BorderSide.none,
                 ),
                 prefixIcon: const Icon(
-                  Icons.person_outline_rounded,
+                  FluentIcons.person_24_regular,
                   color: RequestColors.primary,
                 ),
               ),
@@ -287,7 +288,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                   borderSide: BorderSide.none,
                 ),
                 prefixIcon: const Icon(
-                  Icons.mail_outline_rounded,
+                  FluentIcons.mail_24_regular,
                   color: RequestColors.primary,
                 ),
               ),
@@ -324,7 +325,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                   borderSide: BorderSide.none,
                 ),
                 prefixIcon: const Icon(
-                  Icons.badge_outlined,
+                  FluentIcons.badge_24_regular,
                   color: RequestColors.primary,
                 ),
               ),
@@ -364,7 +365,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                           ),
                         ),
                         const Icon(
-                          Icons.lock_outline_rounded,
+                          FluentIcons.lock_closed_24_regular,
                           size: 18,
                           color: RequestColors.textSecondary,
                         ),
@@ -374,7 +375,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                 : RequestDropdownField<UserRole>(
                     value: _selectedRole,
                     fillColor: RequestColors.softSurface,
-                    icon: Icons.keyboard_arrow_down_rounded,
+                    icon: FluentIcons.chevron_down_24_regular,
                     items: allowedRoles
                         .map(
                           (r) => DropdownMenuItem<UserRole>(
@@ -405,7 +406,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                 value: _selectedBranchId,
                 hint: 'Select Branch',
                 fillColor: RequestColors.softSurface,
-                icon: Icons.keyboard_arrow_down_rounded,
+                icon: FluentIcons.chevron_down_24_regular,
                 items: branches
                     .map(
                       (b) => DropdownMenuItem<int>(
@@ -445,7 +446,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                 value: _selectedDeptId,
                 hint: 'Select Department',
                 fillColor: RequestColors.softSurface,
-                icon: Icons.keyboard_arrow_down_rounded,
+                icon: FluentIcons.chevron_down_24_regular,
                 items: [
                   ...depts.map(
                     (d) =>
@@ -654,7 +655,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                         ),
                       ] else ...[
                         const Icon(
-                          Icons.person_add_alt_1_rounded,
+                          FluentIcons.person_add_24_regular,
                           color: Colors.white,
                           size: 20,
                         ),
@@ -727,7 +728,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                     ),
                   ),
                   const Icon(
-                    Icons.access_time_rounded,
+                    FluentIcons.clock_24_regular,
                     size: 16,
                     color: RequestColors.primary,
                   ),

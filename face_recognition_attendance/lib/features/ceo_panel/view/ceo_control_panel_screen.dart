@@ -1,5 +1,6 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/features/ceo_panel/controller/ceo_panel_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,12 +16,12 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Color(0xFF1E293B)),
+          icon: const Icon(FluentIcons.chevron_left_24_regular, size: 20, color: Color(0xFF1E293B)),
           onPressed: () => Get.back(),
         ),
         title: const Row(
           children: [
-            Icon(Icons.auto_awesome_rounded, color: Color(0xFF7C3AED), size: 22),
+            Icon(FluentIcons.sparkle_24_filled, color: Color(0xFF7C3AED), size: 22),
             SizedBox(width: 8),
             Text(
               'CEO Control Panel',
@@ -35,7 +36,7 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF64748B)),
+            icon: const Icon(FluentIcons.arrow_clockwise_24_regular, color: Color(0xFF64748B)),
             tooltip: 'Refresh Telemetry',
             onPressed: () => controller.fetchDashboardData(),
           ),
@@ -146,7 +147,7 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.verified_user_rounded, color: Color(0xFF4ADE80), size: 14),
+                    Icon(FluentIcons.shield_checkmark_24_regular, color: Color(0xFF4ADE80), size: 14),
                     SizedBox(width: 5),
                     Text(
                       'STRICT 1:1 SECURITY ACTIVE',
@@ -209,33 +210,29 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
         title: 'Total Workforce',
         value: controller.totalEmployees.toString(),
         subtitle: '${controller.activeEmployees} active accounts',
-        icon: Icons.groups_rounded,
+        icon: FluentIcons.people_team_24_regular,
         color: const Color(0xFF2563EB),
-        bg: const Color(0xFFEFF6FF),
       ),
       _buildKpiCard(
         title: 'Present Today',
         value: controller.presentToday.toString(),
         subtitle: '${controller.onLeaveToday} approved leave',
-        icon: Icons.how_to_reg_rounded,
+        icon: FluentIcons.person_available_24_regular,
         color: const Color(0xFF059669),
-        bg: const Color(0xFFECFDF5),
       ),
       _buildKpiCard(
         title: 'Biometric Enrolled',
         value: '${(controller.biometricEnrollmentRate * 100).toStringAsFixed(0)}%',
         subtitle: '${controller.biometricEnrolledCount} / ${controller.totalEmployees} registered',
-        icon: Icons.face_rounded,
+        icon: FluentIcons.person_star_24_regular,
         color: const Color(0xFF7C3AED),
-        bg: const Color(0xFFF5F3FF),
       ),
       _buildKpiCard(
         title: 'Branches & Hubs',
         value: controller.totalBranches.toString(),
         subtitle: '${controller.totalDepartments} departments',
-        icon: Icons.account_tree_rounded,
+        icon: FluentIcons.building_multiple_24_regular,
         color: const Color(0xFFD97706),
-        bg: const Color(0xFFFFFBEB),
       ),
     ];
 
@@ -259,7 +256,6 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
     required String subtitle,
     required IconData icon,
     required Color color,
-    required Color bg,
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -295,13 +291,9 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
                 ),
               ),
               const SizedBox(width: 4),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 18),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Icon(icon, color: color, size: 22),
               ),
             ],
           ),
@@ -337,63 +329,63 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
       _ActionItem(
         title: 'New Branch',
         subtitle: 'Configure GPS geofence',
-        icon: Icons.add_business_rounded,
+        icon: FluentIcons.building_bank_link_24_regular,
         color: const Color(0xFF0D9488),
         onTap: () => Get.toNamed(AppRoutes.createBranch),
       ),
       _ActionItem(
         title: 'New Department',
         subtitle: 'Add team division',
-        icon: Icons.domain_add_rounded,
+        icon: FluentIcons.building_multiple_24_regular,
         color: const Color(0xFF2563EB),
         onTap: () => Get.toNamed(AppRoutes.createDepartment),
       ),
       _ActionItem(
         title: 'Add Employee',
         subtitle: 'Onboard team member',
-        icon: Icons.person_add_alt_1_rounded,
+        icon: FluentIcons.person_add_24_regular,
         color: const Color(0xFF7C3AED),
         onTap: () => Get.toNamed(AppRoutes.createEmployee),
       ),
       _ActionItem(
         title: 'Branch Hub',
         subtitle: 'Manage all sites',
-        icon: Icons.apartment_rounded,
+        icon: FluentIcons.building_bank_24_regular,
         color: const Color(0xFFD97706),
         onTap: () => Get.toNamed(AppRoutes.branchList),
       ),
       _ActionItem(
         title: 'Departments',
         subtitle: 'Structure & managers',
-        icon: Icons.category_rounded,
+        icon: FluentIcons.apps_list_detail_24_regular,
         color: const Color(0xFF0284C7),
         onTap: () => Get.toNamed(AppRoutes.departmentList),
       ),
       _ActionItem(
         title: 'Employees',
         subtitle: 'Workforce roster',
-        icon: Icons.badge_rounded,
+        icon: FluentIcons.people_team_24_regular,
         color: const Color(0xFF475569),
         onTap: () => Get.toNamed(AppRoutes.employeeList),
       ),
       _ActionItem(
         title: 'Face Scanner',
         subtitle: 'Biometric capture',
-        icon: Icons.document_scanner_rounded,
+        icon: FluentIcons.camera_24_regular,
         color: const Color(0xFFE11D48),
         onTap: () => Get.toNamed(AppRoutes.faceCapture),
       ),
       _ActionItem(
         title: 'Approvals Desk',
         subtitle: 'Review incoming requests',
-        icon: Icons.rule_rounded,
+        icon: FluentIcons.document_checkmark_24_regular,
         color: const Color(0xFF059669),
         onTap: () => Get.toNamed(AppRoutes.request),
       ),
       _ActionItem(
         title: 'Clock Attendance',
         subtitle: 'Record executive shift',
-        icon: Icons.fingerprint_rounded,
+        icon: FluentIcons.fingerprint_24_regular,
         color: const Color(0xFF6366F1),
         onTap: () => Get.toNamed(AppRoutes.clock),
       ),
@@ -430,14 +422,9 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: item.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(item.icon, color: item.color, size: 18),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(item.icon, color: item.color, size: 24),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -495,13 +482,9 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.security_rounded, color: Color(0xFF7C3AED), size: 24),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(FluentIcons.shield_checkmark_24_regular, color: Color(0xFF7C3AED), size: 28),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -525,7 +508,7 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.tune_rounded, color: Color(0xFF7C3AED)),
+                icon: const Icon(FluentIcons.options_24_regular, color: Color(0xFF7C3AED)),
                 tooltip: 'Configure Thresholds',
                 onPressed: () => _showThresholdConfigDialog(context),
               ),
@@ -621,7 +604,7 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
+                const Icon(FluentIcons.checkmark_circle_24_regular, color: Color(0xFF16A34A), size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -653,7 +636,7 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Row(
             children: [
-              Icon(Icons.tune_rounded, color: Color(0xFF7C3AED), size: 22),
+              Icon(FluentIcons.options_24_regular, color: Color(0xFF7C3AED), size: 22),
               SizedBox(width: 8),
               Text('Security Thresholds', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
             ],
@@ -746,13 +729,9 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.event_busy_rounded, color: Color(0xFFD97706), size: 20),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(FluentIcons.calendar_cancel_24_regular, color: Color(0xFFD97706), size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -772,12 +751,12 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 26),
+                  icon: const Icon(FluentIcons.checkmark_circle_24_regular, color: Color(0xFF16A34A), size: 26),
                   tooltip: 'Approve',
                   onPressed: () => controller.quickApproveLeave(leaveId),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.cancel_rounded, color: Color(0xFFDC2626), size: 26),
+                  icon: const Icon(FluentIcons.dismiss_circle_24_regular, color: Color(0xFFDC2626), size: 26),
                   tooltip: 'Reject',
                   onPressed: () => controller.quickRejectLeave(leaveId),
                 ),
@@ -810,14 +789,9 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
           ),
           child: Row(
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F766E).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.location_on_rounded, color: Color(0xFF0F766E), size: 22),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(FluentIcons.location_24_regular, color: Color(0xFF0F766E), size: 26),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -989,16 +963,12 @@ class CeoControlPanelScreen extends GetView<CeoPanelController> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: hasCheckOut ? const Color(0xFFEFF6FF) : const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Icon(
-                    hasCheckOut ? Icons.logout_rounded : Icons.login_rounded,
+                    hasCheckOut ? FluentIcons.sign_out_24_regular : FluentIcons.fingerprint_24_regular,
                     color: hasCheckOut ? const Color(0xFF2563EB) : const Color(0xFF059669),
-                    size: 18,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 12),

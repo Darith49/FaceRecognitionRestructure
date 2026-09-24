@@ -4,6 +4,7 @@ import 'package:face_recognition_attendance/features/auth/controller/login_contr
 import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/model/my_team_model.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/view/widgets/change_session_time_dialog.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -191,14 +192,14 @@ class _MyteamScreenState extends State<MyteamScreen> {
             fontSize: 14,
           ),
           prefixIcon: const Icon(
-            Icons.search_rounded,
+            FluentIcons.search_24_regular,
             color: RequestColors.primary,
             size: 22,
           ),
           suffixIcon: _controller.searchQuery.value.isNotEmpty
               ? IconButton(
                   icon: const Icon(
-                    Icons.close_rounded,
+                    FluentIcons.dismiss_24_regular,
                     color: RequestColors.textSecondary,
                     size: 18,
                   ),
@@ -394,7 +395,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                     if (member.hasFaceRegistered) ...[
                       const SizedBox(width: 6),
                       Icon(
-                        Icons.verified_rounded,
+                        FluentIcons.checkmark_starburst_24_filled,
                         color: Colors.white.withValues(alpha: 0.85),
                         size: 15,
                       ),
@@ -436,7 +437,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.schedule_rounded, size: 12, color: Colors.white),
+                        const Icon(FluentIcons.clock_24_regular, size: 12, color: Colors.white),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -519,7 +520,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                     if (member.hasFaceRegistered) ...[
                       const SizedBox(width: 4),
                       const Icon(
-                        Icons.verified_rounded,
+                        FluentIcons.checkmark_starburst_24_filled,
                         color: RequestColors.primary,
                         size: 15,
                       ),
@@ -571,7 +572,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.schedule_rounded, size: 12, color: RequestColors.primary),
+                      const Icon(FluentIcons.clock_24_regular, size: 12, color: RequestColors.primary),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
@@ -612,17 +613,12 @@ class _MyteamScreenState extends State<MyteamScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: RequestColors.primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.business_rounded,
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Icon(
+              FluentIcons.building_multiple_24_regular,
               color: RequestColors.primary,
-              size: 26,
+              size: 30,
             ),
           ),
           const SizedBox(width: 14),
@@ -644,7 +640,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                 Row(
                   children: [
                     const Icon(
-                      Icons.person_pin_rounded,
+                      FluentIcons.person_24_regular,
                       size: 14,
                       color: RequestColors.textSecondary,
                     ),
@@ -677,7 +673,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
           ),
           const SizedBox(width: 8),
           _circleButton(
-            icon: Icons.call_rounded,
+            icon: FluentIcons.call_24_regular,
             tooltip: branch.hasManagerPhone
                 ? 'Call ${branch.managerName}'
                 : 'No phone number available',
@@ -722,7 +718,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
               boxShadow: _softShadow,
             ),
             child: const Icon(
-              Icons.push_pin_rounded,
+              FluentIcons.pin_24_filled,
               size: 12,
               color: RequestColors.danger,
             ),
@@ -753,7 +749,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
       children: [
         if (_controller.isCeo && !member.isCeo) ...[
           _circleButton(
-            icon: Icons.schedule_rounded,
+            icon: FluentIcons.clock_24_regular,
             tooltip: 'Change Session Time',
             background: onDark
                 ? Colors.white.withValues(alpha: 0.25)
@@ -764,7 +760,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
           const SizedBox(width: 8),
         ],
         _circleButton(
-          icon: isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+          icon: isPinned ? FluentIcons.pin_24_filled : FluentIcons.pin_24_regular,
           tooltip: isPinned ? 'Unpin' : 'Pin',
           background: pinBackground,
           iconColor: pinIconColor,
@@ -772,7 +768,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
         ),
         const SizedBox(width: 8),
         _circleButton(
-          icon: Icons.call_rounded,
+          icon: FluentIcons.call_24_regular,
           tooltip: hasPhone ? 'Call ${member.fullname}' : 'No phone number available',
           background: onDark
               ? Colors.white
@@ -833,7 +829,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
               boxShadow: _softShadow,
             ),
             child: const Icon(
-              Icons.search_off_rounded,
+              FluentIcons.search_info_24_regular,
               size: 32,
               color: RequestColors.textSecondary,
             ),
@@ -874,7 +870,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                 boxShadow: _softShadow,
               ),
               child: const Icon(
-                Icons.cloud_off_rounded,
+                FluentIcons.cloud_dismiss_24_regular,
                 size: 32,
                 color: RequestColors.danger,
               ),
@@ -900,7 +896,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () => _controller.fetchMyTeam(),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
+              icon: const Icon(FluentIcons.arrow_clockwise_24_regular, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: RequestColors.primary,

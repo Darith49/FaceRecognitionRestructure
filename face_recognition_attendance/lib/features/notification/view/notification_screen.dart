@@ -1,5 +1,6 @@
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,11 +14,11 @@ class NotificationScreen extends GetView<NotificationController> {
           : Get.put(NotificationController());
 
   IconData _iconForType(String type) {
-    if (type.contains('leave')) return Icons.beach_access_rounded;
-    if (type.contains('overtime')) return Icons.access_time_rounded;
-    if (type.contains('permission')) return Icons.how_to_reg_rounded;
-    if (type.contains('suggestion')) return Icons.lightbulb_outline_rounded;
-    return Icons.notifications_active_rounded;
+    if (type.contains('leave')) return FluentIcons.calendar_ltr_24_regular;
+    if (type.contains('overtime')) return FluentIcons.clock_24_regular;
+    if (type.contains('permission')) return FluentIcons.person_available_24_regular;
+    if (type.contains('suggestion')) return FluentIcons.lightbulb_24_regular;
+    return FluentIcons.alert_24_regular;
   }
 
   Color _colorForType(String type) {
@@ -37,7 +38,7 @@ class NotificationScreen extends GetView<NotificationController> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: RequestColors.textPrimary, size: 20),
+          icon: const Icon(FluentIcons.chevron_left_24_regular, color: RequestColors.textPrimary, size: 20),
           onPressed: () => Get.back(),
         ),
         title: const Text(
@@ -75,15 +76,7 @@ class NotificationScreen extends GetView<NotificationController> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: RequestColors.primary.withValues(alpha: 0.10),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.notifications_off_outlined, color: RequestColors.primary, size: 32),
-                ),
+                const Icon(FluentIcons.alert_off_24_regular, color: RequestColors.primary, size: 36),
                 const SizedBox(height: 16),
                 const Text(
                   'No notifications yet',
@@ -134,14 +127,9 @@ class NotificationScreen extends GetView<NotificationController> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(icon, color: color, size: 22),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2, right: 6),
+                          child: Icon(icon, color: color, size: 24),
                         ),
                         const SizedBox(width: 12),
                         Expanded(

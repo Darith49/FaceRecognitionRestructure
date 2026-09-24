@@ -5,6 +5,7 @@ import 'package:face_recognition_attendance/features/notification/controller/not
 import 'package:face_recognition_attendance/features/permission_screen/controller/permission_controller.dart';
 import 'package:face_recognition_attendance/features/permission_screen/model/permission_request.dart';
 import 'package:face_recognition_attendance/features/request_screen/controller/request_screen_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -48,12 +49,12 @@ class RequestScreen extends StatelessWidget {
                       GestureDetector(
                         onTap: () => Get.back(),
                         child: const Icon(
-                          Icons.chevron_left_rounded,
-                          size: 28,
+                          FluentIcons.chevron_left_24_regular,
+                          size: 24,
                           color: RequestColors.primary,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
                     ],
                     Expanded(
                       child: Text(
@@ -79,7 +80,7 @@ class RequestScreen extends StatelessWidget {
                               border: Border.all(color: const Color(0xFFE5E5EA)),
                             ),
                             child: const Icon(
-                              Icons.notifications_none_rounded,
+                              FluentIcons.alert_24_regular,
                               size: 20,
                               color: RequestColors.textSecondary,
                             ),
@@ -174,7 +175,7 @@ class RequestScreen extends StatelessWidget {
                           decoration: appleCardDecoration(),
                           child: const Row(
                             children: [
-                              Icon(Icons.check_circle_outline_rounded,
+                              Icon(FluentIcons.checkmark_circle_24_regular,
                                   color: RequestColors.approvedStatus, size: 20),
                               SizedBox(width: 10),
                               Text(
@@ -190,7 +191,7 @@ class RequestScreen extends StatelessWidget {
                         _buildApprovalCard(
                           context: context,
                           type: 'Leave Request',
-                          icon: Icons.beach_access_rounded,
+                          icon: FluentIcons.beach_24_regular,
                           iconColor: RequestColors.gold,
                           employeeName: l['employee_name']?.toString() ?? 'Employee',
                           detail: () {
@@ -219,7 +220,7 @@ class RequestScreen extends StatelessWidget {
                         _buildApprovalCard(
                           context: context,
                           type: 'Overtime Request',
-                          icon: Icons.access_time_rounded,
+                          icon: FluentIcons.clock_24_regular,
                           iconColor: const Color(0xFF7C3AED),
                           employeeName: o['employee_name']?.toString() ?? 'Employee',
                           detail: '${o['date']} (${o['start_time']} - ${o['end_time']})',
@@ -231,7 +232,7 @@ class RequestScreen extends StatelessWidget {
                         _buildApprovalCard(
                           context: context,
                           type: 'Permission Request',
-                          icon: Icons.how_to_reg_rounded,
+                          icon: FluentIcons.person_available_24_regular,
                           iconColor: RequestColors.primary,
                           employeeName: p['employee_name']?.toString() ?? 'Employee',
                           detail: '${p['date']} (${p['schedule_time']})',
@@ -306,28 +307,28 @@ class RequestScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       _ServiceRow(
-                        icon: Icons.calendar_today_rounded,
+                        icon: FluentIcons.calendar_ltr_24_regular,
                         iconColor: RequestColors.primary,
                         title: 'My Schedule',
                         onTap: () => Get.toNamed(AppRoutes.schedule),
                       ),
                       const Divider(height: 1, indent: 56),
                       _ServiceRow(
-                        icon: Icons.arrow_outward_rounded,
+                        icon: FluentIcons.beach_24_regular,
                         iconColor: RequestColors.approvedStatus,
                         title: 'Leave Request',
                         onTap: () => Get.toNamed(AppRoutes.leave),
                       ),
                       const Divider(height: 1, indent: 56),
                       _ServiceRow(
-                        icon: Icons.access_time_rounded,
+                        icon: FluentIcons.clock_24_regular,
                         iconColor: RequestColors.gold,
                         title: 'Overtime',
                         onTap: () => Get.toNamed(AppRoutes.overtime),
                       ),
                       const Divider(height: 1, indent: 56),
                       _ServiceRow(
-                        icon: Icons.lightbulb_outline_rounded,
+                        icon: FluentIcons.lightbulb_24_regular,
                         iconColor: RequestColors.gold,
                         title: 'Suggestion Box',
                         onTap: () => Get.toNamed(AppRoutes.suggestion),
@@ -348,25 +349,20 @@ class RequestScreen extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () => Get.toNamed(AppRoutes.permission),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
+                    child: const Padding(
+                      padding: EdgeInsets.all(14),
                       child: Row(
                         children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.how_to_reg_rounded,
-                              size: 22,
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4),
+                            child: Icon(
+                              FluentIcons.person_passkey_24_regular,
+                              size: 26,
                               color: Color(0xFF7C3AED),
                             ),
                           ),
-                          const SizedBox(width: 14),
-                          const Expanded(
+                          SizedBox(width: 14),
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -389,7 +385,7 @@ class RequestScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const Text(
+                          Text(
                             'Apply',
                             style: TextStyle(
                               fontSize: 14,
@@ -397,9 +393,9 @@ class RequestScreen extends StatelessWidget {
                               color: RequestColors.primary,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.chevron_right_rounded,
+                          SizedBox(width: 4),
+                          Icon(
+                            FluentIcons.chevron_right_24_regular,
                             size: 20,
                             color: RequestColors.textSecondary,
                           ),
@@ -452,7 +448,7 @@ class RequestScreen extends StatelessWidget {
                       Obx(() {
                         final pendingList = permissionCtrl.requestsWithStatus(RequestStatus.pending);
                         return _ActivityRow(
-                          icon: Icons.schedule_rounded,
+                          icon: FluentIcons.clock_24_regular,
                           iconColor: RequestColors.gold,
                           title: 'Unauthorized',
                           subtitle: 'Pending review',
@@ -465,7 +461,7 @@ class RequestScreen extends StatelessWidget {
                       Obx(() {
                         final approvedList = permissionCtrl.requestsWithStatus(RequestStatus.approved);
                         return _ActivityRow(
-                          icon: Icons.check_circle_outline_rounded,
+                          icon: FluentIcons.checkmark_circle_24_regular,
                           iconColor: RequestColors.approvedStatus,
                           title: 'Authorized',
                           subtitle: 'Completed & archived',
@@ -506,14 +502,9 @@ class RequestScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, size: 20, color: iconColor),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(icon, size: 24, color: iconColor),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -620,11 +611,11 @@ class _RequestClockAttendanceCard extends StatelessWidget {
         if (!hasFace) {
           buttonColor = const Color(0xFF7C3AED);
           buttonLabel = 'Register Face';
-          buttonIcon = Icons.face_retouching_natural_rounded;
+          buttonIcon = FluentIcons.person_star_24_regular;
         } else if (isDone) {
           buttonColor = RequestColors.approvedStatus;
           buttonLabel = 'Completed';
-          buttonIcon = Icons.check_rounded;
+          buttonIcon = FluentIcons.checkmark_24_regular;
         } else {
           switch (state) {
             case CheckState.session1NotCheckedIn:
@@ -632,19 +623,19 @@ class _RequestClockAttendanceCard extends StatelessWidget {
             case CheckState.session2NotCheckedIn:
               buttonColor = RequestColors.primary;
               buttonLabel = 'Check In';
-              buttonIcon = Icons.wifi_tethering_rounded;
+              buttonIcon = FluentIcons.fingerprint_24_regular;
               break;
             case CheckState.session1CheckedIn:
             case CheckState.checkedIn:
             case CheckState.session2CheckedIn:
               buttonColor = RequestColors.danger;
               buttonLabel = 'Check Out';
-              buttonIcon = Icons.logout_rounded;
+              buttonIcon = FluentIcons.sign_out_24_regular;
               break;
             default:
               buttonColor = RequestColors.primary;
               buttonLabel = 'Check In';
-              buttonIcon = Icons.wifi_tethering_rounded;
+              buttonIcon = FluentIcons.fingerprint_24_regular;
           }
         }
 
@@ -677,16 +668,11 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
                 child: Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: buttonColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
                       child: Icon(
-                        Icons.access_time_filled_rounded,
-                        size: 22,
+                        FluentIcons.clock_24_regular,
+                        size: 28,
                         color: buttonColor,
                       ),
                     ),
@@ -746,7 +732,7 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                     Expanded(
                       child: _MiniSessionTile(
                         label: 'SESSION 1',
-                        icon: Icons.wb_sunny_rounded,
+                        icon: FluentIcons.weather_sunny_24_filled,
                         iconColor: const Color(0xFFF59E0B),
                         checkIn: homeCtrl.session1CheckInText,
                         checkOut: homeCtrl.session1CheckOutText,
@@ -759,7 +745,7 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                     Expanded(
                       child: _MiniSessionTile(
                         label: 'SESSION 2',
-                        icon: Icons.wb_twilight_rounded,
+                        icon: FluentIcons.weather_moon_24_filled,
                         iconColor: const Color(0xFF6366F1),
                         checkIn: homeCtrl.session2CheckInText,
                         checkOut: homeCtrl.session2CheckOutText,
@@ -903,15 +889,7 @@ class _MiniSessionTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 11, color: iconColor),
-              ),
+              Icon(icon, size: 16, color: iconColor),
               const SizedBox(width: 6),
               Text(
                 label,
@@ -924,7 +902,7 @@ class _MiniSessionTile extends StatelessWidget {
               ),
               const Spacer(),
               if (isDone)
-                const Icon(Icons.check_circle_rounded, size: 14, color: RequestColors.approvedStatus),
+                const Icon(FluentIcons.checkmark_circle_24_filled, size: 14, color: RequestColors.approvedStatus),
             ],
           ),
           const SizedBox(height: 8),
@@ -1019,14 +997,9 @@ class _ActivityRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 20, color: iconColor),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Icon(icon, size: 24, color: iconColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1069,7 +1042,7 @@ class _ActivityRow extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             const Icon(
-              Icons.chevron_right_rounded,
+              FluentIcons.chevron_right_24_regular,
               size: 20,
               color: RequestColors.textSecondary,
             ),
@@ -1103,14 +1076,9 @@ class _ServiceRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Icon(icon, size: 18, color: iconColor),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Icon(icon, size: 22, color: iconColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1124,7 +1092,7 @@ class _ServiceRow extends StatelessWidget {
               ),
             ),
             const Icon(
-              Icons.chevron_right_rounded,
+              FluentIcons.chevron_right_24_regular,
               size: 20,
               color: RequestColors.textSecondary,
             ),

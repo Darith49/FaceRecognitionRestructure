@@ -1,6 +1,7 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/Suggestion_screen/controller/suggestion_controller.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -56,7 +57,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
         IconButton(
           tooltip: 'Suggestion Status',
           icon: const Icon(
-            Icons.history_rounded,
+            FluentIcons.history_24_regular,
             color: RequestColors.textSecondary,
           ),
           onPressed: () => Get.toNamed(AppRoutes.suggestionStatus),
@@ -258,7 +259,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
 
                   RequestButton(
                     label: 'Submit Feedback',
-                    icon: Icons.arrow_forward_rounded,
+                    icon: FluentIcons.arrow_right_24_regular,
                     onPressed: _submit,
                   ),
 

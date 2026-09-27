@@ -125,371 +125,540 @@ class RequestScreen extends StatelessWidget {
                 ),
               ),
 
-              // INCOMING APPROVALS (CEO / Manager / Leader)
+              // SEGMENTED CONTROL (Only for Supervisors: CEO / Manager / Leader)
               Obx(() {
                 if (!controller.canApprove.value) return const SizedBox.shrink();
-                final leaves = controller.incomingLeaves;
-                final overtimes = controller.incomingOvertimes;
-                final perms = controller.incomingPermissions;
-                final hasAny = leaves.isNotEmpty || overtimes.isNotEmpty || perms.isNotEmpty;
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'PENDING APPROVALS'.tr,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: RequestColors.textSecondary,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          if (hasAny)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '${controller.totalPending.value} ${'Pending'.tr}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    if (!hasAny)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: appleCardDecoration(context: context),
-                          child: Row(
-                            children: [
-                              const Icon(FluentIcons.checkmark_circle_24_regular,
-                                  color: RequestColors.approvedStatus, size: 20),
-                              const SizedBox(width: 10),
-                              Text(
-                                'No requests pending your review.'.tr,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else ...[
-                      for (final l in leaves)
-                        _buildApprovalCard(
-                          context: context,
-                          type: 'Leave Request'.tr,
-                          icon: FluentIcons.beach_24_regular,
-                          iconColor: RequestColors.gold,
-                          employeeName: l['employee_name']?.toString() ?? 'Employee'.tr,
-                          detail: () {
-                            final sess = l['session'] as num? ?? 1;
-                            final mode = l['leave_mode']?.toString() ?? 'full_section';
-                            final earlyTime = l['early_leave_time']?.toString() ?? '';
-                            final dateStr = l['from_date']?.toString() ?? '';
-                            if (sess == 1) {
-                              return mode == 'early_leave' && earlyTime.isNotEmpty
-                                  ? '${'Section 1'.tr} • ${'Early leave at'.tr} $earlyTime ($dateStr)'
-                                  : '${'Section 1 (Morning)'.tr} ${'on'.tr} $dateStr';
-                            } else if (sess == 2) {
-                              return mode == 'early_leave' && earlyTime.isNotEmpty
-                                  ? '${'Section 2'.tr} • ${'Early leave at'.tr} $earlyTime ($dateStr)'
-                                  : '${'Section 2 (Afternoon)'.tr} ${'on'.tr} $dateStr';
-                            } else if (sess == 0) {
-                              return '${'Full Day Leave'.tr} ${'on'.tr} $dateStr';
-                            }
-                            return '${(l['day_type'] ?? l['leave_type']).toString().tr}: $dateStr';
-                          }(),
-                          reason: l['reason']?.toString() ?? '',
-                          onApprove: () => controller.reviewLeave(l['id'], true, context),
-                          onReject: () => controller.reviewLeave(l['id'], false, context),
-                        ),
-                      for (final o in overtimes)
-                        _buildApprovalCard(
-                          context: context,
-                          type: 'Overtime Request'.tr,
-                          icon: FluentIcons.clock_24_regular,
-                          iconColor: const Color(0xFF7C3AED),
-                          employeeName: o['employee_name']?.toString() ?? 'Employee'.tr,
-                          detail: '${o['date']} (${o['start_time']} - ${o['end_time']})',
-                          reason: o['reason']?.toString() ?? '',
-                          onApprove: () => controller.reviewOvertime(o['id'], true, context),
-                          onReject: () => controller.reviewOvertime(o['id'], false, context),
-                        ),
-                      for (final p in perms)
-                        _buildApprovalCard(
-                          context: context,
-                          type: 'Permission Request'.tr,
-                          icon: FluentIcons.person_available_24_regular,
-                          iconColor: RequestColors.primary,
-                          employeeName: p['employee_name']?.toString() ?? 'Employee'.tr,
-                          detail: '${p['date']} (${p['schedule_time']})',
-                          reason: p['reason']?.toString() ?? '',
-                          onApprove: () => controller.reviewPermission(p['id'], true, context),
-                          onReject: () => controller.reviewPermission(p['id'], false, context),
-                        ),
-                    ],
-                  ],
-                );
+                return _buildSegmentedTabBar(context, controller, isDark);
               }),
 
-              const SizedBox(height: 20),
+              // CONTENT AREA
+              Obx(() {
+                final isSupervisor = controller.canApprove.value;
+                final showApprovalsTab = isSupervisor && controller.selectedTab.value == 0;
 
-              // ─── CLOCK ATTENDANCE (Inline) ───────────────────────────────────
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'CLOCK ATTENDANCE'.tr,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => Get.toNamed(AppRoutes.clock),
-                          child: Text(
-                            'Full View'.tr,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: RequestColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _RequestClockAttendanceCard(homeCtrl: homeCtrl),
-                  const SizedBox(height: 20),
-                ],
-              ),
+                if (showApprovalsTab) {
+                  return _buildApprovalsTabContent(context, controller, isDark);
+                }
 
-              // MANAGEMENT & SERVICES Section
-              Padding(
-                padding: const EdgeInsets.only(left: 20),
-                child: Text(
-                  'MANAGEMENT & SERVICES'.tr,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                    letterSpacing: 0.5,
-                  ),
+                return _buildServicesTabContent(context, homeCtrl, permissionCtrl, isDark);
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedTabBar(
+    BuildContext context,
+    RequestScreenController controller,
+    bool isDark,
+  ) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : const Color(0xFFEFEFF4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : Colors.transparent,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Tab 0: Approvals
+          Expanded(
+            child: GestureDetector(
+              onTap: () => controller.selectedTab.value = 0,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: controller.selectedTab.value == 0
+                      ? (isDark ? AppColors.darkCard : Colors.white)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: controller.selectedTab.value == 0 && !isDark
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
-              ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  decoration: appleCardDecoration(context: context),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    children: [
-                      _ServiceRow(
-                        icon: FluentIcons.calendar_ltr_24_regular,
-                        iconColor: RequestColors.primary,
-                        title: 'My Schedule'.tr,
-                        onTap: () => Get.toNamed(AppRoutes.schedule),
-                      ),
-                      Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
-                      _ServiceRow(
-                        icon: FluentIcons.beach_24_regular,
-                        iconColor: RequestColors.approvedStatus,
-                        title: 'Leave Request'.tr,
-                        onTap: () => Get.toNamed(AppRoutes.leave),
-                      ),
-                      Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
-                      _ServiceRow(
-                        icon: FluentIcons.clock_24_regular,
-                        iconColor: RequestColors.gold,
-                        title: 'Overtime'.tr,
-                        onTap: () => Get.toNamed(AppRoutes.overtime),
-                      ),
-                      Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
-                      _ServiceRow(
-                        icon: FluentIcons.lightbulb_24_regular,
-                        iconColor: RequestColors.gold,
-                        title: 'Suggestion Box'.tr,
-                        onTap: () => Get.toNamed(AppRoutes.suggestion),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // Permission & Authorization
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Material(
-                  color: isDark ? AppColors.darkSurface : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: () => Get.toNamed(AppRoutes.permission),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: isDark ? Border.all(color: AppColors.darkBorder, width: 0.5) : null,
-                        boxShadow: isDark ? null : appleSoftShadow,
-                      ),
-                      child: Row(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4),
-                            child: Icon(
-                              FluentIcons.person_passkey_24_regular,
-                              size: 26,
-                              color: Color(0xFF7C3AED),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Permission & Authorization'.tr,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark ? AppColors.darkText : RequestColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Request permissions or authorization changes'.tr,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            'Apply'.tr,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: RequestColors.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            FluentIcons.chevron_right_24_regular,
-                            size: 20,
-                            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // REQUEST ACTIVITY Section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'REQUEST ACTIVITY'.tr,
+                      'Approvals'.tr,
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                        letterSpacing: 0.5,
+                        fontSize: 13,
+                        fontWeight: controller.selectedTab.value == 0
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: controller.selectedTab.value == 0
+                            ? (isDark ? AppColors.darkText : RequestColors.textPrimary)
+                            : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => Get.toNamed(AppRoutes.requestInformation),
-                      child: Text(
-                        'History'.tr,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: RequestColors.primary,
+                    if (controller.totalPending.value > 0) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${controller.totalPending.value}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  decoration: appleCardDecoration(context: context),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    children: [
-                      Obx(() {
-                        final pendingList = permissionCtrl.requestsWithStatus(RequestStatus.pending);
-                        return _ActivityRow(
-                          icon: FluentIcons.clock_24_regular,
-                          iconColor: RequestColors.gold,
-                          title: 'Unauthorized'.tr,
-                          subtitle: 'Pending review'.tr,
-                          badgeText: '${pendingList.length} ${'Pending'.tr}',
-                          badgeColor: RequestColors.gold,
-                          onTap: () => Get.toNamed(AppRoutes.requestUnauthorized),
-                        );
-                      }),
-                      Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
-                      Obx(() {
-                        final approvedList = permissionCtrl.requestsWithStatus(RequestStatus.approved);
-                        return _ActivityRow(
-                          icon: FluentIcons.checkmark_circle_24_regular,
-                          iconColor: RequestColors.approvedStatus,
-                          title: 'Authorized'.tr,
-                          subtitle: 'Completed & archived'.tr,
-                          badgeText: '${approvedList.length} ${'Total'.tr}',
-                          badgeColor: RequestColors.approvedStatus,
-                          onTap: () => Get.toNamed(AppRoutes.requestAuthorized),
-                        );
-                      }),
-                    ],
+            ),
+          ),
+          // Tab 1: Apply & Services
+          Expanded(
+            child: GestureDetector(
+              onTap: () => controller.selectedTab.value = 1,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: controller.selectedTab.value == 1
+                      ? (isDark ? AppColors.darkCard : Colors.white)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: controller.selectedTab.value == 1 && !isDark
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Center(
+                  child: Text(
+                    'Apply & Services'.tr,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: controller.selectedTab.value == 1
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: controller.selectedTab.value == 1
+                          ? (isDark ? AppColors.darkText : RequestColors.textPrimary)
+                          : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildApprovalsTabContent(
+    BuildContext context,
+    RequestScreenController controller,
+    bool isDark,
+  ) {
+    final leaves = controller.incomingLeaves;
+    final overtimes = controller.incomingOvertimes;
+    final perms = controller.incomingPermissions;
+    final hasAny = leaves.isNotEmpty || overtimes.isNotEmpty || perms.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'PENDING APPROVALS'.tr,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              if (hasAny)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${controller.totalPending.value} ${'Pending'.tr}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (!hasAny)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+              decoration: appleCardDecoration(context: context),
+              child: Column(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: RequestColors.approvedStatus.withValues(alpha: 0.12),
+                    ),
+                    child: const Icon(
+                      FluentIcons.checkmark_circle_24_regular,
+                      color: RequestColors.approvedStatus,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'All Caught Up!'.tr,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? AppColors.darkText : RequestColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'No requests pending your review.'.tr,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else ...[
+          for (final l in leaves)
+            _buildApprovalCard(
+              context: context,
+              type: 'Leave Request'.tr,
+              icon: FluentIcons.beach_24_regular,
+              iconColor: RequestColors.gold,
+              employeeName: l['employee_name']?.toString() ?? 'Employee'.tr,
+              detail: () {
+                final sess = l['session'] as num? ?? 1;
+                final mode = l['leave_mode']?.toString() ?? 'full_section';
+                final earlyTime = l['early_leave_time']?.toString() ?? '';
+                final dateStr = l['from_date']?.toString() ?? '';
+                if (sess == 1) {
+                  return mode == 'early_leave' && earlyTime.isNotEmpty
+                      ? '${'Section 1'.tr} • ${'Early leave at'.tr} $earlyTime ($dateStr)'
+                      : '${'Section 1 (Morning)'.tr} ${'on'.tr} $dateStr';
+                } else if (sess == 2) {
+                  return mode == 'early_leave' && earlyTime.isNotEmpty
+                      ? '${'Section 2'.tr} • ${'Early leave at'.tr} $earlyTime ($dateStr)'
+                      : '${'Section 2 (Afternoon)'.tr} ${'on'.tr} $dateStr';
+                } else if (sess == 0) {
+                  return '${'Full Day Leave'.tr} ${'on'.tr} $dateStr';
+                }
+                return '${(l['day_type'] ?? l['leave_type']).toString().tr}: $dateStr';
+              }(),
+              reason: l['reason']?.toString() ?? '',
+              onApprove: () => controller.reviewLeave(l['id'], true, context),
+              onReject: () => controller.reviewLeave(l['id'], false, context),
+            ),
+          for (final o in overtimes)
+            _buildApprovalCard(
+              context: context,
+              type: 'Overtime Request'.tr,
+              icon: FluentIcons.clock_24_regular,
+              iconColor: const Color(0xFF7C3AED),
+              employeeName: o['employee_name']?.toString() ?? 'Employee'.tr,
+              detail: '${o['date']} (${o['start_time']} - ${o['end_time']})',
+              reason: o['reason']?.toString() ?? '',
+              onApprove: () => controller.reviewOvertime(o['id'], true, context),
+              onReject: () => controller.reviewOvertime(o['id'], false, context),
+            ),
+          for (final p in perms)
+            _buildApprovalCard(
+              context: context,
+              type: 'Permission Request'.tr,
+              icon: FluentIcons.person_available_24_regular,
+              iconColor: RequestColors.primary,
+              employeeName: p['employee_name']?.toString() ?? 'Employee'.tr,
+              detail: '${p['date']} (${p['schedule_time']})',
+              reason: p['reason']?.toString() ?? '',
+              onApprove: () => controller.reviewPermission(p['id'], true, context),
+              onReject: () => controller.reviewPermission(p['id'], false, context),
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildServicesTabContent(
+    BuildContext context,
+    HomeController homeCtrl,
+    PermissionController permissionCtrl,
+    bool isDark,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        // ─── CLOCK ATTENDANCE (Inline) ───────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.only(left: 20, right: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'CLOCK ATTENDANCE'.tr,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Get.toNamed(AppRoutes.clock),
+                child: Text(
+                  'Full View'.tr,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: RequestColors.primary,
                   ),
                 ),
               ),
             ],
           ),
         ),
-      ),
+        const SizedBox(height: 10),
+        _RequestClockAttendanceCard(homeCtrl: homeCtrl),
+        const SizedBox(height: 20),
+
+        // MANAGEMENT & SERVICES Section
+        Padding(
+          padding: const EdgeInsets.only(left: 20),
+          child: Text(
+            'MANAGEMENT & SERVICES'.tr,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            decoration: appleCardDecoration(context: context),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                _ServiceRow(
+                  icon: FluentIcons.calendar_ltr_24_regular,
+                  iconColor: RequestColors.primary,
+                  title: 'My Schedule'.tr,
+                  onTap: () => Get.toNamed(AppRoutes.schedule),
+                ),
+                Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
+                _ServiceRow(
+                  icon: FluentIcons.beach_24_regular,
+                  iconColor: RequestColors.approvedStatus,
+                  title: 'Leave Request'.tr,
+                  onTap: () => Get.toNamed(AppRoutes.leave),
+                ),
+                Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
+                _ServiceRow(
+                  icon: FluentIcons.clock_24_regular,
+                  iconColor: RequestColors.gold,
+                  title: 'Overtime'.tr,
+                  onTap: () => Get.toNamed(AppRoutes.overtime),
+                ),
+                Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
+                _ServiceRow(
+                  icon: FluentIcons.lightbulb_24_regular,
+                  iconColor: RequestColors.gold,
+                  title: 'Suggestion Box'.tr,
+                  onTap: () => Get.toNamed(AppRoutes.suggestion),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // Permission & Authorization
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Material(
+            color: isDark ? AppColors.darkSurface : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => Get.toNamed(AppRoutes.permission),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: isDark ? Border.all(color: AppColors.darkBorder, width: 0.5) : null,
+                  boxShadow: isDark ? null : appleSoftShadow,
+                ),
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(
+                        FluentIcons.person_passkey_24_regular,
+                        size: 26,
+                        color: Color(0xFF7C3AED),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Permission & Authorization'.tr,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AppColors.darkText : RequestColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Request permissions or authorization changes'.tr,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      'Apply'.tr,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: RequestColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      FluentIcons.chevron_right_24_regular,
+                      size: 20,
+                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // REQUEST ACTIVITY Section
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'REQUEST ACTIVITY'.tr,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Get.toNamed(AppRoutes.requestInformation),
+                child: Text(
+                  'History'.tr,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: RequestColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            decoration: appleCardDecoration(context: context),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                Obx(() {
+                  final pendingList = permissionCtrl.requestsWithStatus(RequestStatus.pending);
+                  return _ActivityRow(
+                    icon: FluentIcons.clock_24_regular,
+                    iconColor: RequestColors.gold,
+                    title: 'Unauthorized'.tr,
+                    subtitle: 'Pending review'.tr,
+                    badgeText: '${pendingList.length} ${'Pending'.tr}',
+                    badgeColor: RequestColors.gold,
+                    onTap: () => Get.toNamed(AppRoutes.requestUnauthorized),
+                  );
+                }),
+                Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
+                Obx(() {
+                  final approvedList = permissionCtrl.requestsWithStatus(RequestStatus.approved);
+                  return _ActivityRow(
+                    icon: FluentIcons.checkmark_circle_24_regular,
+                    iconColor: RequestColors.approvedStatus,
+                    title: 'Authorized'.tr,
+                    subtitle: 'Completed & archived'.tr,
+                    badgeText: '${approvedList.length} ${'Total'.tr}',
+                    badgeColor: RequestColors.approvedStatus,
+                    onTap: () => Get.toNamed(AppRoutes.requestAuthorized),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

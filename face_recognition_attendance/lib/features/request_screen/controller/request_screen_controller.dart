@@ -15,6 +15,8 @@ class RequestScreenController extends GetxController {
   final RxList<Map<String, dynamic>> incomingOvertimes = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> incomingPermissions = <Map<String, dynamic>>[].obs;
   final RxInt totalPending = 0.obs;
+  final RxInt selectedTab = 0.obs;
+  bool _hasInitializedTab = false;
 
   @override
   void onInit() {
@@ -58,6 +60,10 @@ class RequestScreenController extends GetxController {
           incomingPermissions.assignAll(
             (res['permissions'] as List).map((e) => Map<String, dynamic>.from(e)).toList(),
           );
+        }
+        if (!_hasInitializedTab) {
+          selectedTab.value = totalPending.value > 0 ? 0 : 1;
+          _hasInitializedTab = true;
         }
       }
     } catch (e) {

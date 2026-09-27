@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:face_recognition_attendance/core/services/face_recognition_engine.dart';
+import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
@@ -103,12 +104,50 @@ class ApiService {
       return _db.getAttendanceStatus(user?.uid ?? 1);
     }
     if (clean.contains('/attendance/department-summary/')) {
+      final user = _auth.getCurrentUser();
+      final emp = user != null
+          ? (_db.getEmployeeByUid(user.uid) ?? _db.getEmployeeByEmail(user.email))
+          : null;
+      final role = (emp?['role'] ?? 'employee').toString().toLowerCase();
+      final allEmployees = _db.getEmployees();
+      
+      List<Map<String, dynamic>> scoped;
+      if (role == 'leader') {
+        final dept = emp?['department']?.toString();
+        scoped = allEmployees.where((e) =>
+          e['id']?.toString() != emp?['id']?.toString() &&
+          e['role']?.toString().toLowerCase() == 'employee' &&
+          (dept == null || dept.isEmpty || e['department']?.toString() == dept)
+        ).toList();
+      } else if (role == 'manager') {
+        final branch = emp?['branch']?.toString();
+        scoped = allEmployees.where((e) =>
+          e['id']?.toString() != emp?['id']?.toString() &&
+          (e['role']?.toString().toLowerCase() == 'leader' || e['role']?.toString().toLowerCase() == 'employee') &&
+          (branch == null || branch.isEmpty || e['branch']?.toString() == branch)
+        ).toList();
+      } else {
+        scoped = allEmployees.where((e) => e['role']?.toString().toLowerCase() != 'ceo').toList();
+      }
+
+      final todayStr = DateText.ymd(DateText.nowCambodia());
+      final records = _db.getAttendanceRecords(date: todayStr);
+      final activeIds = records.map((r) => r['employee_id']?.toString() ?? r['employee_uid']?.toString()).toSet();
+      
+      final present = scoped.where((e) => activeIds.contains(e['id']?.toString()) || activeIds.contains(e['firebase_uid']?.toString())).length;
+      final onLeave = _db.getLeaves(status: 'approved').where((l) =>
+        (l['from_date']?.toString().compareTo(todayStr) ?? 1) <= 0 &&
+        (l['to_date']?.toString().compareTo(todayStr) ?? -1) >= 0
+      ).length;
+      final lateCount = records.where((r) => r['is_late'] == true).length;
+      final absent = (scoped.length - present - onLeave).clamp(0, scoped.length);
+
       return {
-        'total_employees': _db.getEmployees().length,
-        'present': _db.getAttendanceRecords().where((r) => r['check_out_time'] == null).length,
-        'late': 0,
-        'absent': 0,
-        'on_leave': _db.getLeaves().where((l) => l['status'] == 'approved').length,
+        'total_employees': scoped.length,
+        'present': present,
+        'late': lateCount,
+        'absent': absent,
+        'on_leave': onLeave,
       };
     }
     if (clean.contains('/attendance/monthly-summary/')) {

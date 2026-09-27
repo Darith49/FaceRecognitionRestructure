@@ -170,6 +170,23 @@ class MyTeamController extends GetxController {
   bool get isLeader => currentRole == 'leader';
   bool get isEmployee => currentRole == 'employee';
 
+  /// Evaluates whether the current user is permitted to edit work shift sessions for the given member.
+  /// - CEO/Admin can edit anyone except other CEOs.
+  /// - Manager can edit Leaders and Staff/Employees.
+  /// - Leader can edit Staff/Employees in their department.
+  /// - Regular employees have read-only access.
+  bool canEditSessionFor(MyTeamMember member) {
+    if (member.isCeo) return false;
+    if (isCeo) return true;
+    if (isManager) {
+      return member.role == 'leader' || member.role == 'employee' || member.role == 'staff';
+    }
+    if (isLeader) {
+      return member.role == 'employee' || member.role == 'staff';
+    }
+    return false;
+  }
+
   List<MyTeamTab> get tabs => teamData.value?.tabs ?? [];
 
   MyTeamTab? get currentTab {

@@ -751,7 +751,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (_controller.isCeo && !member.isCeo) ...[
+        if (_controller.canEditSessionFor(member)) ...[
           _circleButton(
             icon: FluentIcons.clock_24_regular,
             tooltip: 'Change Session Time'.tr,

@@ -68,6 +68,9 @@ class HomeController extends GetxController {
     if (isCeo) {
       refreshAdminOverview();
     }
+    if (isSupervisor) {
+      fetchTeamTelemetry();
+    }
   }
 
   Future<void> fetchTodayAttendanceStatus() async {
@@ -164,7 +167,49 @@ class HomeController extends GetxController {
 
   UserModel? get currentUser => _authController.currentuser.value;
   bool get isCeo => currentUser?.role == UserRole.ceo || currentUser?.role == UserRole.admin;
+  bool get isLeader => currentUser?.role == UserRole.leader;
+  bool get isManager => currentUser?.role == UserRole.manager;
+  bool get isEmployee => currentUser?.role == UserRole.employee;
+  bool get isSupervisor => isLeader || isManager || isCeo;
   bool get hasFaceRegistered => _authController.hasFaceRegistered.value;
+
+  // ─── Team Live Telemetry (Leader & Manager) ──────────────────────────────────
+  final RxInt teamTotalCount = 0.obs;
+  final RxInt teamPresentCount = 0.obs;
+  final RxInt teamLateCount = 0.obs;
+  final RxInt teamAbsentCount = 0.obs;
+  final RxInt teamOnLeaveCount = 0.obs;
+  final RxInt teamPendingApprovalsCount = 0.obs;
+  final RxBool isTeamTelemetryLoading = false.obs;
+
+  Future<void> fetchTeamTelemetry() async {
+    if (!isSupervisor) return;
+    try {
+      isTeamTelemetryLoading.value = true;
+      final res = await _apiService.get('/attendance/department-summary/');
+      if (res is Map) {
+        teamTotalCount.value = (res['total_employees'] as num?)?.toInt() ?? 0;
+        teamPresentCount.value = (res['present'] as num?)?.toInt() ?? 0;
+        teamLateCount.value = (res['late'] as num?)?.toInt() ?? 0;
+        teamAbsentCount.value = (res['absent'] as num?)?.toInt() ?? 0;
+        teamOnLeaveCount.value = (res['on_leave'] as num?)?.toInt() ?? 0;
+      }
+
+      final roleStr = userRoleToString(currentUser?.role ?? UserRole.employee);
+      final pendingRes = await _apiService.get('/requests/incoming/', queryParams: {
+        'role': roleStr,
+        if (currentUser?.branchId.isNotEmpty == true) 'branch_id': currentUser!.branchId,
+        if (currentUser?.departmentId.isNotEmpty == true) 'department_id': currentUser!.departmentId,
+      });
+      if (pendingRes is Map) {
+        teamPendingApprovalsCount.value = (pendingRes['total_pending'] as num?)?.toInt() ?? 0;
+      }
+    } catch (_) {
+      // Graceful fallback
+    } finally {
+      isTeamTelemetryLoading.value = false;
+    }
+  }
 
   BranchController get branchController => Get.isRegistered<BranchController>()
       ? Get.find<BranchController>()

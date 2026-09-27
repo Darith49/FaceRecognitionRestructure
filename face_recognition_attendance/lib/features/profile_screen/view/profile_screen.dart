@@ -428,27 +428,38 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _confirmLogout(BuildContext context, LoginController loginController) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: isDark
+              ? const BorderSide(color: AppColors.darkBorder, width: 0.5)
+              : BorderSide.none,
+        ),
         title: Row(
           children: [
             const Icon(FluentIcons.sign_out_24_regular, color: RequestColors.danger, size: 22),
             const SizedBox(width: 10),
             Text(
               'Log Out'.tr,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
-                color: RequestColors.textPrimary,
+                color: isDark ? AppColors.darkText : RequestColors.textPrimary,
               ),
             ),
           ],
         ),
         content: Text(
           'Are you sure you want to log out of your account?'.tr,
-          style: const TextStyle(fontSize: 14, color: RequestColors.textSecondary),
+          style: TextStyle(
+            fontSize: 14,
+            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+          ),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -456,8 +467,8 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               'Cancel'.tr,
-              style: const TextStyle(
-                color: RequestColors.textSecondary,
+              style: TextStyle(
+                color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -549,9 +560,17 @@ class _LogoutTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary;
+
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      color: isDark ? AppColors.darkSurface : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: isDark
+            ? const BorderSide(color: AppColors.darkBorder, width: 0.5)
+            : BorderSide.none,
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -583,18 +602,18 @@ class _LogoutTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'Sign out of your session on this device'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: RequestColors.textSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 FluentIcons.chevron_right_24_regular,
                 size: 20,
-                color: RequestColors.textSecondary,
+                color: textSecondary,
               ),
             ],
           ),

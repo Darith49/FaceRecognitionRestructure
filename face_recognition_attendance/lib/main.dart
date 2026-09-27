@@ -1,6 +1,7 @@
 import 'package:face_recognition_attendance/app.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/services/language_service.dart';
+import 'package:face_recognition_attendance/core/services/theme_service.dart';
 import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
 import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
@@ -24,6 +25,7 @@ Future<void> main() async {
 
   // Initialize Core Services
   Get.put<LanguageService>(LanguageService(), permanent: true);
+  Get.put<ThemeService>(ThemeService(), permanent: true);
 
   // Initialize Local Standalone Database & Auth
   await LocalDatabaseService().init();

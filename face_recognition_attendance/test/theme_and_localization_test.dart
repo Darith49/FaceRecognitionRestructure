@@ -2,7 +2,7 @@ import 'package:face_recognition_attendance/config/localization/en_us.dart';
 import 'package:face_recognition_attendance/config/localization/km_kh.dart';
 
 void main() {
-  print('=== STARTING LOCALIZATION & DICTIONARY TESTS ===');
+  print('=== STARTING LOCALIZATION & THEME KEYS TESTS ===');
 
   // 1. English & Khmer Dictionary Parity
   print('\n[Test 1] Testing English and Khmer dictionary key parity...');
@@ -26,5 +26,24 @@ void main() {
   }
   print('Non-empty translation string tests passed (${kmKeys.length} translations verified).');
 
-  print('\n=== ALL LOCALIZATION TESTS PASSED SUCCESSFULLY! ===\n');
+  // 3. Dark mode and appearance translation keys check
+  print('\n[Test 3] Testing dark mode and appearance translation keys...');
+  const expectedThemeKeys = [
+    'APPEARANCE / រូបរាង',
+    'System Default',
+    'Light Mode',
+    'Dark Mode',
+    'System',
+    'Light',
+    'Dark',
+    'App theme and display appearance',
+    'Settings & Appearance',
+  ];
+  for (final key in expectedThemeKeys) {
+    assert(enKeys.contains(key), 'Missing theme key in enUS: $key');
+    assert(kmKeys.contains(key), 'Missing theme key in kmKH: $key');
+  }
+  print('All dark mode & appearance keys verified in both locales.');
+
+  print('\n=== ALL LOCALIZATION & THEME TESTS PASSED SUCCESSFULLY! ===\n');
 }

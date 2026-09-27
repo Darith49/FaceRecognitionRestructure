@@ -2,8 +2,11 @@ import 'dart:convert';
 import 'package:face_recognition_attendance/core/utils/file_picker_helper.dart';
 import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
+import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/permissions/app_permissions.dart';
 import 'package:face_recognition_attendance/core/permissions/widgets/permission_view.dart';
+import 'package:face_recognition_attendance/core/services/language_service.dart';
+import 'package:face_recognition_attendance/core/services/theme_service.dart';
 import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
@@ -274,12 +277,19 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _SettingsTile(
-                  icon: FluentIcons.local_language_24_regular,
-                  iconColor: RequestColors.primary,
-                  title: 'Settings & Language'.tr,
-                  subtitle: 'English (US) • Notifications'.tr,
-                  onTap: () => Get.toNamed(AppRoutes.settings),
+                child: Builder(
+                  builder: (context) {
+                    final isKhmer = Get.isRegistered<LanguageService>() && Get.find<LanguageService>().isKhmer;
+                    final langLabel = isKhmer ? 'ភាសាខ្មែរ' : 'English (US)';
+                    final themeName = Get.isRegistered<ThemeService>() ? Get.find<ThemeService>().themeModeName.tr : 'System'.tr;
+                    return _SettingsTile(
+                      icon: FluentIcons.settings_24_regular,
+                      iconColor: RequestColors.primary,
+                      title: 'Settings & Appearance'.tr,
+                      subtitle: '$langLabel • $themeName',
+                      onTap: () => Get.toNamed(AppRoutes.settings),
+                    );
+                  },
                 ),
               ),
 
@@ -630,9 +640,18 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.darkText : RequestColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary;
+
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      color: isDark ? AppColors.darkSurface : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: isDark
+            ? const BorderSide(color: AppColors.darkBorder, width: 0.5)
+            : BorderSide.none,
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -651,27 +670,27 @@ class _SettingsTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: RequestColors.textPrimary,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: RequestColors.textSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 FluentIcons.chevron_right_24_regular,
                 size: 20,
-                color: RequestColors.textSecondary,
+                color: textSecondary,
               ),
             ],
           ),

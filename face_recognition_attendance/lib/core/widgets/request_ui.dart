@@ -29,12 +29,25 @@ const List<BoxShadow> appleSoftShadow = [
   BoxShadow(color: Color(0x05000000), blurRadius: 4, offset: Offset(0, 1)),
 ];
 
-/// Apple-style card decoration.
-BoxDecoration appleCardDecoration({double radius = 16}) => BoxDecoration(
-  color: Colors.white,
-  borderRadius: BorderRadius.circular(radius),
-  boxShadow: appleSoftShadow,
-);
+/// Apple-style card decoration supporting light and dark modes.
+BoxDecoration appleCardDecoration({
+  double radius = 16,
+  BuildContext? context,
+  Color? color,
+}) {
+  final isDark = context != null
+      ? Theme.of(context).brightness == Brightness.dark
+      : (Get.context != null
+          ? Theme.of(Get.context!).brightness == Brightness.dark
+          : Get.isDarkMode);
+
+  return BoxDecoration(
+    color: color ?? (isDark ? AppColors.darkSurface : Colors.white),
+    borderRadius: BorderRadius.circular(radius),
+    border: isDark ? Border.all(color: AppColors.darkBorder, width: 0.5) : null,
+    boxShadow: isDark ? const [] : appleSoftShadow,
+  );
+}
 
 /// Page frame used by every screen in this feature:
 /// white app bar with a title + back arrow, and the light grey body.

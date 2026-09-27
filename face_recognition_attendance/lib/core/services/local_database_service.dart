@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:collection/collection.dart';
 import 'package:face_recognition_attendance/core/services/sqlite_sync_service.dart';
 import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/features/face/model/person_model.dart';
@@ -101,6 +102,15 @@ class LocalDatabaseService {
           .toList();
       if (incomingOt.isNotEmpty) {
         _box.write('overtimes', incomingOt);
+      }
+    }
+
+    if (data.containsKey('permissions') && data['permissions'] is List) {
+      final incomingPerm = (data['permissions'] as List)
+          .map((p) => Map<String, dynamic>.from(p as Map))
+          .toList();
+      if (incomingPerm.isNotEmpty) {
+        _box.write('permissions', incomingPerm);
       }
     }
 
@@ -302,41 +312,221 @@ class LocalDatabaseService {
       _box.write('attendance', []);
     }
 
+    final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final tomorrow = now.add(const Duration(days: 1));
+    final tomorrowStr = '${tomorrow.year}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.day.toString().padLeft(2, '0')}';
+    final monthStartStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-03';
+
     // 6. Seed Leaves
-    if (_box.read('leaves') == null) {
-      _box.write('leaves', []);
+    final existingLeaves = _box.read<List>('leaves');
+    if (existingLeaves == null || existingLeaves.isEmpty) {
+      _box.write('leaves', [
+        {
+          'id': 1,
+          'employee_id': 5,
+          'employee_name': 'Alex Developer',
+          'employee_code': 'EMP-005',
+          'employee_id_code': 'EMP-005',
+          'employee_uid': 'local_uid_emp_5',
+          'employee_email': 'employee@gmail.com',
+          'employee_role': 'employee',
+          'branch': 1,
+          'department': 1,
+          'leave_type': 'Personal Leave',
+          'day_type': 'Full Day',
+          'from_date': monthStartStr,
+          'to_date': monthStartStr,
+          'session': 0,
+          'leave_mode': 'full_section',
+          'reason': 'Family urgent appointment in hometown.',
+          'status': 'approved',
+          'reviewer_name': 'David Team Leader',
+          'review_notes': 'Approved. Safe travels.',
+          'created_at': now.subtract(const Duration(days: 15)).toIso8601String(),
+        },
+        {
+          'id': 2,
+          'employee_id': 5,
+          'employee_name': 'Alex Developer',
+          'employee_code': 'EMP-005',
+          'employee_id_code': 'EMP-005',
+          'employee_uid': 'local_uid_emp_5',
+          'employee_email': 'employee@gmail.com',
+          'employee_role': 'employee',
+          'branch': 1,
+          'department': 1,
+          'leave_type': 'Section 1 (Morning)',
+          'day_type': 'Section 1 (Morning)',
+          'from_date': tomorrowStr,
+          'to_date': tomorrowStr,
+          'session': 1,
+          'leave_mode': 'early_leave',
+          'early_leave_time': '09:30:00',
+          'reason': 'Dentist appointment checkup in the morning.',
+          'status': 'pending',
+          'created_at': now.subtract(const Duration(hours: 3)).toIso8601String(),
+        },
+      ]);
     }
 
     // 7. Seed Overtime
-    if (_box.read('overtimes') == null) {
-      _box.write('overtimes', []);
+    final existingOvertimes = _box.read<List>('overtimes');
+    if (existingOvertimes == null || existingOvertimes.isEmpty) {
+      _box.write('overtimes', [
+        {
+          'id': 1,
+          'employee_id': 4,
+          'employee_name': 'David Team Leader',
+          'employee_code': 'EMP-004',
+          'employee_id_code': 'EMP-004',
+          'employee_uid': 'local_uid_ldr_4',
+          'employee_email': 'leader@gmail.com',
+          'employee_role': 'leader',
+          'branch': 1,
+          'department': 1,
+          'date': todayStr,
+          'start_time': '18:00:00',
+          'end_time': '20:00:00',
+          'reason': 'Database indexing and migration deployment.',
+          'status': 'pending',
+          'created_at': now.subtract(const Duration(hours: 2)).toIso8601String(),
+        },
+      ]);
     }
 
-    // 8. Seed Suggestions
-    if (_box.read('suggestions') == null) {
+    // 8. Seed Permissions
+    final existingPerms = _box.read<List>('permissions');
+    if (existingPerms == null || existingPerms.isEmpty) {
+      _box.write('permissions', [
+        {
+          'id': 1,
+          'employee_id': 3,
+          'employee_name': 'Sarah Manager',
+          'employee_code': 'EMP-003',
+          'employee_id_code': 'EMP-003',
+          'employee_uid': 'local_uid_mgr_3',
+          'employee_email': 'manager@gmail.com',
+          'employee_role': 'manager',
+          'branch': 1,
+          'department': 2,
+          'date': todayStr,
+          'session': 2,
+          'schedule_time': 'Section 2',
+          'reason': 'Ministry quarterly board conference.',
+          'status': 'pending',
+          'created_at': now.subtract(const Duration(hours: 1)).toIso8601String(),
+        },
+      ]);
+    }
+
+    // 9. Seed Suggestions
+    final existingSuggestions = _box.read<List>('suggestions');
+    if (existingSuggestions == null || existingSuggestions.isEmpty) {
       _box.write('suggestions', [
         {
           'id': 1,
           'title': 'Coffee Machine in Breakroom',
           'content': 'Would be great to add an espresso coffee maker on the 2nd floor.',
+          'message': 'Would be great to add an espresso coffee maker on the 2nd floor.',
           'type': 'Facility',
+          'is_anonymous': true,
           'is_read': false,
-          'employee_name': 'Alex Developer',
-          'created_at': DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
+          'employee_id': 5,
+          'employee_name': 'Anonymous',
+          'created_at': now.subtract(const Duration(days: 1)).toIso8601String(),
+        },
+        {
+          'id': 2,
+          'title': 'Ergonomic Standing Desks',
+          'content': 'Standing desks would greatly help health and posture during long coding sprints.',
+          'message': 'Standing desks would greatly help health and posture during long coding sprints.',
+          'type': 'Equipment',
+          'is_anonymous': true,
+          'is_read': true,
+          'employee_id': 5,
+          'employee_name': 'Anonymous',
+          'read_by_name': 'Sonar Seang',
+          'created_at': now.subtract(const Duration(days: 3)).toIso8601String(),
         }
       ]);
     }
 
-    // 9. Seed Notifications
-    if (_box.read('notifications') == null) {
+    // 10. Seed Notifications
+    final existingNotifs = _box.read<List>('notifications');
+    if (existingNotifs == null || existingNotifs.isEmpty) {
       _box.write('notifications', [
         {
-          'id': 1,
+          'id': 101,
+          'recipient_id': '4',
+          'recipient_uid': 'local_uid_ldr_4',
+          'title': 'New Leave Request',
+          'message': 'Alex Developer submitted a leave request (Section 1 • Early leave at 09:30 AM).',
+          'notif_type': 'leave',
+          'ref_id': '2',
+          'sender_name': 'Alex Developer',
+          'is_read': false,
+          'created_at': now.subtract(const Duration(hours: 3)).toIso8601String(),
+        },
+        {
+          'id': 102,
+          'recipient_id': '3',
+          'recipient_uid': 'local_uid_mgr_3',
+          'title': 'New Overtime Request',
+          'message': 'David Team Leader submitted an overtime request for today (18:00 - 20:00).',
+          'notif_type': 'overtime',
+          'ref_id': '1',
+          'sender_name': 'David Team Leader',
+          'is_read': false,
+          'created_at': now.subtract(const Duration(hours: 2)).toIso8601String(),
+        },
+        {
+          'id': 103,
+          'recipient_id': '1',
+          'recipient_uid': 'local_uid_ceo_1',
+          'title': 'New Permission Request',
+          'message': 'Sarah Manager submitted a permission request for Section 2.',
+          'notif_type': 'permission',
+          'ref_id': '1',
+          'sender_name': 'Sarah Manager',
+          'is_read': false,
+          'created_at': now.subtract(const Duration(hours: 1)).toIso8601String(),
+        },
+        {
+          'id': 104,
+          'recipient_id': '1',
+          'recipient_uid': 'local_uid_ceo_1',
+          'title': 'New Suggestion Submitted',
+          'message': 'Anonymous Suggestion: Would be great to add an espresso coffee maker on the 2nd floor.',
+          'notif_type': 'suggestion',
+          'ref_id': '1',
+          'sender_name': 'Anonymous',
+          'is_read': false,
+          'created_at': now.subtract(const Duration(days: 1)).toIso8601String(),
+        },
+        {
+          'id': 105,
+          'recipient_id': '5',
+          'recipient_uid': 'local_uid_emp_5',
+          'title': 'Leave Request Approved',
+          'message': 'Your personal leave request was approved by David Team Leader.',
+          'notif_type': 'leave',
+          'ref_id': '1',
+          'sender_name': 'David Team Leader',
+          'is_read': true,
+          'created_at': now.subtract(const Duration(days: 14)).toIso8601String(),
+        },
+        {
+          'id': 106,
+          'recipient_id': null,
+          'recipient_uid': null,
           'title': 'Welcome to Face Attendance App',
           'message': 'System now operates completely on-device with zero backend dependencies.',
-          'is_read': false,
-          'created_at': DateTime.now().toIso8601String(),
-          'type': 'system',
+          'notif_type': 'system',
+          'ref_id': '',
+          'sender_name': 'System Admin',
+          'is_read': true,
+          'created_at': now.toIso8601String(),
         }
       ]);
     }
@@ -1180,21 +1370,218 @@ class LocalDatabaseService {
     };
   }
 
-  // ==================== REQUESTS (LEAVE, OVERTIME, PERMISSIONS) ====================
-  List<Map<String, dynamic>> getLeaves() {
+  // ==================== STRICT 3-TIER HIERARCHY & ROUTING ====================
+
+  /// Resolves the strict 3-tier approval chain:
+  /// - Employee request -> Leader ONLY (never to Manager or CEO)
+  /// - Leader request -> Manager ONLY (never to Leader or CEO)
+  /// - Manager request -> CEO ONLY
+  /// - CEO request -> No supervisor (returns [])
+  List<Map<String, dynamic>> findSupervisorsFor(Map<String, dynamic> employee) {
+    final role = (employee['role'] ?? 'employee').toString().toLowerCase().trim();
+    final allEmployees = getEmployees();
+    final empId = employee['id']?.toString() ?? '';
+
+    if (role == 'employee') {
+      // 1. Direct supervisor if active and role is leader
+      if (employee['reporting_to'] != null) {
+        final rep = allEmployees.firstWhereOrNull((e) =>
+            e['id']?.toString() == employee['reporting_to']?.toString() &&
+            e['status'] != 'inactive' &&
+            e['role']?.toString().toLowerCase() == 'leader');
+        if (rep != null) return [rep];
+      }
+      // 2. Leader in same department
+      final deptId = employee['department']?.toString() ?? '';
+      if (deptId.isNotEmpty) {
+        final leader = allEmployees.firstWhereOrNull((e) =>
+            e['id']?.toString() != empId &&
+            e['status'] != 'inactive' &&
+            e['role']?.toString().toLowerCase() == 'leader' &&
+            e['department']?.toString() == deptId);
+        if (leader != null) return [leader];
+      }
+      // 3. Leader in same branch
+      final branchId = employee['branch']?.toString() ?? '';
+      if (branchId.isNotEmpty) {
+        final leader = allEmployees.firstWhereOrNull((e) =>
+            e['id']?.toString() != empId &&
+            e['status'] != 'inactive' &&
+            e['role']?.toString().toLowerCase() == 'leader' &&
+            e['branch']?.toString() == branchId);
+        if (leader != null) return [leader];
+      }
+      // 4. Any non-inactive leader
+      final leader = allEmployees.firstWhereOrNull((e) =>
+          e['id']?.toString() != empId &&
+          e['status'] != 'inactive' &&
+          e['role']?.toString().toLowerCase() == 'leader');
+      if (leader != null) return [leader];
+      return [];
+    } else if (role == 'leader') {
+      // 1. Manager in same branch
+      final branchId = employee['branch']?.toString() ?? '';
+      if (branchId.isNotEmpty) {
+        final manager = allEmployees.firstWhereOrNull((e) =>
+            e['id']?.toString() != empId &&
+            e['status'] != 'inactive' &&
+            e['role']?.toString().toLowerCase() == 'manager' &&
+            e['branch']?.toString() == branchId);
+        if (manager != null) return [manager];
+      }
+      // 2. Any non-inactive manager
+      final manager = allEmployees.firstWhereOrNull((e) =>
+          e['id']?.toString() != empId &&
+          e['status'] != 'inactive' &&
+          e['role']?.toString().toLowerCase() == 'manager');
+      if (manager != null) return [manager];
+      return [];
+    } else if (role == 'manager') {
+      // Goes to CEO
+      final ceo = allEmployees.firstWhereOrNull((e) =>
+          e['id']?.toString() != empId &&
+          e['status'] != 'inactive' &&
+          (e['role']?.toString().toLowerCase() == 'ceo' || e['role']?.toString().toLowerCase() == 'admin'));
+      if (ceo != null) return [ceo];
+      return [];
+    }
+    return [];
+  }
+
+  /// Validates strict 3-tier review hierarchy:
+  /// - Employee request -> Leader ONLY
+  /// - Leader request -> Manager ONLY
+  /// - Manager request -> CEO ONLY
+  bool canUserReviewRequester(String reviewerRole, String requesterRole) {
+    final rev = reviewerRole.toLowerCase().trim();
+    final req = requesterRole.toLowerCase().trim();
+    if (rev == 'admin') return true;
+    if (req == 'employee') return rev == 'leader';
+    if (req == 'leader') return rev == 'manager';
+    if (req == 'manager') return rev == 'ceo';
+    return false;
+  }
+
+  // ==================== INCOMING REQUESTS ROUTING ====================
+
+  /// Strict 3-tier incoming requests for reviewer:
+  /// - Employee: returns 0 pending
+  /// - Leader: pending requests from Employees in department/branch
+  /// - Manager: pending requests from Leaders in branch
+  /// - CEO: pending requests from Managers
+  Map<String, dynamic> getIncomingRequests({
+    required String role,
+    dynamic employeeId,
+    int? branchId,
+    int? departmentId,
+  }) {
+    final cleanRole = role.toLowerCase().trim();
+    if (cleanRole == 'employee') {
+      return {
+        'role': 'employee',
+        'total_pending': 0,
+        'leaves': <Map<String, dynamic>>[],
+        'overtimes': <Map<String, dynamic>>[],
+        'permissions': <Map<String, dynamic>>[],
+      };
+    }
+
+    final allLeaves = getLeaves().where((l) => (l['status']?.toString().toLowerCase() ?? '') == 'pending').toList();
+    final allOvertimes = getOvertimes().where((o) => (o['status']?.toString().toLowerCase() ?? '') == 'pending').toList();
+    final allPerms = getPermissions().where((p) => (p['status']?.toString().toLowerCase() ?? '') == 'pending').toList();
+
+    bool isSubordinate(Map<String, dynamic> req) {
+      final reqRole = (req['employee_role'] ?? req['role'] ?? 'employee').toString().toLowerCase().trim();
+      final reqEmpId = req['employee_id']?.toString() ?? '';
+      if (employeeId != null && reqEmpId == employeeId.toString()) return false;
+
+      if (cleanRole == 'leader') {
+        // Leader only sees Employee requests
+        if (reqRole != 'employee') return false;
+        if (departmentId != null && req['department'] != null) {
+          return req['department'].toString() == departmentId.toString();
+        }
+        if (branchId != null && req['branch'] != null) {
+          return req['branch'].toString() == branchId.toString();
+        }
+        return true;
+      } else if (cleanRole == 'manager') {
+        // Manager only sees Leader requests
+        if (reqRole != 'leader') return false;
+        if (branchId != null && req['branch'] != null) {
+          return req['branch'].toString() == branchId.toString();
+        }
+        return true;
+      } else if (cleanRole == 'ceo' || cleanRole == 'admin') {
+        // CEO sees Manager requests (and any unassigned / direct escalation)
+        return reqRole == 'manager' || (cleanRole == 'admin');
+      }
+      return false;
+    }
+
+    final pendingLeaves = allLeaves.where(isSubordinate).toList();
+    final pendingOvertimes = allOvertimes.where(isSubordinate).toList();
+    final pendingPerms = allPerms.where(isSubordinate).toList();
+
+    return {
+      'role': cleanRole,
+      'total_pending': pendingLeaves.length + pendingOvertimes.length + pendingPerms.length,
+      'leaves': pendingLeaves,
+      'overtimes': pendingOvertimes,
+      'permissions': pendingPerms,
+    };
+  }
+
+  // ==================== LEAVE REQUESTS ====================
+
+  List<Map<String, dynamic>> getLeaves({dynamic employeeId, String? status}) {
     final raw = _box.read<List>('leaves') ?? [];
-    return raw.map((e) => Map<String, dynamic>.from(e)).toList();
+    var list = raw.map((e) => Map<String, dynamic>.from(e)).toList();
+    if (employeeId != null) {
+      list = list.where((l) =>
+          l['employee_id']?.toString() == employeeId.toString() ||
+          l['employee_uid']?.toString() == employeeId.toString()).toList();
+    }
+    if (status != null && status.isNotEmpty) {
+      list = list.where((l) =>
+          (l['status']?.toString().toLowerCase() ?? '') == status.toLowerCase()).toList();
+    }
+    return list;
+  }
+
+  Map<String, dynamic>? getLeaveById(dynamic id) {
+    final list = getLeaves();
+    final idx = list.indexWhere((l) => l['id'].toString() == id.toString());
+    return idx >= 0 ? list[idx] : null;
   }
 
   Map<String, dynamic> addLeave(Map<String, dynamic> data) {
     final list = getLeaves();
-    final int nextId = list.isEmpty ? 1 : list.length + 1;
+    final int nextId = list.isEmpty ? 1 : list.map((l) => (l['id'] as num?)?.toInt() ?? 0).reduce(max) + 1;
     final item = Map<String, dynamic>.from(data);
     item['id'] = nextId;
     item['status'] = item['status'] ?? 'pending';
-    item['created_at'] = DateTime.now().toIso8601String();
+    item['created_at'] = item['created_at'] ?? DateTime.now().toIso8601String();
     list.add(item);
     _box.write('leaves', list);
+
+    // Auto-dispatch in-app notification to supervisors
+    final supervisors = findSupervisorsFor(item);
+    final empName = item['employee_name'] ?? 'Employee';
+    final scheduleLabel = item['day_type'] ?? 'Leave Request';
+    for (final sup in supervisors) {
+      sendNotification(
+        recipientId: sup['id'],
+        recipientUid: sup['firebase_uid'],
+        title: 'New Leave Request',
+        message: '$empName submitted a leave request ($scheduleLabel).',
+        notifType: 'leave',
+        refId: nextId.toString(),
+        senderName: empName,
+        senderProfileUrl: item['employee_profile_url'],
+      );
+    }
+
     return item;
   }
 
@@ -1209,8 +1596,43 @@ class LocalDatabaseService {
     return updated;
   }
 
+  Map<String, dynamic>? reviewLeave(
+    dynamic id, {
+    required String status,
+    String? reviewerName,
+    String? reviewerRole,
+    String? reviewNotes,
+  }) {
+    final list = getLeaves();
+    final idx = list.indexWhere((l) => l['id'].toString() == id.toString());
+    if (idx < 0) return null;
+    final updated = Map<String, dynamic>.from(list[idx]);
+    updated['status'] = status.toLowerCase();
+    if (reviewerName != null) updated['reviewer_name'] = reviewerName;
+    if (reviewerRole != null) updated['reviewer_role'] = reviewerRole;
+    if (reviewNotes != null) updated['review_notes'] = reviewNotes;
+    updated['reviewed_at'] = DateTime.now().toIso8601String();
+    list[idx] = updated;
+    _box.write('leaves', list);
+
+    // Auto-dispatch in-app notification to requester
+    final rev = reviewerName ?? 'Supervisor';
+    final isApprove = status.toLowerCase() == 'approved';
+    sendNotification(
+      recipientId: updated['employee_id'],
+      recipientUid: updated['employee_uid'],
+      title: isApprove ? 'Leave Request Approved' : 'Leave Request Rejected',
+      message: 'Your leave request has been ${isApprove ? "approved" : "rejected"} by $rev.',
+      notifType: 'leave',
+      refId: id.toString(),
+      senderName: rev,
+    );
+
+    return updated;
+  }
+
   Map<String, dynamic>? updateLeaveStatus(dynamic id, String status) {
-    return updateLeave(id, {'status': status});
+    return reviewLeave(id, status: status, reviewerName: 'CEO', reviewerRole: 'CEO');
   }
 
   bool deleteLeave(dynamic id) {
@@ -1224,21 +1646,103 @@ class LocalDatabaseService {
     return false;
   }
 
-  List<Map<String, dynamic>> getOvertimes() {
+  // ==================== OVERTIME REQUESTS ====================
+
+  List<Map<String, dynamic>> getOvertimes({dynamic employeeId, String? status}) {
     final raw = _box.read<List>('overtimes') ?? [];
-    return raw.map((e) => Map<String, dynamic>.from(e)).toList();
+    var list = raw.map((e) => Map<String, dynamic>.from(e)).toList();
+    if (employeeId != null) {
+      list = list.where((o) =>
+          o['employee_id']?.toString() == employeeId.toString() ||
+          o['employee_uid']?.toString() == employeeId.toString()).toList();
+    }
+    if (status != null && status.isNotEmpty) {
+      list = list.where((o) =>
+          (o['status']?.toString().toLowerCase() ?? '') == status.toLowerCase()).toList();
+    }
+    return list;
+  }
+
+  Map<String, dynamic>? getOvertimeById(dynamic id) {
+    final list = getOvertimes();
+    final idx = list.indexWhere((o) => o['id'].toString() == id.toString());
+    return idx >= 0 ? list[idx] : null;
   }
 
   Map<String, dynamic> addOvertime(Map<String, dynamic> data) {
     final list = getOvertimes();
-    final int nextId = list.isEmpty ? 1 : list.length + 1;
+    final int nextId = list.isEmpty ? 1 : list.map((o) => (o['id'] as num?)?.toInt() ?? 0).reduce(max) + 1;
     final item = Map<String, dynamic>.from(data);
     item['id'] = nextId;
     item['status'] = item['status'] ?? 'pending';
-    item['created_at'] = DateTime.now().toIso8601String();
+    item['created_at'] = item['created_at'] ?? DateTime.now().toIso8601String();
     list.add(item);
     _box.write('overtimes', list);
+
+    // Auto-dispatch in-app notification to supervisors
+    final supervisors = findSupervisorsFor(item);
+    final empName = item['employee_name'] ?? 'Employee';
+    final dateStr = item['date'] ?? 'today';
+    for (final sup in supervisors) {
+      sendNotification(
+        recipientId: sup['id'],
+        recipientUid: sup['firebase_uid'],
+        title: 'New Overtime Request',
+        message: '$empName submitted an overtime request for $dateStr.',
+        notifType: 'overtime',
+        refId: nextId.toString(),
+        senderName: empName,
+        senderProfileUrl: item['employee_profile_url'],
+      );
+    }
+
     return item;
+  }
+
+  Map<String, dynamic>? updateOvertime(dynamic id, Map<String, dynamic> updates) {
+    final list = getOvertimes();
+    final idx = list.indexWhere((o) => o['id'].toString() == id.toString());
+    if (idx < 0) return null;
+    final updated = Map<String, dynamic>.from(list[idx]);
+    updates.forEach((k, v) => updated[k] = v);
+    list[idx] = updated;
+    _box.write('overtimes', list);
+    return updated;
+  }
+
+  Map<String, dynamic>? reviewOvertime(
+    dynamic id, {
+    required String status,
+    String? reviewerName,
+    String? reviewerRole,
+    String? reviewNotes,
+  }) {
+    final list = getOvertimes();
+    final idx = list.indexWhere((o) => o['id'].toString() == id.toString());
+    if (idx < 0) return null;
+    final updated = Map<String, dynamic>.from(list[idx]);
+    updated['status'] = status.toLowerCase();
+    if (reviewerName != null) updated['reviewer_name'] = reviewerName;
+    if (reviewerRole != null) updated['reviewer_role'] = reviewerRole;
+    if (reviewNotes != null) updated['review_notes'] = reviewNotes;
+    updated['reviewed_at'] = DateTime.now().toIso8601String();
+    list[idx] = updated;
+    _box.write('overtimes', list);
+
+    // Auto-dispatch in-app notification to requester
+    final rev = reviewerName ?? 'Supervisor';
+    final isApprove = status.toLowerCase() == 'approved';
+    sendNotification(
+      recipientId: updated['employee_id'],
+      recipientUid: updated['employee_uid'],
+      title: isApprove ? 'Overtime Request Approved' : 'Overtime Request Rejected',
+      message: 'Your overtime request has been ${isApprove ? "approved" : "rejected"} by $rev.',
+      notifType: 'overtime',
+      refId: id.toString(),
+      senderName: rev,
+    );
+
+    return updated;
   }
 
   bool deleteOvertime(dynamic id) {
@@ -1252,40 +1756,298 @@ class LocalDatabaseService {
     return false;
   }
 
+  // ==================== PERMISSION REQUESTS ====================
+
+  List<Map<String, dynamic>> getPermissions({dynamic employeeId, String? status}) {
+    final raw = _box.read<List>('permissions') ?? [];
+    var list = raw.map((e) => Map<String, dynamic>.from(e)).toList();
+    if (employeeId != null) {
+      list = list.where((p) =>
+          p['employee_id']?.toString() == employeeId.toString() ||
+          p['employee_uid']?.toString() == employeeId.toString()).toList();
+    }
+    if (status != null && status.isNotEmpty) {
+      list = list.where((p) =>
+          (p['status']?.toString().toLowerCase() ?? '') == status.toLowerCase()).toList();
+    }
+    return list;
+  }
+
+  Map<String, dynamic>? getPermissionById(dynamic id) {
+    final list = getPermissions();
+    final idx = list.indexWhere((p) => p['id'].toString() == id.toString());
+    return idx >= 0 ? list[idx] : null;
+  }
+
+  Map<String, dynamic> addPermission(Map<String, dynamic> data) {
+    final list = getPermissions();
+    final int nextId = list.isEmpty ? 1 : list.map((p) => (p['id'] as num?)?.toInt() ?? 0).reduce(max) + 1;
+    final item = Map<String, dynamic>.from(data);
+    item['id'] = nextId;
+    item['status'] = item['status'] ?? 'pending';
+    item['created_at'] = item['created_at'] ?? DateTime.now().toIso8601String();
+    list.add(item);
+    _box.write('permissions', list);
+
+    // Auto-dispatch in-app notification to supervisors
+    final supervisors = findSupervisorsFor(item);
+    final empName = item['employee_name'] ?? 'Employee';
+    final sched = item['schedule_time'] ?? item['schedule'] ?? 'Section';
+    final dateStr = item['date'] ?? 'today';
+    for (final sup in supervisors) {
+      sendNotification(
+        recipientId: sup['id'],
+        recipientUid: sup['firebase_uid'],
+        title: 'New Permission Request',
+        message: '$empName submitted a permission request for $sched on $dateStr.',
+        notifType: 'permission',
+        refId: nextId.toString(),
+        senderName: empName,
+        senderProfileUrl: item['employee_profile_url'],
+      );
+    }
+
+    return item;
+  }
+
+  Map<String, dynamic>? updatePermission(dynamic id, Map<String, dynamic> updates) {
+    final list = getPermissions();
+    final idx = list.indexWhere((p) => p['id'].toString() == id.toString());
+    if (idx < 0) return null;
+    final updated = Map<String, dynamic>.from(list[idx]);
+    updates.forEach((k, v) => updated[k] = v);
+    list[idx] = updated;
+    _box.write('permissions', list);
+    return updated;
+  }
+
+  Map<String, dynamic>? reviewPermission(
+    dynamic id, {
+    required String status,
+    String? reviewerName,
+    String? reviewerRole,
+    String? reviewNotes,
+  }) {
+    final list = getPermissions();
+    final idx = list.indexWhere((p) => p['id'].toString() == id.toString());
+    if (idx < 0) return null;
+    final updated = Map<String, dynamic>.from(list[idx]);
+    updated['status'] = status.toLowerCase();
+    if (reviewerName != null) updated['reviewer_name'] = reviewerName;
+    if (reviewerRole != null) updated['reviewer_role'] = reviewerRole;
+    if (reviewNotes != null) updated['review_notes'] = reviewNotes;
+    updated['reviewed_at'] = DateTime.now().toIso8601String();
+    list[idx] = updated;
+    _box.write('permissions', list);
+
+    // Auto-dispatch in-app notification to requester
+    final rev = reviewerName ?? 'Supervisor';
+    final isApprove = status.toLowerCase() == 'approved';
+    sendNotification(
+      recipientId: updated['employee_id'],
+      recipientUid: updated['employee_uid'],
+      title: isApprove ? 'Permission Request Approved' : 'Permission Request Rejected',
+      message: 'Your permission request has been ${isApprove ? "approved" : "rejected"} by $rev.',
+      notifType: 'permission',
+      refId: id.toString(),
+      senderName: rev,
+    );
+
+    return updated;
+  }
+
+  bool deletePermission(dynamic id) {
+    final list = getPermissions();
+    final countBefore = list.length;
+    list.removeWhere((p) => p['id'].toString() == id.toString());
+    if (list.length < countBefore) {
+      _box.write('permissions', list);
+      return true;
+    }
+    return false;
+  }
+
+  // ==================== SUGGESTIONS (ANONYMOUS & ROLE-FILTERED) ====================
+
   List<Map<String, dynamic>> getSuggestions() {
     final raw = _box.read<List>('suggestions') ?? [];
     return raw.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
+  Map<String, dynamic>? getSuggestionById(dynamic id) {
+    final list = getSuggestions();
+    final idx = list.indexWhere((s) => s['id'].toString() == id.toString());
+    return idx >= 0 ? list[idx] : null;
+  }
+
+  /// Returns suggestions according to role hierarchy:
+  /// - CEO: sees all suggestions
+  /// - Manager: sees suggestions from branch staff (employees/leaders) + own
+  /// - Employee & Leader: see only their own suggestions
+  List<Map<String, dynamic>> getSuggestionsForRole(
+    String role, {
+    dynamic employeeId,
+    int? branchId,
+    String? statusFilter,
+  }) {
+    final cleanRole = role.toLowerCase().trim();
+    final all = getSuggestions();
+    var list = <Map<String, dynamic>>[];
+
+    if (cleanRole == 'ceo' || cleanRole == 'admin') {
+      list = all;
+    } else if (cleanRole == 'manager') {
+      list = all.where((s) {
+        if (employeeId != null && s['employee_id']?.toString() == employeeId.toString()) return true;
+        final sRole = (s['employee_role'] ?? 'employee').toString().toLowerCase();
+        if (branchId != null && s['branch'] != null) {
+          return (sRole == 'employee' || sRole == 'leader') && s['branch'].toString() == branchId.toString();
+        }
+        return sRole == 'employee' || sRole == 'leader';
+      }).toList();
+    } else {
+      // Regular staff see only their own suggestions
+      if (employeeId != null) {
+        list = all.where((s) => s['employee_id']?.toString() == employeeId.toString()).toList();
+      } else {
+        list = all;
+      }
+    }
+
+    if (statusFilter == 'pending') {
+      list = list.where((s) => s['is_read'] != true).toList();
+    } else if (statusFilter == 'seen') {
+      list = list.where((s) => s['is_read'] == true).toList();
+    }
+
+    return list;
+  }
+
   Map<String, dynamic> addSuggestion(Map<String, dynamic> data) {
     final list = getSuggestions();
-    final int nextId = list.isEmpty ? 1 : list.length + 1;
+    final int nextId = list.isEmpty ? 1 : list.map((s) => (s['id'] as num?)?.toInt() ?? 0).reduce(max) + 1;
     final item = Map<String, dynamic>.from(data);
     item['id'] = nextId;
     item['is_read'] = false;
-    item['created_at'] = DateTime.now().toIso8601String();
+    item['is_anonymous'] = true; // Always anonymous
+    item['created_at'] = item['created_at'] ?? DateTime.now().toIso8601String();
     list.add(item);
     _box.write('suggestions', list);
+
+    // Notify routing:
+    // Strictly CEO and Managers (NEVER Leader or Employee)
+    final allEmployees = getEmployees();
+    final userRole = (item['employee_role'] ?? 'employee').toString().toLowerCase();
+    final userId = item['employee_id']?.toString() ?? '';
+
+    List<Map<String, dynamic>> recipients = [];
+    if (userRole == 'manager') {
+      // Notify CEO only
+      recipients = allEmployees.where((e) =>
+          e['status'] != 'inactive' &&
+          e['id']?.toString() != userId &&
+          (e['role']?.toString().toLowerCase() == 'ceo' || e['role']?.toString().toLowerCase() == 'admin')).toList();
+    } else {
+      // Notify CEO and Managers
+      recipients = allEmployees.where((e) =>
+          e['status'] != 'inactive' &&
+          e['id']?.toString() != userId &&
+          ['ceo', 'admin', 'manager'].contains(e['role']?.toString().toLowerCase())).toList();
+    }
+
+    final msgSnippet = (item['content'] ?? item['message'] ?? '').toString();
+    final preview = msgSnippet.length > 80 ? '${msgSnippet.substring(0, 80)}...' : msgSnippet;
+
+    for (final r in recipients) {
+      sendNotification(
+        recipientId: r['id'],
+        recipientUid: r['firebase_uid'],
+        title: 'New Suggestion Submitted',
+        message: 'Anonymous Suggestion: $preview',
+        notifType: 'suggestion',
+        refId: nextId.toString(),
+        senderName: 'Anonymous',
+      );
+    }
+
     return item;
   }
 
-  void markSuggestionRead(dynamic id) {
+  void markSuggestionRead(dynamic id, {String? readByName}) {
     final list = getSuggestions();
     final idx = list.indexWhere((s) => s['id'].toString() == id.toString());
     if (idx >= 0) {
       list[idx]['is_read'] = true;
+      if (readByName != null) list[idx]['read_by_name'] = readByName;
+      list[idx]['read_at'] = DateTime.now().toIso8601String();
       _box.write('suggestions', list);
     }
   }
 
-  // ==================== NOTIFICATIONS ====================
-  List<Map<String, dynamic>> getNotifications() {
+  bool deleteSuggestion(dynamic id) {
+    final list = getSuggestions();
+    final countBefore = list.length;
+    list.removeWhere((s) => s['id'].toString() == id.toString() && s['is_read'] != true);
+    if (list.length < countBefore) {
+      _box.write('suggestions', list);
+      return true;
+    }
+    return false;
+  }
+
+  // ==================== IN-APP NOTIFICATIONS ====================
+
+  Map<String, dynamic> sendNotification({
+    required dynamic recipientId,
+    String? recipientUid,
+    required String title,
+    required String message,
+    String notifType = 'general',
+    String refId = '',
+    String senderName = 'System',
+    String? senderProfileUrl,
+  }) {
+    final list = _box.read<List>('notifications') ?? [];
+    final int nextId = list.isEmpty ? 1 : list.map((n) => (n['id'] as num?)?.toInt() ?? 0).reduce(max) + 1;
+    final notif = {
+      'id': nextId,
+      'recipient_id': recipientId?.toString(),
+      'recipient_uid': recipientUid,
+      'title': title,
+      'message': message,
+      'notif_type': notifType,
+      'ref_id': refId,
+      'sender_name': senderName,
+      'sender_profile_url': senderProfileUrl,
+      'is_read': false,
+      'created_at': DateTime.now().toIso8601String(),
+    };
+    list.add(notif);
+    _box.write('notifications', list);
+    return notif;
+  }
+
+  List<Map<String, dynamic>> getNotifications({dynamic employeeId, String? firebaseUid}) {
     final raw = _box.read<List>('notifications') ?? [];
-    return raw.map((e) => Map<String, dynamic>.from(e)).toList();
+    var list = raw.map((e) => Map<String, dynamic>.from(e)).toList();
+
+    if (employeeId != null || (firebaseUid != null && firebaseUid.isNotEmpty)) {
+      list = list.where((n) {
+        final rId = n['recipient_id']?.toString();
+        final rUid = n['recipient_uid']?.toString();
+        // System wide notifications (null recipient) or targeted to user
+        if (rId == null && rUid == null) return true;
+        if (employeeId != null && rId == employeeId.toString()) return true;
+        if (firebaseUid != null && rUid == firebaseUid) return true;
+        return false;
+      }).toList();
+    }
+
+    return list;
   }
 
   void markNotificationRead(dynamic id) {
-    final list = getNotifications();
+    final list = _box.read<List>('notifications') ?? [];
     final idx = list.indexWhere((n) => n['id'].toString() == id.toString());
     if (idx >= 0) {
       list[idx]['is_read'] = true;
@@ -1293,11 +2055,27 @@ class LocalDatabaseService {
     }
   }
 
+  void markAllNotificationsReadForUser({dynamic employeeId, String? firebaseUid}) {
+    final list = _box.read<List>('notifications') ?? [];
+    for (var n in list) {
+      final rId = n['recipient_id']?.toString();
+      final rUid = n['recipient_uid']?.toString();
+      final forUser = (rId == null && rUid == null) ||
+          (employeeId != null && rId == employeeId.toString()) ||
+          (firebaseUid != null && rUid == firebaseUid);
+      if (forUser) {
+        n['is_read'] = true;
+      }
+    }
+    _box.write('notifications', list);
+  }
+
   void markAllNotificationsRead() {
-    final list = getNotifications();
+    final list = _box.read<List>('notifications') ?? [];
     for (var n in list) {
       n['is_read'] = true;
     }
     _box.write('notifications', list);
   }
 }
+

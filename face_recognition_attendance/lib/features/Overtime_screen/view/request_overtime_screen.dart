@@ -1,28 +1,15 @@
-import 'dart:typed_data';
-import 'package:face_recognition_attendance/core/utils/file_picker_helper.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
-import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
-import 'package:face_recognition_attendance/core/widgets/download_report_dialog.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/Overtime_screen/controller/overtime_controller.dart';
 import 'package:face_recognition_attendance/features/Overtime_screen/model/overtime_request.dart';
-import 'package:face_recognition_attendance/features/Overtime_screen/service/overtime_report_pdf.dart';
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Redesigned Apple-Style Overtime Screen featuring:
-/// 1. Month Allowance Card (September 2026, Quota Progress Bar, Hours Used/Remaining)
-/// 2. Segmented Control ("Request Overtime" and "History & Pending")
-/// 3. Apple-inspired Overtime Request Form (Date, From/To Interval, Duration Banner, Reason, Attachment)
-/// 4. Overtime History & Status List with PDF Report Download Option
+/// Redesigned Apple-Style Overtime Screen
 class RequestOvertimeScreen extends StatefulWidget {
-  const RequestOvertimeScreen({
-    super.key,
-    this.initialTab = 0,
-    this.editId,
-  });
+  const RequestOvertimeScreen({super.key, this.initialTab = 0, this.editId});
 
   final int initialTab;
   final String? editId;
@@ -39,11 +26,6 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
   late DateTime _date;
   late DateTime _fromTime;
   late DateTime _toTime;
-  bool _hasAttachment = false;
-  String? _attachmentName;
-  Uint8List? _attachmentBytes;
-  int? _attachmentSize;
-  String? _attachmentPath;
   String? _editId;
 
   bool get _isEditing => _editId != null;
@@ -55,8 +37,26 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
 
     final now = DateTime.now();
     _date = DateUtils.dateOnly(now);
-    _fromTime = DateTime(_date.year, _date.month, _date.day, 17, 0);
-    _toTime = DateTime(_date.year, _date.month, _date.day, 20, 0);
+    int sec2Hour = 17;
+    int sec2Min = 0;
+    if (Get.isRegistered<HomeController>()) {
+      final s2 = Get.find<HomeController>().session2SchedOut.value;
+      final parts = s2.split(':');
+      if (parts.length >= 2) {
+        sec2Hour = int.tryParse(parts[0]) ?? 17;
+        sec2Min = int.tryParse(parts[1]) ?? 0;
+      }
+    }
+    _fromTime = DateTime(_date.year, _date.month, _date.day, sec2Hour, sec2Min);
+    _toTime = DateTime(
+      _date.year,
+      _date.month,
+      _date.day,
+      (sec2Hour + 3) % 24,
+      sec2Min,
+    );
+
+    _controller.fetchRequests();
 
     final args = widget.editId ?? Get.arguments;
     if (args is String) {
@@ -66,11 +66,6 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         _date = existing.date;
         _fromTime = existing.fromTime;
         _toTime = existing.toTime;
-        _hasAttachment = existing.hasAttachment;
-        _attachmentName = existing.attachmentName;
-        _attachmentBytes = existing.attachmentBytes;
-        _attachmentSize = existing.attachmentSize;
-        _attachmentPath = existing.attachmentPath;
         _reasonController.text = existing.reason;
         _tabIndex = 0;
       }
@@ -92,13 +87,13 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
 
   String get _durationBadgeText {
     final minutes = _duration.inMinutes;
-    if (minutes <= 0) return '0 HOURS'.tr;
+    if (minutes <= 0) return '0 HOURS';
     final hours = minutes / 60.0;
     if (hours == hours.truncateToDouble()) {
       final h = hours.toInt();
-      return '$h ${h == 1 ? 'HOUR'.tr : 'HOURS'.tr}';
+      return '$h ${h == 1 ? 'HOUR' : 'HOURS'}';
     }
-    return '${hours.toStringAsFixed(1)} ${'HOURS'.tr}';
+    return '${hours.toStringAsFixed(1)} HOURS';
   }
 
   Future<void> _pickDate() async {
@@ -153,95 +148,39 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
     });
   }
 
-  Future<void> _downloadReport(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final period = await showDownloadReportDialog(context);
-    if (period == null) return;
-
-    final records = _controller.requestsIn(period);
-    if (records.isEmpty) {
-      RequestSnack.show(messenger, 'No overtime records for ${period.label}.');
-      return;
-    }
-
-    try {
-      await OvertimeReportPdf.share(requests: records, period: period);
-    } catch (_) {
-      RequestSnack.show(messenger, 'Could not create the PDF. Please try again.');
-    }
-  }
-
-  void _showHelpDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                'Overtime Guidelines'.tr,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: RequestColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'overtime_guidelines_body'.tr,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.6,
-                  color: RequestColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: RequestButton(
-                  label: 'Understood',
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _submit() {
+  Future<void> _submit() async {
     final messenger = ScaffoldMessenger.of(context);
     final reason = _reasonController.text.trim();
 
     if (reason.isEmpty) {
-      RequestSnack.show(messenger, 'Enter the reason for the overtime.');
+      RequestSnack.show(messenger, 'Please input reason.');
       return;
     }
     if (!_toTime.isAfter(_fromTime)) {
-      RequestSnack.show(messenger, 'To time must be after from time.');
+      RequestSnack.show(
+        messenger,
+        'To time must be after the section end time (${DateText.time(_fromTime)}).',
+      );
       return;
+    }
+
+    final now = DateTime.now();
+    final isToday = DateUtils.isSameDay(_date, now);
+    if (isToday) {
+      final nowTime = DateTime(
+        _date.year,
+        _date.month,
+        _date.day,
+        now.hour,
+        now.minute,
+      );
+      if (!_toTime.isAfter(nowTime)) {
+        RequestSnack.show(
+          messenger,
+          'To time must be later than the current time.',
+        );
+        return;
+      }
     }
 
     if (_isEditing) {
@@ -251,11 +190,7 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         fromTime: _fromTime,
         toTime: _toTime,
         reason: reason,
-        hasAttachment: _hasAttachment,
-        attachmentName: _attachmentName,
-        attachmentBytes: _attachmentBytes,
-        attachmentSize: _attachmentSize,
-        attachmentPath: _attachmentPath,
+        hasAttachment: false,
       );
 
       RequestSnack.show(
@@ -271,113 +206,41 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         });
       }
     } else {
-      _controller.addRequest(
+      final success = await _controller.addRequest(
         date: _date,
         fromTime: _fromTime,
         toTime: _toTime,
         reason: reason,
-        hasAttachment: _hasAttachment,
-        attachmentName: _attachmentName,
-        attachmentBytes: _attachmentBytes,
-        attachmentSize: _attachmentSize,
-        attachmentPath: _attachmentPath,
       );
-      RequestSnack.show(messenger, 'Overtime request submitted.');
-      _reasonController.clear();
-      setState(() {
-        _hasAttachment = false;
-        _attachmentName = null;
-        _attachmentBytes = null;
-        _attachmentSize = null;
-        _attachmentPath = null;
-        _tabIndex = 1;
-      });
-    }
-  }
-
-  Future<void> _pickAttachment() async {
-    try {
-      final file = await AppFilePicker.pickFile(
-        allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'webp'],
-      );
-      if (file != null) {
+      if (success) {
+        RequestSnack.show(messenger, 'Overtime request submitted.');
+        _reasonController.clear();
         setState(() {
-          _hasAttachment = true;
-          _attachmentName = file.name;
-          _attachmentBytes = file.bytes;
-          _attachmentSize = file.size;
-          _attachmentPath = file.path ?? file.name;
+          _tabIndex = 1;
         });
-        if (mounted) {
-          RequestSnack.show(
-            ScaffoldMessenger.of(context),
-            'Attached: ${file.name}',
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+      } else {
         RequestSnack.show(
-          ScaffoldMessenger.of(context),
-          'Could not select file: $e',
+          messenger,
+          'Failed to submit overtime request. Please try again.',
         );
       }
     }
   }
 
-  void _removeAttachment() {
-    setState(() {
-      _hasAttachment = false;
-      _attachmentName = null;
-      _attachmentBytes = null;
-      _attachmentSize = null;
-      _attachmentPath = null;
-    });
-    RequestSnack.show(
-      ScaffoldMessenger.of(context),
-      'Attachment removed.',
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return RequestScaffold(
-      title: 'Request Overtime',
-      backLabel: 'Requests',
-      actions: [
-        IconButton(
-          tooltip: 'Download PDF Report'.tr,
-          icon: const Icon(
-            FluentIcons.arrow_download_24_regular,
-            color: RequestColors.primary,
-          ),
-          onPressed: () => _downloadReport(context),
-        ),
-        TextButton(
-          onPressed: _showHelpDialog,
-          child: Text(
-            'Help'.tr,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: RequestColors.primary,
-            ),
-          ),
-        ),
-      ],
+      title: 'Overtime',
+      backLabel: 'Back',
+      actions: const [],
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Month Allowance Card (matches mockup)
-            _buildMonthAllowanceCard(),
-
-            const SizedBox(height: 20),
-
             // Segmented Control
             AppleSegmentedControl(
-              tabs: const ['Request Overtime', 'History & Pending'],
+              tabs: const ['Request Overtime', 'History'],
               selectedIndex: _tabIndex,
               onChanged: (index) => setState(() => _tabIndex = index),
             ),
@@ -392,111 +255,14 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
     );
   }
 
-  Widget _buildMonthAllowanceCard() {
-    return Obx(() {
-      // Calculate dynamic hours used
-      final totalApprovedHours = _controller.requests
-          .where((r) => r.status == OvertimeStatus.approved)
-          .fold<double>(0.0, (sum, r) => sum + r.duration.inMinutes / 60.0);
-
-      final displayHours = totalApprovedHours > 0
-          ? totalApprovedHours.toStringAsFixed(1)
-          : '14';
-      final usedVal = totalApprovedHours > 0 ? totalApprovedHours : 14.0;
-      final maxVal = 20.0;
-      final progress = (usedVal / maxVal).clamp(0.0, 1.0);
-      final remaining = (maxVal - usedVal).clamp(0.0, maxVal);
-
-      return Container(
-        padding: const EdgeInsets.all(18),
-        decoration: appleCardDecoration(radius: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'MONTH ALLOWANCE'.tr,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: RequestColors.textSecondary,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: RequestColors.primary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '$displayHours${'h of 20h Used'.tr}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: RequestColors.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              DateText.monthYear(DateTime.now()),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: RequestColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 14),
-            // Progress Bar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 8,
-                backgroundColor: const Color(0xFFE5E5EA),
-                valueColor: const AlwaysStoppedAnimation<Color>(RequestColors.primary),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${(progress * 100).toInt()}% ${'Quota Filled'.tr}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: RequestColors.textSecondary,
-                  ),
-                ),
-                Text(
-                  '${remaining.toStringAsFixed(1)} ${'hrs remaining'.tr}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: RequestColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    });
-  }
-
   Widget _buildRequestForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // DATE Section
-        Text(
-          'DATE'.tr,
-          style: const TextStyle(
+        const Text(
+          'DATE',
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: RequestColors.textSecondary,
@@ -505,8 +271,6 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         ),
         const SizedBox(height: 8),
         _OvertimeItemCard(
-          icon: FluentIcons.calendar_ltr_24_regular,
-          iconColor: RequestColors.primary,
           title: 'Selected Date',
           value: DateText.fullDate(_date),
           onTapChange: _pickDate,
@@ -514,10 +278,10 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
 
         const SizedBox(height: 18),
 
-        // SHIFT INTERVAL Section
-        Text(
-          'SHIFT INTERVAL'.tr,
-          style: const TextStyle(
+        // TIME Section
+        const Text(
+          'OVERTIME UNTIL',
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: RequestColors.textSecondary,
@@ -528,24 +292,10 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         Container(
           decoration: appleCardDecoration(radius: 14),
           clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              _IntervalRow(
-                icon: FluentIcons.clock_24_regular,
-                iconColor: RequestColors.gold,
-                title: 'From Time',
-                value: DateText.time(_fromTime),
-                onTapChange: () => _pickTime(true),
-              ),
-              const Divider(height: 1, indent: 56),
-              _IntervalRow(
-                icon: FluentIcons.clock_24_regular,
-                iconColor: RequestColors.primary,
-                title: 'To Time',
-                value: DateText.time(_toTime),
-                onTapChange: () => _pickTime(false),
-              ),
-            ],
+          child: _IntervalRow(
+            title: 'To Time',
+            value: DateText.time(_toTime),
+            onTapChange: () => _pickTime(false),
           ),
         ),
 
@@ -557,22 +307,15 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
           decoration: BoxDecoration(
             color: RequestColors.gold.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: RequestColors.gold.withValues(alpha: 0.25)),
+            border: Border.all(
+              color: RequestColors.gold.withValues(alpha: 0.25),
+            ),
           ),
           child: Row(
             children: [
-              const Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: Icon(
-                  FluentIcons.clock_24_regular,
-                  size: 22,
-                  color: RequestColors.gold,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Total Duration:'.tr,
-                style: const TextStyle(
+              const Text(
+                'Total Duration:',
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: RequestColors.textPrimary,
@@ -580,7 +323,10 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: RequestColors.gold.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(8),
@@ -604,9 +350,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'REASON FOR OVERTIME'.tr,
-              style: const TextStyle(
+            const Text(
+              'REASON FOR OVERTIME',
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: RequestColors.textSecondary,
@@ -635,16 +381,16 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
               fontSize: 15,
               color: RequestColors.textPrimary,
             ),
-            decoration: InputDecoration(
-              hintText: 'Please write your detailed reason here...'.tr,
-              hintStyle: const TextStyle(
+            decoration: const InputDecoration(
+              hintText: 'Please write your detailed reason here...',
+              hintStyle: TextStyle(
                 fontSize: 14,
                 color: RequestColors.textSecondary,
               ),
               filled: true,
               fillColor: Colors.white,
-              contentPadding: const EdgeInsets.all(16),
-              border: const OutlineInputBorder(
+              contentPadding: EdgeInsets.all(16),
+              border: OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(14)),
                 borderSide: BorderSide.none,
               ),
@@ -652,139 +398,6 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
             ),
           ),
         ),
-
-        const SizedBox(height: 16),
-
-        // SUPPORTING DOCUMENTS Section
-        Text(
-          'SUPPORTING DOCUMENTS'.tr,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: RequestColors.textSecondary,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (_hasAttachment && _attachmentName != null)
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: RequestColors.primary.withValues(alpha: 0.35),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: Icon(
-                    _attachmentName!.toLowerCase().endsWith('.pdf')
-                        ? FluentIcons.document_pdf_24_regular
-                        : (_attachmentName!.toLowerCase().endsWith('.png') ||
-                                _attachmentName!.toLowerCase().endsWith('.jpg') ||
-                                _attachmentName!.toLowerCase().endsWith('.jpeg') ||
-                                _attachmentName!.toLowerCase().endsWith('.webp'))
-                            ? FluentIcons.image_24_regular
-                            : FluentIcons.document_24_regular,
-                    color: RequestColors.primary,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _attachmentName!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: RequestColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _attachmentSize != null
-                            ? '${(_attachmentSize! / 1024).toStringAsFixed(1)} ${'KB • Tap Change to replace'.tr}'
-                            : 'Document Attached'.tr,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: RequestColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                TextButton(
-                  onPressed: _pickAttachment,
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    foregroundColor: RequestColors.primary,
-                  ),
-                  child: Text('Change'.tr, style: const TextStyle(fontWeight: FontWeight.w600)),
-                ),
-                IconButton(
-                  onPressed: _removeAttachment,
-                  icon: const Icon(FluentIcons.dismiss_circle_24_regular, size: 20, color: RequestColors.danger),
-                  visualDensity: VisualDensity.compact,
-                  tooltip: 'Remove'.tr,
-                ),
-              ],
-            ),
-          )
-        else
-          InkWell(
-            onTap: _pickAttachment,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: const Color(0xFFD0D0D5),
-                  style: BorderStyle.solid,
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    FluentIcons.arrow_upload_24_regular,
-                    size: 22,
-                    color: RequestColors.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      'Attach Work Log or Task Screenshot (PDF, JPG, PNG)'.tr,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: RequestColors.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
 
         const SizedBox(height: 24),
 
@@ -798,14 +411,10 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
 
         const SizedBox(height: 10),
 
-        Center(
+        const Center(
           child: Text(
-            'Requests are subject to manager approval within 24 hours.'.tr,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
-              color: RequestColors.textSecondary,
-            ),
+            'Requests are subject to manager approval within 24 hours.',
+            style: TextStyle(fontSize: 12, color: RequestColors.textSecondary),
           ),
         ),
       ],
@@ -818,92 +427,25 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
 
       return Column(
         children: [
-          // Download Report Banner Card
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: appleCardDecoration(radius: 14),
-            child: Row(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(right: 6),
-                  child: Icon(
-                    FluentIcons.document_pdf_24_regular,
-                    color: RequestColors.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Monthly Attendance Report',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: RequestColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Export overtime summary as PDF',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: RequestColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => _downloadReport(context),
-                  icon: const Icon(FluentIcons.arrow_download_24_regular, size: 16),
-                  label: const Text('Export'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: RequestColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
           if (items.isEmpty)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 20),
               alignment: Alignment.center,
               child: Column(
                 children: [
-                  const Icon(
-                    FluentIcons.history_24_regular,
-                    size: 36,
-                    color: RequestColors.gold,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No Overtime Requests'.tr,
-                    style: const TextStyle(
+                  const Text(
+                    'No Overtime Requests',
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
                       color: RequestColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    'Submitted overtime logs and approval updates will appear here.'.tr,
+                  const Text(
+                    'Submitted overtime logs and approval updates will appear here.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       color: RequestColors.textSecondary,
                     ),
@@ -933,15 +475,6 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                         children: [
                           Row(
                             children: [
-                              const Padding(
-                                padding: EdgeInsets.only(right: 6),
-                                child: Icon(
-                                  FluentIcons.calendar_ltr_24_regular,
-                                  size: 22,
-                                  color: RequestColors.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
                               Text(
                                 DateText.fullDate(req.date),
                                 style: const TextStyle(
@@ -954,12 +487,15 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: isPending
                                   ? RequestColors.gold.withValues(alpha: 0.15)
-                                  : RequestColors.approvedStatus
-                                      .withValues(alpha: 0.15),
+                                  : RequestColors.approvedStatus.withValues(
+                                      alpha: 0.15,
+                                    ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -968,8 +504,8 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: isPending
-                                  ? RequestColors.gold
-                                  : RequestColors.approvedStatus,
+                                    ? RequestColors.gold
+                                    : RequestColors.approvedStatus,
                               ),
                             ),
                           ),
@@ -983,7 +519,9 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF5F5F7),
                               borderRadius: BorderRadius.circular(6),
@@ -1032,10 +570,11 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                         children: [
                           if (isPending) ...[
                             TextButton(
-                              onPressed: () => _controller.cancelRequest(req.id),
-                              child: Text(
-                                'Cancel'.tr,
-                                style: const TextStyle(
+                              onPressed: () =>
+                                  _controller.cancelRequest(req.id),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
                                   fontSize: 13,
                                   color: RequestColors.danger,
                                   fontWeight: FontWeight.w600,
@@ -1050,7 +589,6 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                                   _date = req.date;
                                   _fromTime = req.fromTime;
                                   _toTime = req.toTime;
-                                  _hasAttachment = req.hasAttachment;
                                   _reasonController.text = req.reason;
                                   _tabIndex = 0;
                                 });
@@ -1060,14 +598,16 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 6),
+                                  horizontal: 14,
+                                  vertical: 6,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: Text(
-                                'Edit'.tr,
-                                style: const TextStyle(
+                              child: const Text(
+                                'Edit',
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1080,13 +620,13 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
                                 arguments: req.id,
                               ),
                               icon: const Icon(
-                                FluentIcons.arrow_right_24_regular,
+                                Icons.arrow_forward_rounded,
                                 size: 16,
                                 color: RequestColors.primary,
                               ),
-                              label: Text(
-                                'View Details'.tr,
-                                style: const TextStyle(
+                              label: const Text(
+                                'View Details',
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: RequestColors.primary,
@@ -1109,15 +649,11 @@ class _RequestOvertimeScreenState extends State<RequestOvertimeScreen> {
 
 class _OvertimeItemCard extends StatelessWidget {
   const _OvertimeItemCard({
-    required this.icon,
-    required this.iconColor,
     required this.title,
     required this.value,
     required this.onTapChange,
   });
 
-  final IconData icon;
-  final Color iconColor;
   final String title;
   final String value;
   final VoidCallback onTapChange;
@@ -1129,17 +665,12 @@ class _OvertimeItemCard extends StatelessWidget {
       decoration: appleCardDecoration(radius: 14),
       child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Icon(icon, size: 24, color: iconColor),
-          ),
-          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title.tr,
+                  title,
                   style: const TextStyle(
                     fontSize: 12,
                     color: RequestColors.textSecondary,
@@ -1166,15 +697,11 @@ class _OvertimeItemCard extends StatelessWidget {
 
 class _IntervalRow extends StatelessWidget {
   const _IntervalRow({
-    required this.icon,
-    required this.iconColor,
     required this.title,
     required this.value,
     required this.onTapChange,
   });
 
-  final IconData icon;
-  final Color iconColor;
   final String title;
   final String value;
   final VoidCallback onTapChange;
@@ -1185,17 +712,12 @@ class _IntervalRow extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Icon(icon, size: 24, color: iconColor),
-          ),
-          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title.tr,
+                  title,
                   style: const TextStyle(
                     fontSize: 12,
                     color: RequestColors.textSecondary,

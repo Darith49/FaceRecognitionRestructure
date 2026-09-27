@@ -122,36 +122,85 @@ class ApiService {
       return {'results': list, 'count': list.length};
     }
 
-    // 6. Requests (Leave, Overtime, Suggestions, Incoming)
+    // Current user helper
+    final currentUser = _auth.getCurrentUser();
+    final currentEmp = currentUser != null
+        ? (_db.getEmployeeByUid(currentUser.uid) ?? _db.getEmployeeByEmail(currentUser.email))
+        : null;
+    final currentRole = (currentEmp?['role'] ?? 'employee').toString().toLowerCase();
+    final filterEmpId = currentRole == 'employee' && currentEmp != null ? currentEmp['id'] : null;
+
+    // 6. Requests (Leave, Overtime, Permissions, Suggestions, Incoming)
     if (clean.contains('/requests/leave/')) {
-      final list = _db.getLeaves();
-      return {'results': list, 'count': list.length};
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      if (parts.length >= 3 && int.tryParse(parts[2]) != null) {
+        final id = parts[2];
+        final item = _db.getLeaveById(id);
+        return item ?? {'error': 'Leave request not found'};
+      }
+      final list = _db.getLeaves(employeeId: filterEmpId);
+      return list;
     }
+
     if (clean.contains('/requests/overtime/')) {
-      final list = _db.getOvertimes();
-      return {'results': list, 'count': list.length};
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      if (parts.length >= 3 && int.tryParse(parts[2]) != null) {
+        final id = parts[2];
+        final item = _db.getOvertimeById(id);
+        return item ?? {'error': 'Overtime request not found'};
+      }
+      final list = _db.getOvertimes(employeeId: filterEmpId);
+      return list;
     }
-    if (clean.contains('/requests/suggestions/')) {
-      final list = _db.getSuggestions();
-      return {'results': list, 'count': list.length};
-    }
-    if (clean.contains('/requests/incoming/')) {
-      final leaves = _db.getLeaves().where((l) => l['status'] == 'pending').toList();
-      final overtimes = _db.getOvertimes().where((o) => o['status'] == 'pending').toList();
-      return {
-        'leaves': leaves,
-        'overtimes': overtimes,
-        'count': leaves.length + overtimes.length,
-      };
-    }
+
     if (clean.contains('/requests/permissions/')) {
-      return {'results': [], 'count': 0};
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      if (parts.length >= 3 && int.tryParse(parts[2]) != null) {
+        final id = parts[2];
+        final item = _db.getPermissionById(id);
+        return item ?? {'error': 'Permission request not found'};
+      }
+      final list = _db.getPermissions(employeeId: filterEmpId);
+      return list;
+    }
+
+    if (clean.contains('/requests/suggestions/')) {
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      if (parts.length >= 3 && int.tryParse(parts[2]) != null) {
+        final id = parts[2];
+        final item = _db.getSuggestionById(id);
+        return item ?? {'error': 'Suggestion not found'};
+      }
+      final list = _db.getSuggestionsForRole(
+        currentRole,
+        employeeId: currentEmp?['id'],
+        branchId: currentEmp?['branch'],
+        statusFilter: queryParams?['status']?.toString(),
+      );
+      return list;
+    }
+
+    if (clean.contains('/requests/incoming/')) {
+      return _db.getIncomingRequests(
+        role: currentRole,
+        employeeId: currentEmp?['id'],
+        branchId: currentEmp?['branch'],
+        departmentId: currentEmp?['department'],
+      );
     }
 
     // 7. Notifications
     if (clean.contains('/notifications/')) {
-      final list = _db.getNotifications();
-      return {'results': list, 'count': list.length};
+      final list = _db.getNotifications(
+        employeeId: currentEmp?['id'],
+        firebaseUid: currentUser?.uid,
+      );
+      final unread = list.where((n) => n['is_read'] != true).length;
+      return {
+        'results': list,
+        'unread_count': unread,
+        'count': list.length,
+      };
     }
 
     return {'results': []};
@@ -161,6 +210,11 @@ class ApiService {
     await _db.init();
     final clean = endpoint.toLowerCase();
     final data = body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{};
+    final currentUser = _auth.getCurrentUser();
+    final currentEmp = currentUser != null
+        ? (_db.getEmployeeByUid(currentUser.uid) ?? _db.getEmployeeByEmail(currentUser.email))
+        : null;
+    final currentRole = (currentEmp?['role'] ?? 'employee').toString().toLowerCase();
 
     // Employees
     if (clean.contains('/employees/') && clean.contains('/resend-invitation/')) {
@@ -180,31 +234,140 @@ class ApiService {
       return _db.saveBranch(data);
     }
 
-    // Requests
+    // Reviews (Leave, Overtime, Permission)
+    if (clean.contains('/requests/leave/') && clean.contains('/review/')) {
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      final id = parts.length >= 3 ? parts[2] : '';
+      final leave = _db.getLeaveById(id);
+      if (leave == null) return {'error': 'Leave request not found'};
+      final reqRole = (leave['employee_role'] ?? 'employee').toString();
+      if (!_db.canUserReviewRequester(currentRole, reqRole)) {
+        return {'error': 'You do not have permission to review this request'};
+      }
+      final updated = _db.reviewLeave(
+        id,
+        status: data['status'] ?? 'approved',
+        reviewerName: currentEmp?['fullname'] ?? 'Supervisor',
+        reviewerRole: currentRole,
+        reviewNotes: data['review_notes']?.toString(),
+      );
+      return updated ?? {'error': 'Could not update leave'};
+    }
+
+    if (clean.contains('/requests/overtime/') && clean.contains('/review/')) {
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      final id = parts.length >= 3 ? parts[2] : '';
+      final ot = _db.getOvertimeById(id);
+      if (ot == null) return {'error': 'Overtime request not found'};
+      final reqRole = (ot['employee_role'] ?? 'employee').toString();
+      if (!_db.canUserReviewRequester(currentRole, reqRole)) {
+        return {'error': 'You do not have permission to review this request'};
+      }
+      final updated = _db.reviewOvertime(
+        id,
+        status: data['status'] ?? 'approved',
+        reviewerName: currentEmp?['fullname'] ?? 'Supervisor',
+        reviewerRole: currentRole,
+        reviewNotes: data['review_notes']?.toString(),
+      );
+      return updated ?? {'error': 'Could not update overtime'};
+    }
+
+    if (clean.contains('/requests/permissions/') && clean.contains('/review/')) {
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      final id = parts.length >= 3 ? parts[2] : '';
+      final perm = _db.getPermissionById(id);
+      if (perm == null) return {'error': 'Permission request not found'};
+      final reqRole = (perm['employee_role'] ?? 'employee').toString();
+      if (!_db.canUserReviewRequester(currentRole, reqRole)) {
+        return {'error': 'You do not have permission to review this request'};
+      }
+      final updated = _db.reviewPermission(
+        id,
+        status: data['status'] ?? 'approved',
+        reviewerName: currentEmp?['fullname'] ?? 'Supervisor',
+        reviewerRole: currentRole,
+        reviewNotes: data['review_notes']?.toString(),
+      );
+      return updated ?? {'error': 'Could not update permission'};
+    }
+
+    // Creating Requests
     if (clean.contains('/requests/leave/')) {
+      if (currentEmp != null) {
+        data['employee_id'] ??= currentEmp['id'];
+        data['employee_name'] ??= currentEmp['fullname'];
+        data['employee_code'] ??= currentEmp['employee_id'];
+        data['employee_id_code'] ??= currentEmp['employee_id'];
+        data['employee_role'] ??= currentEmp['role'];
+        data['employee_uid'] ??= currentEmp['firebase_uid'];
+        data['employee_email'] ??= currentEmp['email'];
+        data['employee_profile_url'] ??= currentEmp['profile_picture'];
+        data['branch'] ??= currentEmp['branch'];
+        data['department'] ??= currentEmp['department'];
+      }
       return _db.addLeave(data);
     }
+
     if (clean.contains('/requests/overtime/')) {
+      if (currentEmp != null) {
+        data['employee_id'] ??= currentEmp['id'];
+        data['employee_name'] ??= currentEmp['fullname'];
+        data['employee_code'] ??= currentEmp['employee_id'];
+        data['employee_id_code'] ??= currentEmp['employee_id'];
+        data['employee_role'] ??= currentEmp['role'];
+        data['employee_uid'] ??= currentEmp['firebase_uid'];
+        data['employee_email'] ??= currentEmp['email'];
+        data['employee_profile_url'] ??= currentEmp['profile_picture'];
+        data['branch'] ??= currentEmp['branch'];
+        data['department'] ??= currentEmp['department'];
+      }
       return _db.addOvertime(data);
     }
-    if (clean.contains('/requests/suggestions/')) {
-      return _db.addSuggestion(data);
-    }
-    if (clean.contains('/requests/incoming/')) {
-      return {'status': 'processed'};
-    }
+
     if (clean.contains('/requests/permissions/')) {
-      return {'id': DateTime.now().millisecondsSinceEpoch, ...data};
+      if (currentEmp != null) {
+        data['employee_id'] ??= currentEmp['id'];
+        data['employee_name'] ??= currentEmp['fullname'];
+        data['employee_code'] ??= currentEmp['employee_id'];
+        data['employee_id_code'] ??= currentEmp['employee_id'];
+        data['employee_role'] ??= currentEmp['role'];
+        data['employee_uid'] ??= currentEmp['firebase_uid'];
+        data['employee_email'] ??= currentEmp['email'];
+        data['employee_profile_url'] ??= currentEmp['profile_picture'];
+        data['branch'] ??= currentEmp['branch'];
+        data['department'] ??= currentEmp['department'];
+      }
+      return _db.addPermission(data);
+    }
+
+    if (clean.contains('/requests/suggestions/') && clean.contains('/read/')) {
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      final id = parts.length >= 3 ? parts[2] : 1;
+      _db.markSuggestionRead(id, readByName: currentEmp?['fullname']);
+      return {'status': 'ok'};
+    }
+
+    if (clean.contains('/requests/suggestions/')) {
+      if (currentEmp != null) {
+        data['employee_id'] ??= currentEmp['id'];
+        data['employee_role'] ??= currentEmp['role'];
+        data['branch'] ??= currentEmp['branch'];
+      }
+      return _db.addSuggestion(data);
     }
 
     // Notifications
     if (clean.contains('/notifications/mark-all-read/')) {
-      _db.markAllNotificationsRead();
+      _db.markAllNotificationsReadForUser(
+        employeeId: currentEmp?['id'],
+        firebaseUid: currentUser?.uid,
+      );
       return {'status': 'ok'};
     }
     if (clean.contains('/notifications/') && clean.contains('/read/')) {
-      final parts = endpoint.split('/');
-      final id = parts.length > 2 ? parts[2] : null;
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      final id = parts.length >= 2 ? parts[1] : null;
       if (id != null) _db.markNotificationRead(id);
       return {'status': 'ok'};
     }
@@ -259,6 +422,16 @@ class ApiService {
       return _db.updateLeave(id, data);
     }
 
+    if (clean.contains('/requests/overtime/')) {
+      final id = parts.length >= 3 ? parts[2] : 1;
+      return _db.updateOvertime(id, data);
+    }
+
+    if (clean.contains('/requests/permissions/')) {
+      final id = parts.length >= 3 ? parts[2] : 1;
+      return _db.updatePermission(id, data);
+    }
+
     if (clean.contains('/requests/suggestions/') && clean.contains('/read/')) {
       final id = parts.length >= 3 ? parts[2] : 1;
       _db.markSuggestionRead(id);
@@ -300,6 +473,18 @@ class ApiService {
     if (clean.contains('/requests/overtime/')) {
       final id = parts.length >= 3 ? parts[2] : null;
       if (id != null) _db.deleteOvertime(id);
+      return {'status': 'deleted'};
+    }
+
+    if (clean.contains('/requests/permissions/')) {
+      final id = parts.length >= 3 ? parts[2] : null;
+      if (id != null) _db.deletePermission(id);
+      return {'status': 'deleted'};
+    }
+
+    if (clean.contains('/requests/suggestions/')) {
+      final id = parts.length >= 3 ? parts[2] : null;
+      if (id != null) _db.deleteSuggestion(id);
       return {'status': 'deleted'};
     }
 

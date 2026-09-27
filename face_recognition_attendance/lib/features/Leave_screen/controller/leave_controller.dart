@@ -9,6 +9,7 @@ class LeaveController extends GetxController {
   final ApiService _apiService = ApiService();
   final RxList<LeaveRequest> requests = <LeaveRequest>[].obs;
   final RxBool isLoading = false.obs;
+  final RxString errorMessage = ''.obs;
 
   String? _ownerUid;
 
@@ -79,6 +80,7 @@ class LeaveController extends GetxController {
     int? attachmentSize,
     String? attachmentPath,
   }) async {
+    errorMessage.value = '';
     try {
       final fromStr =
           "${fromDate.year.toString().padLeft(4, '0')}-${fromDate.month.toString().padLeft(2, '0')}-${fromDate.day.toString().padLeft(2, '0')}";
@@ -114,6 +116,7 @@ class LeaveController extends GetxController {
       return true;
     } catch (e) {
       debugPrint('Error adding leave request: $e');
+      errorMessage.value = e is ApiException ? e.message : e.toString();
       return false;
     }
   }
@@ -140,8 +143,10 @@ class LeaveController extends GetxController {
     int? attachmentSize,
     String? attachmentPath,
   }) async {
+    errorMessage.value = '';
     final index = requests.indexWhere((r) => r.id == id);
     if (index == -1 || requests[index].status != LeaveStatus.pending) {
+      errorMessage.value = 'Request not found or no longer pending.';
       return false;
     }
 
@@ -169,17 +174,22 @@ class LeaveController extends GetxController {
       return true;
     } catch (e) {
       debugPrint('Error updating leave request: $e');
+      errorMessage.value = e is ApiException ? e.message : e.toString();
       return false;
     }
   }
 
-  Future<void> cancelRequest(String id) async {
+  Future<bool> cancelRequest(String id) async {
+    errorMessage.value = '';
     try {
       await _apiService.delete('/requests/leave/$id/');
+      requests.removeWhere((r) => r.id == id && r.status == LeaveStatus.pending);
+      await fetchRequests();
+      return true;
     } catch (e) {
       debugPrint('Error deleting leave request: $e');
+      errorMessage.value = e is ApiException ? e.message : e.toString();
+      return false;
     }
-    requests.removeWhere((r) => r.id == id && r.status == LeaveStatus.pending);
-    await fetchRequests();
   }
 }

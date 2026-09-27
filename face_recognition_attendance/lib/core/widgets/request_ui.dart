@@ -20,6 +20,8 @@ class RequestColors {
   static const Color approvedBackground = Color(0xFFD4EDDA);
   static const Color approvedText = Color(0xFF0B3D1E);
   static const Color approvedStatus = Color(0xFF34C759);  // Apple Green
+  static const Color rejectedBackground = Color(0xFFF8D7DA);
+  static const Color rejectedText = Color(0xFF721C24);
   static const Color gold = Color(0xFFFF9500);            // Apple Amber
   static const Color teal = Color(0xFF3E5C76);
 }

@@ -1,11 +1,13 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/Suggestion_screen/controller/suggestion_controller.dart';
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:face_recognition_attendance/features/Suggestion_screen/model/suggestion.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// "Suggestion Box": form with category chips, text area, anonymous toggle.
+/// "Suggestion Box":
+/// - Tab 0: Submit Feedback (no categories, no anonymous toggle card, simple text with "Your identity will not be attached.")
+/// - Tab 1: History & Status (inline on same screen with All / Pending / Seen filters)
 class SuggestionScreen extends StatefulWidget {
   const SuggestionScreen({super.key});
 
@@ -16,16 +18,14 @@ class SuggestionScreen extends StatefulWidget {
 class _SuggestionScreenState extends State<SuggestionScreen> {
   final SuggestionController _controller = Get.find<SuggestionController>();
   final TextEditingController _messageController = TextEditingController();
-  int _selectedCategory = 0;
-  bool _anonymous = false;
   int _tabIndex = 0;
+  int _historyFilter = 0; // 0: All, 1: Pending, 2: Seen
 
-  static const _categories = [
-    'Workplace & Equipment',
-    'Shift Schedule',
-    'Team Culture',
-    'Other',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _controller.fetchSuggestions();
+  }
 
   @override
   void dispose() {
@@ -33,19 +33,27 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final messenger = ScaffoldMessenger.of(context);
     final message = _messageController.text.trim();
     if (message.isEmpty) {
-      RequestSnack.show(messenger, 'Write your suggestion first.');
+      RequestSnack.show(messenger, 'Please input your suggestion.');
       return;
     }
 
-    _controller.submit(message);
-    _messageController.clear();
-
-    Get.offNamed(AppRoutes.suggestionStatus);
-    RequestSnack.show(messenger, 'Your suggestion was submitted.');
+    final success = await _controller.submit(message);
+    if (success) {
+      _messageController.clear();
+      setState(() {
+        _tabIndex = 1;
+      });
+      RequestSnack.show(messenger, 'Your suggestion was submitted.');
+    } else {
+      RequestSnack.show(
+        messenger,
+        'Failed to submit suggestion. Please try again.',
+      );
+    }
   }
 
   @override
@@ -53,224 +61,305 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     return RequestScaffold(
       title: 'Suggestion Box',
       backLabel: 'Requests',
-      actions: [
-        IconButton(
-          tooltip: 'Suggestion Status',
-          icon: const Icon(
-            FluentIcons.history_24_regular,
-            color: RequestColors.textSecondary,
-          ),
-          onPressed: () => Get.toNamed(AppRoutes.suggestionStatus),
-        ),
-      ],
+      actions: const [],
       body: Column(
         children: [
           // Segmented control
           Padding(
-            padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: AppleSegmentedControl(
               tabs: const ['Submit Feedback', 'History & Status'],
               selectedIndex: _tabIndex,
               onChanged: (i) {
+                setState(() => _tabIndex = i);
                 if (i == 1) {
-                  Get.toNamed(AppRoutes.suggestionStatus);
-                } else {
-                  setState(() => _tabIndex = i);
+                  _controller.fetchSuggestions();
                 }
               },
             ),
           ),
 
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Anything we can do better?'.tr,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: RequestColors.textPrimary,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Even the smallest suggestion can help us improve together'.tr,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: RequestColors.textSecondary,
-                    ),
-                  ),
+            child: _tabIndex == 0
+                ? _buildSubmitForm()
+                : _buildHistoryAndStatus(),
+          ),
+        ],
+      ),
+    );
+  }
 
-                  const SizedBox(height: 20),
+  Widget _buildSubmitForm() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Anything we can do better?',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: RequestColors.textPrimary,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Even the smallest suggestion can help us improve together',
+            style: TextStyle(fontSize: 14, color: RequestColors.textSecondary),
+          ),
 
-                  // Category section
-                  Text(
-                    'CATEGORY'.tr,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: RequestColors.textSecondary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: List.generate(_categories.length, (i) {
-                      final selected = i == _selectedCategory;
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedCategory = i),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? RequestColors.primary
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: selected
-                                ? null
-                                : Border.all(color: const Color(0xFFE5E5EA)),
-                          ),
-                          child: Text(
-                            _categories[i].tr,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: selected
-                                  ? Colors.white
-                                  : RequestColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
+          const SizedBox(height: 24),
 
-                  const SizedBox(height: 20),
-
-                  // Your Suggestion
-                  Text(
-                    'YOUR SUGGESTION'.tr,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: RequestColors.textSecondary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: appleCardDecoration(radius: 14),
-                    child: TextField(
-                      controller: _messageController,
-                      minLines: 6,
-                      maxLines: 8,
-                      maxLength: 500,
-                      onChanged: (_) => setState(() {}),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: RequestColors.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Share your thoughts, suggestions, or concerns...'.tr,
-                        hintStyle: const TextStyle(
-                          fontSize: 15,
-                          color: RequestColors.textSecondary,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.all(16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        counterText: '',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Constructive feedback is shared directly with ops'.tr,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: RequestColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '${_messageController.text.length} / 500',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: RequestColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Anonymous toggle
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: appleCardDecoration(radius: 14),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Submit anonymously'.tr,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: RequestColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Your identity will not be attached'.tr,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: RequestColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch.adaptive(
-                          value: _anonymous,
-                          onChanged: (v) => setState(() => _anonymous = v),
-                          activeTrackColor: RequestColors.primary,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  RequestButton(
-                    label: 'Submit Feedback',
-                    icon: FluentIcons.arrow_right_24_regular,
-                    onPressed: _submit,
-                  ),
-
-                  const SizedBox(height: 16),
-                ],
+          // Your Suggestion
+          const Text(
+            'YOUR SUGGESTION',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: RequestColors.textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: appleCardDecoration(radius: 14),
+            child: TextField(
+              controller: _messageController,
+              minLines: 6,
+              maxLines: 8,
+              maxLength: 500,
+              onChanged: (_) => setState(() {}),
+              style: const TextStyle(
+                fontSize: 15,
+                color: RequestColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Share your thoughts, suggestions, or concerns...',
+                hintStyle: const TextStyle(
+                  fontSize: 15,
+                  color: RequestColors.textSecondary,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.all(16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                counterText: '',
               ),
             ),
           ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '${_messageController.text.length} / 500',
+              style: const TextStyle(
+                fontSize: 12,
+                color: RequestColors.textSecondary,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          RequestButton(
+            label: 'Submit Feedback',
+            icon: Icons.arrow_forward_rounded,
+            onPressed: _submit,
+          ),
+
+          const SizedBox(height: 10),
+
+          const Center(
+            child: Text(
+              'Your identity will not be attached.',
+              style: TextStyle(
+                fontSize: 13,
+                color: RequestColors.textSecondary,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryAndStatus() {
+    return Obx(() {
+      final all = _controller.suggestions;
+      final items = _historyFilter == 1
+          ? all.where((s) => s.isPending).toList()
+          : (_historyFilter == 2 ? all.where((s) => s.isSeen).toList() : all);
+
+      return Column(
+        children: [
+          // Filter Chips (All, Pending, Seen)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Row(
+              children: [
+                _buildFilterChip('All', 0, all.length),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  'Pending',
+                  1,
+                  all.where((s) => s.isPending).length,
+                ),
+                const SizedBox(width: 8),
+                _buildFilterChip('Seen', 2, all.where((s) => s.isSeen).length),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: items.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline_rounded,
+                          size: 48,
+                          color: RequestColors.textSecondary.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'No suggestions yet',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: RequestColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return _SuggestionCard(
+                        suggestion: item,
+                        onTap: () => Get.toNamed(
+                          AppRoutes.suggestionDetail,
+                          arguments: item.id,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildFilterChip(String label, int index, int count) {
+    final isSelected = _historyFilter == index;
+    return GestureDetector(
+      onTap: () => setState(() => _historyFilter = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? RequestColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? RequestColors.primary : const Color(0xFFE5E5EA),
+          ),
+        ),
+        child: Text(
+          '$label ($count)',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : RequestColors.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SuggestionCard extends StatelessWidget {
+  const _SuggestionCard({required this.suggestion, required this.onTap});
+
+  final Suggestion suggestion;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = suggestion.isPending;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${suggestion.dateLabel} • ${suggestion.timeLabel}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: RequestColors.textSecondary,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isPending
+                          ? RequestColors.pendingBackground
+                          : RequestColors.approvedBackground,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      isPending ? 'Pending' : 'Seen',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: isPending
+                            ? RequestColors.pendingText
+                            : RequestColors.approvedText,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                suggestion.message,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.4,
+                  color: RequestColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

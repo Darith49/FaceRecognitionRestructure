@@ -16,6 +16,15 @@ class NotificationController extends GetxController {
     fetchNotifications();
   }
 
+  void _sortNotifications() {
+    notifications.sort((a, b) {
+      if (a.isRead != b.isRead) {
+        return a.isRead ? 1 : -1; // unread first
+      }
+      return b.createdAt.compareTo(a.createdAt);
+    });
+  }
+
   Future<void> fetchNotifications({bool background = false}) async {
     try {
       if (!background) isLoading.value = true;
@@ -24,9 +33,12 @@ class NotificationController extends GetxController {
         unreadCount.value = (res['unread_count'] as num?)?.toInt() ?? 0;
         if (res['results'] is List) {
           final list = (res['results'] as List)
-              .map((e) => NotificationItem.fromJson(Map<String, dynamic>.from(e)))
+              .map(
+                (e) => NotificationItem.fromJson(Map<String, dynamic>.from(e)),
+              )
               .toList();
           notifications.assignAll(list);
+          _sortNotifications();
         }
       }
     } catch (e) {
@@ -43,6 +55,7 @@ class NotificationController extends GetxController {
       if (idx != -1 && !notifications[idx].isRead) {
         notifications[idx] = notifications[idx].copyWith(isRead: true);
         if (unreadCount.value > 0) unreadCount.value--;
+        _sortNotifications();
       }
     } catch (e) {
       debugPrint('Error marking notification read: $e');
@@ -56,6 +69,7 @@ class NotificationController extends GetxController {
       notifications.assignAll(
         notifications.map((n) => n.copyWith(isRead: true)).toList(),
       );
+      _sortNotifications();
     } catch (e) {
       debugPrint('Error marking all notifications read: $e');
     }

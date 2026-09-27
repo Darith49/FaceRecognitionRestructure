@@ -19,85 +19,49 @@ class SuggestionDetailScreen extends StatefulWidget {
 
 class _SuggestionDetailScreenState extends State<SuggestionDetailScreen> {
   final SuggestionController _controller = Get.find<SuggestionController>();
-  final TextEditingController _messageController = TextEditingController();
-  late final String _id = Get.arguments as String;
-
-  bool _editing = false;
+  String _id = '';
 
   @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
-  }
-
-  void _startEdit(Suggestion suggestion) {
-    _messageController.text = suggestion.message;
-    setState(() => _editing = true);
-  }
-
-  void _cancelEdit() {
-    _messageController.clear();
-    setState(() => _editing = false);
-  }
-
-  void _saveEdit() {
-    final messenger = ScaffoldMessenger.of(context);
-    final message = _messageController.text.trim();
-    if (message.isEmpty) {
-      RequestSnack.show(messenger, 'Write your suggestion first.');
-      return;
+  void initState() {
+    super.initState();
+    final args = Get.arguments;
+    if (args is String) {
+      _id = args;
+    } else if (args is num) {
+      _id = args.toString();
+    } else if (args is Map && args['id'] != null) {
+      _id = args['id'].toString();
     }
-
-    final updated = _controller.updateMessage(_id, message);
-    _messageController.clear();
-    setState(() => _editing = false);
-    RequestSnack.show(
-      messenger,
-      updated
-          ? 'Your suggestion was updated.'
-          : 'This suggestion was already seen, so it cannot be edited.',
-    );
+    if (_controller.findById(_id) == null) {
+      _controller.fetchSuggestions();
+    }
   }
 
-  Future<void> _delete() async {
-    final messenger = ScaffoldMessenger.of(context);
-    if (!await confirmDeleteSuggestion(context)) return;
-
-    final deleted = _controller.delete(_id);
-    if (deleted) Get.back();
-    RequestSnack.show(
-      messenger,
-      deleted
-          ? 'Suggestion deleted.'
-          : 'This suggestion was already seen, so it cannot be deleted.',
-    );
-  }
-
-  // TODO: replace with the real admin/manager review flow.
+  // Admin/manager review flow: mark suggestion as seen
   Future<void> _confirmMarkSeen() async {
     final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Mark as seen?'.tr),
-        content: Text(
-          'The employee will no longer be able to edit this suggestion.'.tr,
+        title: const Text('Mark as seen?'),
+        content: const Text(
+          'Mark this suggestion as reviewed and seen by management.',
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: Text('Cancel'.tr),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: Text('Mark as seen'.tr),
+            child: const Text('Mark as seen'),
           ),
         ],
       ),
     );
 
     if (confirmed == true) {
-      _controller.markSeen(_id);
+      await _controller.markSeen(_id);
       RequestSnack.show(messenger, 'Suggestion marked as seen.');
     }
   }
@@ -109,11 +73,17 @@ class _SuggestionDetailScreenState extends State<SuggestionDetailScreen> {
       body: Obx(() {
         final suggestion = _controller.findById(_id);
 
-        // Deleted: the page is closing, draw nothing for that moment.
-        if (suggestion == null) return const SizedBox.shrink();
-
-        // It turned "Seen" while the employee was typing: drop back to read-only.
-        final editing = _editing && suggestion.isPending;
+        if (suggestion == null) {
+          if (_controller.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return const Center(
+            child: Text(
+              'This suggestion could not be found.',
+              style: TextStyle(color: RequestColors.textSecondary),
+            ),
+          );
+        }
 
         return Padding(
           padding: const EdgeInsets.all(16),
@@ -123,13 +93,9 @@ class _SuggestionDetailScreenState extends State<SuggestionDetailScreen> {
               _buildHeader(suggestion),
               const SizedBox(height: 16),
               const RequestLabel('Your Message'),
-              Expanded(
-                child: editing
-                    ? _buildEditor()
-                    : _buildMessage(suggestion.message),
-              ),
+              Expanded(child: _buildMessage(suggestion.message)),
               const SizedBox(height: 16),
-              ..._buildActions(suggestion, editing),
+              ..._buildActions(suggestion),
             ],
           ),
         );
@@ -187,77 +153,21 @@ class _SuggestionDetailScreenState extends State<SuggestionDetailScreen> {
       child: SingleChildScrollView(
         child: Text(
           message,
-          style: const TextStyle(fontSize: 14, color: RequestColors.textPrimary),
+          style: const TextStyle(
+            fontSize: 14,
+            color: RequestColors.textPrimary,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildEditor() {
-    return TextField(
-      controller: _messageController,
-      autofocus: true,
-      expands: true,
-      minLines: null,
-      maxLines: null,
-      textAlignVertical: TextAlignVertical.top,
-      style: const TextStyle(fontSize: 14, color: RequestColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: 'Your Message'.tr,
-        hintStyle: const TextStyle(
-          fontSize: 14,
-          color: RequestColors.textSecondary,
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.all(16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildActions(Suggestion suggestion, bool editing) {
-    if (editing) {
+  List<Widget> _buildActions(Suggestion suggestion) {
+    if (suggestion.isPending && _controller.canReview) {
       return [
-        RequestButton(label: 'Update', onPressed: _saveEdit),
-        const SizedBox(height: 10),
-        RequestButton(label: 'Cancel', filled: false, onPressed: _cancelEdit),
+        RequestButton(label: 'Mark as seen', onPressed: _confirmMarkSeen),
       ];
     }
-
-    // Seen: read-only, no actions for the employee.
-    if (suggestion.isSeen) return const [];
-
-    return [
-      Row(
-        children: [
-          Expanded(
-            child: RequestButton(
-              label: 'Delete',
-              color: const Color(0xFFD9531E),
-              onPressed: _delete,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: RequestButton(
-              label: 'Edit',
-              onPressed: () => _startEdit(suggestion),
-            ),
-          ),
-        ],
-      ),
-      if (_controller.canReview) ...[
-        const SizedBox(height: 10),
-        RequestButton(
-          label: 'Mark as seen',
-          filled: false,
-          onPressed: _confirmMarkSeen,
-        ),
-      ],
-    ];
+    return const [];
   }
 }

@@ -62,6 +62,11 @@ class PermissionController extends GetxController {
     return requests.where((request) => request.status == status).toList();
   }
 
+  PermissionRequest? findById(String id) {
+    final index = requests.indexWhere((r) => r.id == id);
+    return index == -1 ? null : requests[index];
+  }
+
   bool _slotTaken(DateTime date, String schedule, {String? excludeId}) {
     final day = DateText.ymd(date);
     return requests.any(
@@ -88,6 +93,41 @@ class PermissionController extends GetxController {
   }
 
   void clearDrafts() => draftSessions.clear();
+
+  Future<bool> submitPermission({
+    required DateTime date,
+    required String schedule,
+    required String reason,
+  }) async {
+    final dateStr =
+        "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    int sessionNum = 1;
+    if (schedule.contains('2') ||
+        schedule.contains('13:') ||
+        schedule.contains('14:')) {
+      sessionNum = 2;
+    }
+
+    try {
+      isLoading.value = true;
+      await _apiService.post(
+        '/requests/permissions/',
+        body: {
+          'date': dateStr,
+          'session': sessionNum,
+          'schedule_time': schedule,
+          'reason': reason,
+        },
+      );
+      await fetchRequests();
+      return true;
+    } catch (e) {
+      debugPrint('Error creating permission request: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   Future<int> submitDraftSessions() async {
     final count = draftSessions.length;

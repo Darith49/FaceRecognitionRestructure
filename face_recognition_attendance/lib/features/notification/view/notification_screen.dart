@@ -1,7 +1,7 @@
-import 'package:face_recognition_attendance/config/theme/app_colors.dart';
+import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -11,55 +11,41 @@ class NotificationScreen extends GetView<NotificationController> {
   @override
   NotificationController get controller =>
       Get.isRegistered<NotificationController>()
-          ? Get.find<NotificationController>()
-          : Get.put(NotificationController());
-
-  IconData _iconForType(String type) {
-    if (type.contains('leave')) return FluentIcons.calendar_ltr_24_regular;
-    if (type.contains('overtime')) return FluentIcons.clock_24_regular;
-    if (type.contains('permission')) return FluentIcons.person_available_24_regular;
-    if (type.contains('suggestion')) return FluentIcons.lightbulb_24_regular;
-    return FluentIcons.alert_24_regular;
-  }
-
-  Color _colorForType(String type) {
-    if (type.contains('approved')) return RequestColors.approvedStatus;
-    if (type.contains('rejected')) return RequestColors.danger;
-    if (type.contains('leave')) return RequestColors.gold;
-    if (type.contains('overtime')) return const Color(0xFF7C3AED);
-    if (type.contains('permission')) return RequestColors.primary;
-    return RequestColors.primary;
-  }
+      ? Get.find<NotificationController>()
+      : Get.put(NotificationController());
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : RequestColors.background,
+      backgroundColor: RequestColors.background,
       appBar: AppBar(
-        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+        backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: Icon(FluentIcons.chevron_left_24_regular, color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: RequestColors.textPrimary,
+            size: 20,
+          ),
           onPressed: () => Get.back(),
         ),
-        title: Text(
-          'Notifications'.tr,
+        title: const Text(
+          'Notifications',
           style: TextStyle(
-            color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
+            color: RequestColors.textPrimary,
             fontWeight: FontWeight.w700,
             fontSize: 18,
           ),
         ),
         actions: [
           Obx(() {
-            if (controller.unreadCount.value == 0) return const SizedBox.shrink();
+            if (controller.unreadCount.value == 0)
+              return const SizedBox.shrink();
             return TextButton(
               onPressed: () => controller.markAllAsRead(),
-              child: Text(
-                'Mark all read'.tr,
-                style: const TextStyle(
+              child: const Text(
+                'Mark all read',
+                style: TextStyle(
                   color: RequestColors.primary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -79,21 +65,36 @@ class NotificationScreen extends GetView<NotificationController> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(FluentIcons.alert_off_24_regular, color: RequestColors.primary, size: 36),
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: RequestColors.primary.withValues(alpha: 0.10),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.notifications_off_outlined,
+                    color: RequestColors.primary,
+                    size: 32,
+                  ),
+                ),
                 const SizedBox(height: 16),
-                Text(
-                  'No notifications yet'.tr,
+                const Text(
+                  'No notifications yet',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
+                    color: RequestColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  'You will be notified about request updates and approvals here.'.tr,
+                const Text(
+                  'You will be notified about request updates and approvals here.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: RequestColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -108,18 +109,72 @@ class NotificationScreen extends GetView<NotificationController> {
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final notif = controller.notifications[index];
-              final color = _colorForType(notif.notifType);
-              final icon = _iconForType(notif.notifType);
 
               return Material(
-                color: notif.isRead
-                    ? (isDark ? AppColors.darkSurface : Colors.white)
-                    : (isDark ? AppColors.darkCard : const Color(0xFFF0F6FF)),
+                color: notif.isRead ? Colors.white : const Color(0xFFF0F6FF),
                 borderRadius: BorderRadius.circular(16),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
                   onTap: () {
                     if (!notif.isRead) controller.markAsRead(notif.id);
+                    final type = notif.notifType.toLowerCase();
+                    final title = notif.title.toLowerCase();
+                    final refId = notif.refId;
+
+                    // 1. Suggestion -> Suggestion Detail or Status
+                    if (type.contains('suggestion') ||
+                        title.contains('suggestion')) {
+                      if (refId != null && refId.isNotEmpty) {
+                        Get.toNamed(
+                          AppRoutes.suggestionDetail,
+                          arguments: refId,
+                        );
+                      } else {
+                        Get.toNamed(
+                          AppRoutes.suggestion,
+                          arguments: {'tab': 1},
+                        );
+                      }
+                      return;
+                    }
+
+                    // 2. Leave Request / Approved / Rejected -> Leave Detail
+                    if (type.contains('leave') || title.contains('leave')) {
+                      if (refId != null && refId.isNotEmpty) {
+                        Get.toNamed(AppRoutes.leaveDetail, arguments: refId);
+                      } else {
+                        Get.toNamed(AppRoutes.leave, arguments: {'tab': 1});
+                      }
+                      return;
+                    }
+
+                    // 3. Permission -> Permission Request Detail
+                    if (type.contains('permission') ||
+                        title.contains('permission')) {
+                      if (refId != null && refId.isNotEmpty) {
+                        Get.toNamed(AppRoutes.requestDetail, arguments: refId);
+                      } else {
+                        Get.toNamed(
+                          AppRoutes.permission,
+                          arguments: {'tab': 1},
+                        );
+                      }
+                      return;
+                    }
+
+                    // 4. Overtime -> Overtime Detail
+                    if (type.contains('overtime') ||
+                        title.contains('overtime')) {
+                      if (refId != null && refId.isNotEmpty) {
+                        Get.toNamed(AppRoutes.overtimeDetail, arguments: refId);
+                      } else {
+                        Get.toNamed(AppRoutes.overtime, arguments: {'tab': 1});
+                      }
+                      return;
+                    }
+
+                    // Fallback
+                    Get.toNamed(AppRoutes.request);
                   },
                   child: Container(
                     padding: const EdgeInsets.all(14),
@@ -127,31 +182,39 @@ class NotificationScreen extends GetView<NotificationController> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: notif.isRead
-                            ? (isDark ? AppColors.darkBorder : Colors.black.withValues(alpha: 0.04))
-                            : RequestColors.primary.withValues(alpha: isDark ? 0.4 : 0.25),
+                            ? Colors.black.withValues(alpha: 0.04)
+                            : RequestColors.primary.withValues(alpha: 0.25),
                       ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2, right: 6),
-                          child: Icon(icon, color: color, size: 24),
+                        AppAvatar(
+                          profileUrl: notif.senderProfileUrl,
+                          name: notif.senderName.isNotEmpty
+                              ? notif.senderName
+                              : 'System',
+                          size: 42,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Sender name
                               Row(
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      notif.title.tr,
+                                      notif.senderName.isNotEmpty
+                                          ? notif.senderName
+                                          : 'System',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800,
-                                        color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
+                                        fontWeight: notif.isRead
+                                            ? FontWeight.w600
+                                            : FontWeight.w800,
+                                        color: RequestColors.textPrimary,
                                       ),
                                     ),
                                   ),
@@ -169,33 +232,33 @@ class NotificationScreen extends GetView<NotificationController> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                notif.message.tr,
-                                style: TextStyle(
+                                notif.title,
+                                style: const TextStyle(
                                   fontSize: 13,
-                                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                                  color: RequestColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                notif.message,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: RequestColors.textSecondary,
                                   height: 1.35,
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  if (notif.senderName.isNotEmpty)
-                                    Text(
-                                      '${'From:'.tr} ${notif.senderName}',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                                      ),
-                                    )
-                                  else
-                                    const SizedBox.shrink(),
                                   Text(
                                     notif.timeAgo,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 11,
-                                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                                      color: RequestColors.textSecondary,
                                     ),
                                   ),
                                 ],

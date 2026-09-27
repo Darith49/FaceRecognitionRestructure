@@ -1,4 +1,5 @@
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
+import 'package:face_recognition_attendance/core/services/theme_service.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
@@ -35,11 +36,14 @@ BoxDecoration appleCardDecoration({
   BuildContext? context,
   Color? color,
 }) {
-  final isDark = context != null
-      ? Theme.of(context).brightness == Brightness.dark
-      : (Get.context != null
-          ? Theme.of(Get.context!).brightness == Brightness.dark
-          : Get.isDarkMode);
+  bool isDark = false;
+  if (context != null) {
+    isDark = Theme.of(context).brightness == Brightness.dark;
+  } else if (Get.isRegistered<ThemeService>()) {
+    isDark = Get.find<ThemeService>().isActualDark;
+  } else if (Get.context != null) {
+    isDark = Theme.of(Get.context!).brightness == Brightness.dark;
+  }
 
   return BoxDecoration(
     color: color ?? (isDark ? AppColors.darkSurface : Colors.white),

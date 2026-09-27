@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
@@ -32,19 +33,21 @@ class NotificationScreen extends GetView<NotificationController> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: RequestColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : RequestColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(FluentIcons.chevron_left_24_regular, color: RequestColors.textPrimary, size: 20),
+          icon: Icon(FluentIcons.chevron_left_24_regular, color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary, size: 20),
           onPressed: () => Get.back(),
         ),
         title: Text(
           'Notifications'.tr,
-          style: const TextStyle(
-            color: RequestColors.textPrimary,
+          style: TextStyle(
+            color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
             fontWeight: FontWeight.w700,
             fontSize: 18,
           ),
@@ -80,17 +83,17 @@ class NotificationScreen extends GetView<NotificationController> {
                 const SizedBox(height: 16),
                 Text(
                   'No notifications yet'.tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: RequestColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'You will be notified about request updates and approvals here.'.tr,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: RequestColors.textSecondary),
+                  style: TextStyle(fontSize: 13, color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
                 ),
               ],
             ),
@@ -109,7 +112,9 @@ class NotificationScreen extends GetView<NotificationController> {
               final icon = _iconForType(notif.notifType);
 
               return Material(
-                color: notif.isRead ? Colors.white : const Color(0xFFF0F6FF),
+                color: notif.isRead
+                    ? (isDark ? AppColors.darkSurface : Colors.white)
+                    : (isDark ? AppColors.darkCard : const Color(0xFFF0F6FF)),
                 borderRadius: BorderRadius.circular(16),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
@@ -121,7 +126,9 @@ class NotificationScreen extends GetView<NotificationController> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: notif.isRead ? Colors.black.withValues(alpha: 0.04) : RequestColors.primary.withValues(alpha: 0.25),
+                        color: notif.isRead
+                            ? (isDark ? AppColors.darkBorder : Colors.black.withValues(alpha: 0.04))
+                            : RequestColors.primary.withValues(alpha: isDark ? 0.4 : 0.25),
                       ),
                     ),
                     child: Row(
@@ -144,7 +151,7 @@ class NotificationScreen extends GetView<NotificationController> {
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.w800,
-                                        color: RequestColors.textPrimary,
+                                        color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                                       ),
                                     ),
                                   ),
@@ -163,9 +170,9 @@ class NotificationScreen extends GetView<NotificationController> {
                               const SizedBox(height: 4),
                               Text(
                                 notif.message.tr,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: RequestColors.textSecondary,
+                                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                                   height: 1.35,
                                 ),
                               ),
@@ -176,19 +183,19 @@ class NotificationScreen extends GetView<NotificationController> {
                                   if (notif.senderName.isNotEmpty)
                                     Text(
                                       '${'From:'.tr} ${notif.senderName}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
-                                        color: RequestColors.textSecondary,
+                                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                                       ),
                                     )
                                   else
                                     const SizedBox.shrink(),
                                   Text(
                                     notif.timeAgo,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: RequestColors.textSecondary,
+                                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                                     ),
                                   ),
                                 ],

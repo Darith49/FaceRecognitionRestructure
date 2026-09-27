@@ -23,23 +23,25 @@ class MyApp extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
     final themeService = Get.find<ThemeService>();
 
-    return GetMaterialApp(
-      title: 'Face Attendance App',
-      debugShowCheckedModeBanner: false,
+    return Obx(
+      () => GetMaterialApp(
+        title: 'Face Attendance App',
+        debugShowCheckedModeBanner: false,
 
-      // Theme Configuration (Light & Dark)
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeService.themeMode,
+        // Theme Configuration (Light & Dark)
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeService.themeMode,
 
-      // Localization Configuration
-      translations: AppTranslations(),
-      locale: languageService.locale,
-      fallbackLocale: const Locale('en', 'US'),
+        // Localization Configuration
+        translations: AppTranslations(),
+        locale: languageService.locale,
+        fallbackLocale: const Locale('en', 'US'),
 
-      initialBinding: InitialBinding(initialUser: initialUser),
-      initialRoute: initialRoute ?? AppPages.INITIAL,
-      getPages: AppPages.routes,
+        initialBinding: InitialBinding(initialUser: initialUser),
+        initialRoute: initialRoute ?? AppPages.INITIAL,
+        getPages: AppPages.routes,
+      ),
     );
   }
 }

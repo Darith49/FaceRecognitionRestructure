@@ -1,4 +1,5 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
+import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
@@ -18,6 +19,8 @@ class RequestScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final controller = Get.isRegistered<RequestScreenController>()
         ? Get.find<RequestScreenController>()
         : Get.put(RequestScreenController());
@@ -32,7 +35,7 @@ class RequestScreen extends StatelessWidget {
         : Get.put(HomeController(), permanent: true);
 
     return Scaffold(
-      backgroundColor: RequestColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : RequestColors.background,
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -59,10 +62,10 @@ class RequestScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'request_title'.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
-                          color: RequestColors.textPrimary,
+                          color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -77,12 +80,13 @@ class RequestScreen extends StatelessWidget {
                             height: 38,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFFE5E5EA)),
+                              color: isDark ? AppColors.darkSurface : Colors.white,
+                              border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFE5E5EA)),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               FluentIcons.alert_24_regular,
                               size: 20,
-                              color: RequestColors.textSecondary,
+                              color: isDark ? AppColors.darkText : RequestColors.textSecondary,
                             ),
                           ),
                           Obx(() {
@@ -172,7 +176,7 @@ class RequestScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Container(
                           padding: const EdgeInsets.all(16),
-                          decoration: appleCardDecoration(),
+                          decoration: appleCardDecoration(context: context),
                           child: Row(
                             children: [
                               const Icon(FluentIcons.checkmark_circle_24_regular,
@@ -180,7 +184,10 @@ class RequestScreen extends StatelessWidget {
                               const SizedBox(width: 10),
                               Text(
                                 'No requests pending your review.'.tr,
-                                style: const TextStyle(fontSize: 13, color: RequestColors.textSecondary),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                                ),
                               ),
                             ],
                           ),
@@ -258,10 +265,10 @@ class RequestScreen extends StatelessWidget {
                       children: [
                         Text(
                           'CLOCK ATTENDANCE'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: RequestColors.textSecondary,
+                            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -290,10 +297,10 @@ class RequestScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 20),
                 child: Text(
                   'MANAGEMENT & SERVICES'.tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: RequestColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -302,7 +309,7 @@ class RequestScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
-                  decoration: appleCardDecoration(),
+                  decoration: appleCardDecoration(context: context),
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [
@@ -312,21 +319,21 @@ class RequestScreen extends StatelessWidget {
                         title: 'My Schedule'.tr,
                         onTap: () => Get.toNamed(AppRoutes.schedule),
                       ),
-                      const Divider(height: 1, indent: 56),
+                      Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
                       _ServiceRow(
                         icon: FluentIcons.beach_24_regular,
                         iconColor: RequestColors.approvedStatus,
                         title: 'Leave Request'.tr,
                         onTap: () => Get.toNamed(AppRoutes.leave),
                       ),
-                      const Divider(height: 1, indent: 56),
+                      Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
                       _ServiceRow(
                         icon: FluentIcons.clock_24_regular,
                         iconColor: RequestColors.gold,
                         title: 'Overtime'.tr,
                         onTap: () => Get.toNamed(AppRoutes.overtime),
                       ),
-                      const Divider(height: 1, indent: 56),
+                      Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
                       _ServiceRow(
                         icon: FluentIcons.lightbulb_24_regular,
                         iconColor: RequestColors.gold,
@@ -344,13 +351,18 @@ class RequestScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Material(
-                  color: Colors.white,
+                  color: isDark ? AppColors.darkSurface : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () => Get.toNamed(AppRoutes.permission),
-                    child: Padding(
+                    child: Container(
                       padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: isDark ? Border.all(color: AppColors.darkBorder, width: 0.5) : null,
+                        boxShadow: isDark ? null : appleSoftShadow,
+                      ),
                       child: Row(
                         children: [
                           const Padding(
@@ -368,18 +380,18 @@ class RequestScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Permission & Authorization'.tr,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: RequestColors.textPrimary,
+                                    color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'Request permissions or authorization changes'.tr,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
-                                    color: RequestColors.textSecondary,
+                                    color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                                   ),
                                 ),
                               ],
@@ -393,11 +405,11 @@ class RequestScreen extends StatelessWidget {
                               color: RequestColors.primary,
                             ),
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Icon(
                             FluentIcons.chevron_right_24_regular,
                             size: 20,
-                            color: RequestColors.textSecondary,
+                            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                           ),
                         ],
                       ),
@@ -416,10 +428,10 @@ class RequestScreen extends StatelessWidget {
                   children: [
                     Text(
                       'REQUEST ACTIVITY'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: RequestColors.textSecondary,
+                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -441,7 +453,7 @@ class RequestScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
-                  decoration: appleCardDecoration(),
+                  decoration: appleCardDecoration(context: context),
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [
@@ -457,7 +469,7 @@ class RequestScreen extends StatelessWidget {
                           onTap: () => Get.toNamed(AppRoutes.requestUnauthorized),
                         );
                       }),
-                      const Divider(height: 1, indent: 56),
+                      Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
                       Obx(() {
                         final approvedList = permissionCtrl.requestsWithStatus(RequestStatus.approved);
                         return _ActivityRow(
@@ -492,11 +504,13 @@ class RequestScreen extends StatelessWidget {
     required VoidCallback onApprove,
     required VoidCallback onReject,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: appleCardDecoration(),
+        decoration: appleCardDecoration(context: context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -513,10 +527,10 @@ class RequestScreen extends StatelessWidget {
                     children: [
                       Text(
                         employeeName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: RequestColors.textPrimary,
+                          color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                         ),
                       ),
                       Text(
@@ -535,19 +549,19 @@ class RequestScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               detail,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: RequestColors.textPrimary,
+                color: isDark ? AppColors.darkText : RequestColors.textPrimary,
               ),
             ),
             if (reason.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
                 '${'Reason'.tr}: $reason',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: RequestColors.textSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                 ),
               ),
             ],
@@ -659,7 +673,7 @@ class _RequestClockAttendanceCard extends StatelessWidget {
         }
 
         return Container(
-          decoration: appleCardDecoration(radius: 20),
+          decoration: appleCardDecoration(context: context, radius: 20),
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
@@ -683,10 +697,12 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                         children: [
                           Text(
                             'Clock Attendance'.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: RequestColors.textPrimary,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.darkText
+                                  : RequestColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -774,14 +790,18 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             color: homeCtrl.goalProgress >= 1.0
                                 ? RequestColors.approvedStatus
-                                : RequestColors.textPrimary,
+                                : (Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.darkText
+                                    : RequestColors.textPrimary),
                           ),
                         ),
                         Text(
                           '${(homeCtrl.goalProgress * 100).toInt()}% ${'of'.tr} ${homeCtrl.goalHours.toStringAsFixed(0)}h',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: RequestColors.textSecondary,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkTextSecondary
+                                : RequestColors.textSecondary,
                           ),
                         ),
                       ],
@@ -792,7 +812,9 @@ class _RequestClockAttendanceCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: homeCtrl.goalProgress,
                         minHeight: 5,
-                        backgroundColor: const Color(0xFFE5E5EA),
+                        backgroundColor: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkBorder
+                            : const Color(0xFFE5E5EA),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           homeCtrl.goalProgress >= 1.0
                               ? RequestColors.approvedStatus
@@ -864,17 +886,19 @@ class _MiniSessionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     Color borderColor;
     Color bgColor;
     if (isDone) {
       borderColor = RequestColors.approvedStatus.withValues(alpha: 0.3);
-      bgColor = RequestColors.approvedStatus.withValues(alpha: 0.04);
+      bgColor = RequestColors.approvedStatus.withValues(alpha: isDark ? 0.12 : 0.04);
     } else if (isActive) {
       borderColor = RequestColors.primary.withValues(alpha: 0.35);
-      bgColor = RequestColors.primary.withValues(alpha: 0.04);
+      bgColor = RequestColors.primary.withValues(alpha: isDark ? 0.12 : 0.04);
     } else {
-      borderColor = const Color(0xFFEBECEF);
-      bgColor = const Color(0xFFF9FAFB);
+      borderColor = isDark ? AppColors.darkBorder : const Color(0xFFEBECEF);
+      bgColor = isDark ? AppColors.darkSurface : const Color(0xFFF9FAFB);
     }
 
     return Container(
@@ -896,7 +920,9 @@ class _MiniSessionTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: isActive ? RequestColors.primary : RequestColors.textSecondary,
+                  color: isActive
+                      ? RequestColors.primary
+                      : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
                   letterSpacing: 0.3,
                 ),
               ),
@@ -914,10 +940,10 @@ class _MiniSessionTile extends StatelessWidget {
                   children: [
                     Text(
                       'IN'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: RequestColors.textSecondary,
+                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -927,7 +953,7 @@ class _MiniSessionTile extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: checkIn != '-- : --'
-                            ? RequestColors.textPrimary
+                            ? (isDark ? AppColors.darkText : RequestColors.textPrimary)
                             : const Color(0xFFB0B0B0),
                       ),
                     ),
@@ -940,10 +966,10 @@ class _MiniSessionTile extends StatelessWidget {
                   children: [
                     Text(
                       'OUT'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: RequestColors.textSecondary,
+                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -953,7 +979,7 @@ class _MiniSessionTile extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: checkOut != '-- : --'
-                            ? RequestColors.textPrimary
+                            ? (isDark ? AppColors.darkText : RequestColors.textPrimary)
                             : const Color(0xFFB0B0B0),
                       ),
                     ),
@@ -991,6 +1017,8 @@ class _ActivityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -1008,18 +1036,18 @@ class _ActivityRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: RequestColors.textPrimary,
+                      color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: RequestColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                     ),
                   ),
                 ],
@@ -1041,10 +1069,10 @@ class _ActivityRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(
+            Icon(
               FluentIcons.chevron_right_24_regular,
               size: 20,
-              color: RequestColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
             ),
           ],
         ),
@@ -1070,6 +1098,8 @@ class _ServiceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -1084,17 +1114,17 @@ class _ServiceRow extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: RequestColors.textPrimary,
+                  color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               FluentIcons.chevron_right_24_regular,
               size: 20,
-              color: RequestColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
             ),
           ],
         ),

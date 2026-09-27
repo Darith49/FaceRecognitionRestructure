@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import '../../config/theme/app_theme.dart';
 
 class ThemeService extends GetxService {
   static const String _themeKey = 'app_theme_mode';
 
   final _storage = GetStorage();
-  final _themeMode = ThemeMode.system.obs;
+  final _themeMode = ThemeMode.light.obs;
 
   ThemeMode get themeMode => _themeMode.value;
 
@@ -19,9 +20,17 @@ class ThemeService extends GetxService {
       WidgetsBinding.instance.platformDispatcher.platformBrightness ==
       Brightness.dark;
 
-  /// Returns true if the rendered appearance is dark (either explicit Dark or System + dark platform).
-  bool get isActualDark =>
-      isDarkMode || (isSystemMode && isPlatformDark);
+  /// Returns true if the rendered appearance is dark.
+  /// Light mode is NEVER dark. Dark mode is ALWAYS dark. System follows platform.
+  bool get isActualDark {
+    if (_themeMode.value == ThemeMode.dark) return true;
+    if (_themeMode.value == ThemeMode.light) return false;
+    return isPlatformDark;
+  }
+
+  /// Active ThemeData corresponding to current state
+  ThemeData get effectiveThemeData =>
+      isActualDark ? AppTheme.darkTheme : AppTheme.lightTheme;
 
   @override
   void onInit() {
@@ -34,17 +43,20 @@ class ThemeService extends GetxService {
     final savedTheme = _storage.read(_themeKey) as String?;
     if (savedTheme == 'dark') {
       _themeMode.value = ThemeMode.dark;
-    } else if (savedTheme == 'light') {
-      _themeMode.value = ThemeMode.light;
-    } else {
+    } else if (savedTheme == 'system') {
       _themeMode.value = ThemeMode.system;
+    } else {
+      _themeMode.value = ThemeMode.light;
     }
   }
 
-  /// Change theme mode and persist to storage
+  /// Change theme mode, apply ThemeData immediately, and persist to storage
   Future<void> setThemeMode(ThemeMode mode) async {
     _themeMode.value = mode;
     await _storage.write(_themeKey, mode.name);
+
+    // Apply the active ThemeData and ThemeMode across GetX
+    Get.changeTheme(effectiveThemeData);
     Get.changeThemeMode(mode);
     Get.forceAppUpdate();
   }

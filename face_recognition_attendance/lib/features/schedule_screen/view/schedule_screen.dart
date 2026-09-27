@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/schedule_screen/controller/schedule_controller.dart';
@@ -12,15 +13,8 @@ import 'package:table_calendar/table_calendar.dart';
 
 const Color _primaryDark = Color(0xFF2456C7);
 
-const List<BoxShadow> _softShadow = [
-  BoxShadow(color: Color(0x0F1B2437), blurRadius: 14, offset: Offset(0, 4)),
-];
-
-BoxDecoration _cardDecoration({double radius = 20}) => BoxDecoration(
-  color: Colors.white,
-  borderRadius: BorderRadius.circular(radius),
-  boxShadow: _softShadow,
-);
+BoxDecoration _cardDecoration({BuildContext? context, double radius = 20}) =>
+    appleCardDecoration(context: context, radius: radius);
 
 // ---------------------------------------------------------------------------
 // Screen
@@ -88,14 +82,14 @@ class ScheduleScreen extends GetView<ScheduleController> {
             final mName = DateText.monthName(month);
             return _SectionTitle('$mName ${'Performance'.tr}');
           }),
-          _buildStatsGrid(),
+          _buildStatsGrid(context),
           const SizedBox(height: 24),
-          _buildCalendarCard(),
+          _buildCalendarCard(context),
           const SizedBox(height: 24),
           _SectionTitle('Work Schedule'.tr),
-          _buildTabBar(),
+          _buildTabBar(context),
           const SizedBox(height: 14),
-          _buildTabContent(),
+          _buildTabContent(context),
         ],
       ),
     );
@@ -242,7 +236,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
 
   // ------------------------------- stats grid ------------------------------
 
-  Widget _buildStatsGrid() {
+  Widget _buildStatsGrid(BuildContext context) {
     return Obx(() {
       final daysGoal = controller.daysGoal.value;
       final daysWorked = controller.daysWorked.value;
@@ -258,6 +252,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
               children: [
                 Expanded(
                   child: _statCard(
+                    context: context,
                     label: 'Days Goal'.tr,
                     value: '$daysGoal',
                     icon: FluentIcons.flag_24_regular,
@@ -267,6 +262,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _statCard(
+                    context: context,
                     label: 'Days Worked'.tr,
                     value: '$daysWorked',
                     icon: FluentIcons.checkmark_circle_24_regular,
@@ -283,6 +279,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
               children: [
                 Expanded(
                   child: _statCard(
+                    context: context,
                     label: 'Days Absent'.tr,
                     value: '$daysAbsent',
                     icon: FluentIcons.calendar_cancel_24_regular,
@@ -293,6 +290,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _statCard(
+                    context: context,
                     label: 'On-Time Rate'.tr,
                     value: '$onTimeRate%',
                     icon: FluentIcons.timer_24_regular,
@@ -308,15 +306,17 @@ class ScheduleScreen extends GetView<ScheduleController> {
   }
 
   Widget _statCard({
+    required BuildContext context,
     required String label,
     required String value,
     required IconData icon,
     required Color color,
     String? badge,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration(radius: 18),
+      decoration: _cardDecoration(context: context, radius: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -334,7 +334,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
+                    color: color.withValues(alpha: isDark ? 0.22 : 0.12),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -351,18 +351,18 @@ class ScheduleScreen extends GetView<ScheduleController> {
           const SizedBox(height: 14),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
-              color: RequestColors.textPrimary,
+              color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: RequestColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -373,10 +373,11 @@ class ScheduleScreen extends GetView<ScheduleController> {
 
   // ------------------------------ calendar card ----------------------------
 
-  Widget _buildCalendarCard() {
+  Widget _buildCalendarCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context: context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -388,10 +389,10 @@ class ScheduleScreen extends GetView<ScheduleController> {
                 children: [
                   Text(
                     'Calendar View'.tr,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 16,
-                      color: RequestColors.textPrimary,
+                      color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -399,8 +400,8 @@ class ScheduleScreen extends GetView<ScheduleController> {
                     final focused = controller.focusedDay.value;
                     return Text(
                       DateText.monthYear(focused),
-                      style: const TextStyle(
-                        color: RequestColors.textSecondary,
+                      style: TextStyle(
+                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                         fontSize: 12,
                       ),
                     );
@@ -410,11 +411,12 @@ class ScheduleScreen extends GetView<ScheduleController> {
               Row(
                 children: [
                   _navArrow(
+                    context,
                     FluentIcons.chevron_left_24_regular,
                     controller.previousMonth,
                   ),
                   const SizedBox(width: 8),
-                  _navArrow(FluentIcons.chevron_right_24_regular, controller.nextMonth),
+                  _navArrow(context, FluentIcons.chevron_right_24_regular, controller.nextMonth),
                 ],
               ),
             ],
@@ -438,15 +440,15 @@ class ScheduleScreen extends GetView<ScheduleController> {
               daysOfWeekHeight: 28,
               calendarStyle: const CalendarStyle(outsideDaysVisible: false),
               calendarBuilders: CalendarBuilders(
-                prioritizedBuilder: (context, day, focusedDay) =>
-                    _buildDayCell(day, selected),
-                dowBuilder: (context, day) => Center(
+                prioritizedBuilder: (ctx, day, focusedDay) =>
+                    _buildDayCell(day, selected, context),
+                dowBuilder: (ctx, day) => Center(
                   child: Text(
                     DateText.weekdayShort(day.weekday),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: RequestColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                     ),
                   ),
                 ),
@@ -457,16 +459,16 @@ class ScheduleScreen extends GetView<ScheduleController> {
             );
           }),
           const SizedBox(height: 8),
-          _buildSelectedDayInfo(),
+          _buildSelectedDayInfo(context),
           const SizedBox(height: 14),
           Wrap(
             spacing: 14,
             runSpacing: 8,
             children: [
-              _legendDot(_statusColor(DayStatus.worked), 'Worked'.tr),
-              _legendDot(_statusColor(DayStatus.absent), 'Absent'.tr),
-              _legendDot(_statusColor(DayStatus.dayOff), 'Day off'.tr),
-              _legendDot(_statusColor(DayStatus.overtime), 'Overtime'.tr),
+              _legendDot(_statusColor(DayStatus.worked), 'Worked'.tr, context),
+              _legendDot(_statusColor(DayStatus.absent), 'Absent'.tr, context),
+              _legendDot(_statusColor(DayStatus.dayOff), 'Day off'.tr, context),
+              _legendDot(_statusColor(DayStatus.overtime), 'Overtime'.tr, context),
             ],
           ),
         ],
@@ -474,9 +476,10 @@ class ScheduleScreen extends GetView<ScheduleController> {
     );
   }
 
-  Widget _navArrow(IconData icon, VoidCallback onTap) {
+  Widget _navArrow(BuildContext context, IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color: RequestColors.background.withValues(alpha: 0.6),
+      color: isDark ? AppColors.darkCard : RequestColors.background.withValues(alpha: 0.6),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
@@ -484,7 +487,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
         child: SizedBox(
           width: 32,
           height: 32,
-          child: Icon(icon, size: 20, color: RequestColors.textPrimary),
+          child: Icon(icon, size: 20, color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary),
         ),
       ),
     );
@@ -492,7 +495,8 @@ class ScheduleScreen extends GetView<ScheduleController> {
 
   /// Drawn by table_calendar for every day of the month (taps are handled by
   /// the calendar itself and end up in `controller.onDaySelected`).
-  Widget _buildDayCell(DateTime day, DateTime selectedDay) {
+  Widget _buildDayCell(DateTime day, DateTime selectedDay, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final status = controller.statusFor(day);
     final selected = isSameDay(day, selectedDay);
     final isToday = isSameDay(day, DateTime.now());
@@ -501,10 +505,10 @@ class ScheduleScreen extends GetView<ScheduleController> {
 
     final Color background = selected
         ? color
-        : (hasStatus ? color.withValues(alpha: 0.12) : Colors.transparent);
+        : (hasStatus ? color.withValues(alpha: isDark ? 0.22 : 0.12) : Colors.transparent);
     final Color foreground = selected
         ? Colors.white
-        : (hasStatus ? color : RequestColors.textPrimary);
+        : (hasStatus ? color : (isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary));
 
     return Padding(
       padding: const EdgeInsets.all(3),
@@ -538,7 +542,8 @@ class ScheduleScreen extends GetView<ScheduleController> {
     );
   }
 
-  Widget _buildSelectedDayInfo() {
+  Widget _buildSelectedDayInfo(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Obx(() {
       final selectedDay = controller.selectedDay.value;
       final status = controller.statusFor(selectedDay);
@@ -548,7 +553,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
+          color: color.withValues(alpha: isDark ? 0.20 : 0.10),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -558,10 +563,10 @@ class ScheduleScreen extends GetView<ScheduleController> {
             Expanded(
               child: Text(
                 '${DateText.weekdayShort(selectedDay.weekday)}, ${DateText.monthName(selectedDay.month)} ${selectedDay.day}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: RequestColors.textPrimary,
+                  color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                 ),
               ),
             ),
@@ -579,7 +584,8 @@ class ScheduleScreen extends GetView<ScheduleController> {
     });
   }
 
-  Widget _legendDot(Color color, String label) {
+  Widget _legendDot(Color color, String label, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -591,9 +597,9 @@ class ScheduleScreen extends GetView<ScheduleController> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: RequestColors.textSecondary,
+            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -603,13 +609,14 @@ class ScheduleScreen extends GetView<ScheduleController> {
 
   // --------------------------------- tabs ----------------------------------
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final tabs = controller.tabs;
 
     return Container(
       height: 48,
       padding: const EdgeInsets.all(4),
-      decoration: _cardDecoration(radius: 16),
+      decoration: _cardDecoration(context: context, radius: 16),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final tabWidth = constraints.maxWidth / tabs.length;
@@ -655,7 +662,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                               fontSize: 13,
                               color: selected
                                   ? Colors.white
-                                  : RequestColors.textSecondary,
+                                  : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
                             ),
                             child: Text(tabs[i].tr),
                           ),
@@ -672,13 +679,13 @@ class ScheduleScreen extends GetView<ScheduleController> {
     );
   }
 
-  Widget _buildTabContent() {
+  Widget _buildTabContent(BuildContext context) {
     return Obx(() {
       final current = controller.tabIndex.value;
 
       if (current == 0) {
         if (controller.schedule.isEmpty) {
-          return _buildEmptySchedule('No scheduled shifts found for this period.'.tr);
+          return _buildEmptySchedule('No scheduled shifts found for this period.'.tr, context);
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -686,14 +693,14 @@ class ScheduleScreen extends GetView<ScheduleController> {
               .map(
                 (d) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildScheduleTile(d),
+                  child: _buildScheduleTile(d, context),
                 ),
               )
               .toList(),
         );
       } else if (current == 1) {
         if (controller.holidays.isEmpty) {
-          return _buildEmptyTab(isHoliday: true);
+          return _buildEmptyTab(isHoliday: true, context: context);
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -701,14 +708,14 @@ class ScheduleScreen extends GetView<ScheduleController> {
               .map(
                 (h) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildHolidayTile(h),
+                  child: _buildHolidayTile(h, context),
                 ),
               )
               .toList(),
         );
       } else {
         if (controller.leaves.isEmpty) {
-          return _buildEmptyTab(isHoliday: false);
+          return _buildEmptyTab(isHoliday: false, context: context);
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -716,7 +723,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
               .map(
                 (l) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildLeaveTile(l),
+                  child: _buildLeaveTile(l, context),
                 ),
               )
               .toList(),
@@ -725,10 +732,11 @@ class ScheduleScreen extends GetView<ScheduleController> {
     });
   }
 
-  Widget _buildHolidayTile(HolidayItem holiday) {
+  Widget _buildHolidayTile(HolidayItem holiday, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration(radius: 18),
+      decoration: _cardDecoration(context: context, radius: 18),
       child: Row(
         children: [
           Container(
@@ -755,18 +763,18 @@ class ScheduleScreen extends GetView<ScheduleController> {
               children: [
                 Text(
                   holiday.full,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
-                    color: RequestColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   holiday.reason,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: RequestColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                   ),
                 ),
               ],
@@ -792,10 +800,11 @@ class ScheduleScreen extends GetView<ScheduleController> {
     );
   }
 
-  Widget _buildLeaveTile(LeaveItem leave) {
+  Widget _buildLeaveTile(LeaveItem leave, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration(radius: 18),
+      decoration: _cardDecoration(context: context, radius: 18),
       child: Row(
         children: [
           const Padding(
@@ -813,19 +822,19 @@ class ScheduleScreen extends GetView<ScheduleController> {
               children: [
                 Text(
                   leave.leaveType.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
-                    color: RequestColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${leave.fromDate}  →  ${leave.toDate}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: RequestColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                   ),
                 ),
                 if (leave.reason.isNotEmpty) ...[
@@ -834,9 +843,9 @@ class ScheduleScreen extends GetView<ScheduleController> {
                     leave.reason,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: RequestColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                     ),
                   ),
                 ],
@@ -863,10 +872,11 @@ class ScheduleScreen extends GetView<ScheduleController> {
     );
   }
 
-  Widget _buildEmptySchedule(String message) {
+  Widget _buildEmptySchedule(String message, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context: context),
       child: Column(
         children: [
           const Icon(
@@ -877,20 +887,20 @@ class ScheduleScreen extends GetView<ScheduleController> {
           const SizedBox(height: 14),
           Text(
             'No Shifts Scheduled'.tr,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
-              color: RequestColors.textPrimary,
+              color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               height: 1.4,
-              color: RequestColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
             ),
           ),
         ],
@@ -898,10 +908,11 @@ class ScheduleScreen extends GetView<ScheduleController> {
     );
   }
 
-  Widget _buildEmptyTab({required bool isHoliday}) {
+  Widget _buildEmptyTab({required bool isHoliday, required BuildContext context}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration(context: context),
       child: Column(
         children: [
           Icon(
@@ -914,10 +925,10 @@ class ScheduleScreen extends GetView<ScheduleController> {
           const SizedBox(height: 14),
           Text(
             'Nothing here yet'.tr,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
-              color: RequestColors.textPrimary,
+              color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -926,10 +937,10 @@ class ScheduleScreen extends GetView<ScheduleController> {
                 ? 'Public holidays will appear here once they are added.'.tr
                 : 'Your leave days will appear here once they are approved.'.tr,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               height: 1.4,
-              color: RequestColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
             ),
           ),
         ],
@@ -937,10 +948,11 @@ class ScheduleScreen extends GetView<ScheduleController> {
     );
   }
 
-  Widget _buildScheduleTile(ScheduleDay day) {
+  Widget _buildScheduleTile(ScheduleDay day, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration(radius: 18),
+      decoration: _cardDecoration(context: context, radius: 18),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -949,8 +961,9 @@ class ScheduleScreen extends GetView<ScheduleController> {
             height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: RequestColors.textPrimary,
+              color: isDark ? AppColors.darkCard : RequestColors.textPrimary,
               borderRadius: BorderRadius.circular(14),
+              border: isDark ? Border.all(color: AppColors.darkBorder) : null,
             ),
             child: Text(
               day.short,
@@ -971,10 +984,10 @@ class ScheduleScreen extends GetView<ScheduleController> {
                     Expanded(
                       child: Text(
                         day.full,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 14,
-                          color: RequestColors.textPrimary,
+                          color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                         ),
                       ),
                     ),
@@ -999,7 +1012,7 @@ class ScheduleScreen extends GetView<ScheduleController> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                for (final shift in day.shifts) _buildShiftRow(shift),
+                for (final shift in day.shifts) _buildShiftRow(shift, context),
               ],
             ),
           ),
@@ -1008,7 +1021,8 @@ class ScheduleScreen extends GetView<ScheduleController> {
     );
   }
 
-  Widget _buildShiftRow(ScheduleShift shift) {
+  Widget _buildShiftRow(ScheduleShift shift, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = shift.startHour < 12
         ? RequestColors.gold
         : RequestColors.primary;
@@ -1028,19 +1042,19 @@ class ScheduleScreen extends GetView<ScheduleController> {
               shift.range,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: RequestColors.textPrimary,
+                color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
               ),
             ),
           ),
           Text(
             '${shift.hours}h',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: RequestColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
             ),
           ),
         ],
@@ -1060,14 +1074,15 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(left: 2, bottom: 12),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w800,
-          color: RequestColors.textPrimary,
+          color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
         ),
       ),
     );

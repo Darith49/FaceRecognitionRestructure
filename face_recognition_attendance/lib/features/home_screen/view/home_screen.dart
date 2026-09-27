@@ -91,8 +91,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: RequestColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : RequestColors.background,
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -163,10 +165,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       child: Text(
                         controller.nextScheduleText,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: RequestColors.textSecondary,
+                          color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                         ),
                       ),
                     ),
@@ -205,6 +207,8 @@ class _GreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
@@ -226,7 +230,7 @@ class _GreetingHeader extends StatelessWidget {
                   name: controller.userName,
                   size: 50,
                   border: Border.all(
-                    color: RequestColors.primary.withValues(alpha: 0.20),
+                    color: isDark ? AppColors.darkBorder : RequestColors.primary.withValues(alpha: 0.20),
                     width: 2,
                   ),
                 ),
@@ -239,7 +243,7 @@ class _GreetingHeader extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: RequestColors.approvedStatus,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: isDark ? AppColors.darkSurface : Colors.white, width: 2),
                     ),
                   ),
                 ),
@@ -255,10 +259,10 @@ class _GreetingHeader extends StatelessWidget {
                       Flexible(
                         child: Text(
                           controller.userName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: RequestColors.textPrimary,
+                            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -290,9 +294,9 @@ class _GreetingHeader extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '${controller.greeting} • ${'Have a productive day'.tr}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: RequestColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                     ),
                   ),
                 ],
@@ -309,12 +313,13 @@ class _GreetingHeader extends StatelessWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
+                      color: isDark ? AppColors.darkSurface : Colors.white,
+                      border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFE5E5EA), width: 1),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       FluentIcons.alert_24_regular,
                       size: 20,
-                      color: RequestColors.textSecondary,
+                      color: isDark ? AppColors.darkText : RequestColors.textSecondary,
                     ),
                   ),
                   Obx(() {
@@ -368,17 +373,19 @@ class _AttendanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: appleCardDecoration(radius: 20),
+      decoration: appleCardDecoration(context: context, radius: 20),
       child: Column(
         children: [
           Obx(
             () => Row(
               children: [
-                const Icon(
+                Icon(
                   FluentIcons.clock_24_regular,
-                  color: RequestColors.textPrimary,
+                  color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                   size: 28,
                 ),
                 const SizedBox(width: 12),
@@ -393,19 +400,19 @@ class _AttendanceCard extends StatelessWidget {
                         child: Text(
                           DateText.clock(controller.now.value),
                           key: ValueKey(DateText.clock(controller.now.value)),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
-                            color: RequestColors.textPrimary,
+                            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                             letterSpacing: -0.5,
                           ),
                         ),
                       ),
                       Text(
                         DateText.fullDate(controller.now.value),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: RequestColors.textSecondary,
+                          color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                         ),
                       ),
                     ],
@@ -417,7 +424,7 @@ class _AttendanceCard extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
-          const Divider(height: 1, color: Color(0xFFF0F0F0)),
+          Divider(height: 1, color: isDark ? AppColors.darkBorder : const Color(0xFFF0F0F0)),
           const SizedBox(height: 14),
 
           // ─── 2 Attendance Sessions ──────────────────────────────────────────
@@ -467,7 +474,7 @@ class _AttendanceCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: controller.goalProgress >= 1.0
                         ? RequestColors.approvedStatus.withValues(alpha: 0.08)
-                        : const Color(0xFFF5F5F7),
+                        : (isDark ? AppColors.darkSurfaceElevated : const Color(0xFFF5F5F7)),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Column(
@@ -482,15 +489,15 @@ class _AttendanceCard extends StatelessWidget {
                                 size: 16,
                                 color: controller.goalProgress >= 1.0
                                     ? RequestColors.approvedStatus
-                                    : RequestColors.textSecondary,
+                                    : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 'TOTAL HOURS WORKED'.tr,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: RequestColors.textSecondary,
+                                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -514,7 +521,7 @@ class _AttendanceCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: controller.goalProgress,
                           minHeight: 6,
-                          backgroundColor: const Color(0xFFE5E5EA),
+                          backgroundColor: isDark ? AppColors.darkBorder : const Color(0xFFE5E5EA),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             controller.goalProgress >= 1.0
                                 ? RequestColors.approvedStatus
@@ -528,9 +535,9 @@ class _AttendanceCard extends StatelessWidget {
                         children: [
                           Text(
                             '${(controller.goalProgress * 100).toInt()}% ${'of 8.0h goal'.tr}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: RequestColors.textSecondary,
+                              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                             ),
                           ),
                           Text(
@@ -542,7 +549,7 @@ class _AttendanceCard extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               color: controller.goalProgress >= 1.0
                                   ? RequestColors.approvedStatus
-                                  : RequestColors.textSecondary,
+                                  : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
                             ),
                           ),
                         ],
@@ -565,8 +572,8 @@ class _AttendanceCard extends StatelessWidget {
               icon: const Icon(FluentIcons.note_edit_24_regular, size: 20),
               label: Text('Request Time Adjustment'.tr),
               style: OutlinedButton.styleFrom(
-                foregroundColor: RequestColors.textPrimary,
-                side: const BorderSide(color: Color(0xFFE0E0E0)),
+                foregroundColor: isDark ? AppColors.darkText : RequestColors.textPrimary,
+                side: BorderSide(color: isDark ? AppColors.darkBorder : const Color(0xFFE0E0E0)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -590,20 +597,22 @@ class _GoalBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F7),
+        color: isDark ? AppColors.darkSurfaceElevated : const Color(0xFFF5F5F7),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Text(
             'GOAL'.tr,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: RequestColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
               letterSpacing: 0.5,
             ),
           ),
@@ -817,12 +826,14 @@ class _SessionStatItem extends StatelessWidget {
 class _WifiStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E5EA)),
+        border: Border.all(color: isDark ? AppColors.darkBorder : const Color(0xFFE5E5EA)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -838,9 +849,9 @@ class _WifiStatusPill extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             'Office Wi-Fi Connected • Main HQ'.tr,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: RequestColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -986,13 +997,15 @@ class _CheckInButtonState extends State<_CheckInButton>
                         dashSpace: 4,
                       ),
                     ),
-                    // Middle white ring
+                    // Middle ring
                     Container(
                       width: 200,
                       height: 200,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkCard
+                            : Colors.white,
                         boxShadow: [
                           BoxShadow(
                             color: buttonColor.withValues(
@@ -1227,17 +1240,7 @@ class _CeoActionPanel extends StatelessWidget {
           // ─── 2. Administrative Action Tiles ───
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+            decoration: appleCardDecoration(context: context, radius: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1255,18 +1258,22 @@ class _CeoActionPanel extends StatelessWidget {
                         children: [
                           Text(
                             'CEO Management'.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
-                              color: RequestColors.textPrimary,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.darkText
+                                  : RequestColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Quick administrative actions'.tr,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: RequestColors.textSecondary,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.darkTextSecondary
+                                  : RequestColors.textSecondary,
                             ),
                           ),
                         ],
@@ -1275,7 +1282,12 @@ class _CeoActionPanel extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Divider(height: 1),
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkBorder
+                      : null,
+                ),
                 const SizedBox(height: 14),
 
                 // 1. Create Branch
@@ -1346,8 +1358,10 @@ class _CeoAttendanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      decoration: appleCardDecoration(radius: 20),
+      decoration: appleCardDecoration(context: context, radius: 20),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
@@ -1368,10 +1382,10 @@ class _CeoAttendanceCard extends StatelessWidget {
                     children: [
                       Text(
                         'Executive Attendance'.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: RequestColors.textPrimary,
+                          color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -1447,7 +1461,12 @@ class _CeoAttendanceCard extends StatelessWidget {
             ),
           ),
 
-          const Divider(height: 1, indent: 16, endIndent: 16),
+          Divider(
+            height: 1,
+            indent: 16,
+            endIndent: 16,
+            color: isDark ? AppColors.darkBorder : null,
+          ),
 
           // Shift Info Row
           Padding(
@@ -1471,10 +1490,10 @@ class _CeoAttendanceCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           'S1: ${controller.session1SchedIn.value} - ${controller.session1SchedOut.value}  •  S2: ${controller.session2SchedIn.value} - ${controller.session2SchedOut.value}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: RequestColors.textPrimary,
+                            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                           ),
                         ),
                       ],
@@ -1483,25 +1502,25 @@ class _CeoAttendanceCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: isDark ? AppColors.darkSurfaceElevated : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
                       children: [
                         Text(
                           'WORKED'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
-                            color: RequestColors.textSecondary,
+                            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                           ),
                         ),
                         Text(
                           controller.totalHoursText,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: RequestColors.textPrimary,
+                            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                           ),
                         ),
                       ],
@@ -1607,8 +1626,10 @@ class _CeoStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Material(
-      color: Colors.white,
+      color: isDark ? AppColors.darkSurface : Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -1617,13 +1638,16 @@ class _CeoStatCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            border: isDark ? Border.all(color: AppColors.darkBorder, width: 0.5) : null,
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
           ),
           child: Column(
             children: [
@@ -1634,19 +1658,19 @@ class _CeoStatCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 '$count',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: RequestColors.textPrimary,
+                  color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: RequestColors.textSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -1677,8 +1701,12 @@ class _CeoActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Material(
-      color: RequestColors.softSurface.withValues(alpha: 0.6),
+      color: isDark
+          ? AppColors.darkSurfaceElevated
+          : RequestColors.softSurface.withValues(alpha: 0.6),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -1698,27 +1726,27 @@ class _CeoActionTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: RequestColors.textPrimary,
+                        color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: RequestColors.textSecondary,
+                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 FluentIcons.chevron_right_24_regular,
                 size: 18,
-                color: RequestColors.textSecondary,
+                color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
               ),
             ],
           ),
@@ -1735,6 +1763,8 @@ class _RecentCreatedOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1746,17 +1776,7 @@ class _RecentCreatedOverview extends StatelessWidget {
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+            decoration: appleCardDecoration(context: context, radius: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1773,10 +1793,10 @@ class _RecentCreatedOverview extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'Created Branches'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: RequestColors.textPrimary,
+                            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                           ),
                         ),
                       ],
@@ -1794,7 +1814,10 @@ class _RecentCreatedOverview extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Divider(height: 8),
+                Divider(
+                  height: 8,
+                  color: isDark ? AppColors.darkBorder : null,
+                ),
                 ...branches
                     .take(3)
                     .map(
@@ -1817,17 +1840,17 @@ class _RecentCreatedOverview extends StatelessWidget {
                                 children: [
                                   Text(
                                     b.name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
-                                      color: RequestColors.textPrimary,
+                                      color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                                     ),
                                   ),
                                   Text(
                                     '${'Radius'.tr}: ${b.radius.toInt()}m ${'geofence'.tr}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: RequestColors.textSecondary,
+                                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -1835,10 +1858,10 @@ class _RecentCreatedOverview extends StatelessWidget {
                             ),
                             Text(
                               '${b.employeeCount} ${'staff'.tr}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: RequestColors.textSecondary,
+                                color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                               ),
                             ),
                           ],
@@ -1858,17 +1881,7 @@ class _RecentCreatedOverview extends StatelessWidget {
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+            decoration: appleCardDecoration(context: context, radius: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1885,10 +1898,10 @@ class _RecentCreatedOverview extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'Created Departments'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: RequestColors.textPrimary,
+                            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                           ),
                         ),
                       ],
@@ -1906,7 +1919,10 @@ class _RecentCreatedOverview extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Divider(height: 8),
+                Divider(
+                  height: 8,
+                  color: isDark ? AppColors.darkBorder : null,
+                ),
                 ...departments
                     .take(3)
                     .map(
@@ -1929,19 +1945,19 @@ class _RecentCreatedOverview extends StatelessWidget {
                                 children: [
                                   Text(
                                     d.name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
-                                      color: RequestColors.textPrimary,
+                                      color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                                     ),
                                   ),
                                   Text(
                                     d.branchName.isNotEmpty
                                         ? d.branchName
                                         : 'Branch #${d.branchId}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: RequestColors.textSecondary,
+                                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -1949,10 +1965,10 @@ class _RecentCreatedOverview extends StatelessWidget {
                             ),
                             Text(
                               '${d.employeeCount} ${'staff'.tr}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: RequestColors.textSecondary,
+                                color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                               ),
                             ),
                           ],
@@ -1972,17 +1988,7 @@ class _RecentCreatedOverview extends StatelessWidget {
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+            decoration: appleCardDecoration(context: context, radius: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1999,10 +2005,10 @@ class _RecentCreatedOverview extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'Invited Users'.tr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: RequestColors.textPrimary,
+                            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                           ),
                         ),
                       ],
@@ -2020,7 +2026,10 @@ class _RecentCreatedOverview extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Divider(height: 8),
+                Divider(
+                  height: 8,
+                  color: isDark ? AppColors.darkBorder : null,
+                ),
                 ...employees
                     .take(3)
                     .map(
@@ -2051,17 +2060,17 @@ class _RecentCreatedOverview extends StatelessWidget {
                                 children: [
                                   Text(
                                     e.fullname,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
-                                      color: RequestColors.textPrimary,
+                                      color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                                     ),
                                   ),
                                   Text(
                                     e.email,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: RequestColors.textSecondary,
+                                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                                     ),
                                   ),
                                 ],

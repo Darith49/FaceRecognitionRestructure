@@ -1,5 +1,6 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
+import 'package:face_recognition_attendance/core/services/theme_service.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/home_screen.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/view/myteam_screen.dart';
 import 'package:face_recognition_attendance/features/profile_screen/view/profile_screen.dart';
@@ -15,18 +16,23 @@ class NavigationScreen extends GetView<NavigationController> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Obx(() {
+      final themeService = Get.isRegistered<ThemeService>() ? Get.find<ThemeService>() : null;
+      final isDark = themeService != null
+          ? themeService.isActualDark
+          : (Theme.of(context).brightness == Brightness.dark);
+      final loc = Get.locale?.toString() ?? 'en_US';
+      final currentIndex = controller.currentIndex.value;
+      final isProfileSelected = currentIndex == 4;
 
-    return GlassScaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.canvasParchment,
-      extendBody: true,
-      edgeFade: true,
-      body: Obx(() {
-        final loc = Get.locale?.toString() ?? 'en_US';
-        return KeyedSubtree(
-          key: ValueKey(loc),
+      return GlassScaffold(
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.canvasParchment,
+        extendBody: true,
+        edgeFade: true,
+        body: KeyedSubtree(
+          key: ValueKey('$loc-$isDark'),
           child: IndexedStack(
-            index: controller.currentIndex.value,
+            index: currentIndex,
             children: const [
               HomeScreen(),
               ScheduleScreen(),
@@ -35,14 +41,8 @@ class NavigationScreen extends GetView<NavigationController> {
               ProfileScreen(),
             ],
           ),
-        );
-      }),
-      bottomBar: Obx(() {
-        final _ = Get.locale;
-        final currentIndex = controller.currentIndex.value;
-        final isProfileSelected = currentIndex == 4;
-
-        return Material(
+        ),
+        bottomBar: Material(
           type: MaterialType.transparency,
           child: DefaultTextStyle(
             style: const TextStyle(
@@ -117,8 +117,8 @@ class NavigationScreen extends GetView<NavigationController> {
               interactionBehavior: GlassInteractionBehavior.full,
             ),
           ),
-        );
-      }),
-    );
+        ),
+      );
+    });
   }
 }

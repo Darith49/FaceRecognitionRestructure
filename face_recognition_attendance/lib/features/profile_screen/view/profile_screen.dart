@@ -27,8 +27,13 @@ class ProfileScreen extends StatelessWidget {
         : Get.put(LoginController(), permanent: true);
     loginController.checkFaceStatus();
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.darkText : RequestColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary;
+
     return Scaffold(
-      backgroundColor: RequestColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : RequestColors.background,
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -44,10 +49,10 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     Text(
                       'profile_title'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
-                        color: RequestColors.textPrimary,
+                        color: textPrimary,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -58,12 +63,14 @@ class ProfileScreen extends StatelessWidget {
                         height: 38,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFFE5E5EA)),
+                          border: Border.all(
+                            color: isDark ? AppColors.darkBorder : const Color(0xFFE5E5EA),
+                          ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           FluentIcons.settings_24_regular,
                           size: 20,
-                          color: RequestColors.textSecondary,
+                          color: textSecondary,
                         ),
                       ),
                     ),
@@ -78,7 +85,7 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
                   padding: const EdgeInsets.all(18),
-                  decoration: appleCardDecoration(radius: 20),
+                  decoration: appleCardDecoration(context: context, radius: 20),
                   child: Obx(() {
                     final user = loginController.currentuser.value;
                     return Row(
@@ -152,10 +159,10 @@ class ProfileScreen extends StatelessWidget {
                             children: [
                               Text(
                                 user?.fullname ?? 'profile_name'.tr,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
-                                  color: RequestColors.textPrimary,
+                                  color: textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -183,9 +190,9 @@ class ProfileScreen extends StatelessWidget {
                               const SizedBox(height: 4),
                               Text(
                                 user?.email ?? 'profile_email'.tr,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: RequestColors.textSecondary,
+                                  color: textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -606,14 +613,15 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(left: 20, bottom: 2),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: RequestColors.textSecondary,
+          color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
           letterSpacing: 0.5,
         ),
       ),
@@ -832,9 +840,18 @@ class _RoleListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.darkText : RequestColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary;
+
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      color: isDark ? AppColors.darkSurface : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: isDark
+            ? const BorderSide(color: AppColors.darkBorder, width: 0.5)
+            : BorderSide.none,
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -853,27 +870,27 @@ class _RoleListTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: RequestColors.textPrimary,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: RequestColors.textSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 FluentIcons.chevron_right_24_regular,
                 size: 20,
-                color: RequestColors.textSecondary,
+                color: textSecondary,
               ),
             ],
           ),
@@ -1283,9 +1300,9 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
     );
   }
 
-  Widget _navArrow(IconData icon, VoidCallback onTap) {
+  Widget _navArrow(IconData icon, VoidCallback onTap, bool isDark) {
     return Material(
-      color: RequestColors.background.withValues(alpha: 0.8),
+      color: isDark ? const Color(0xFF334155) : RequestColors.background.withValues(alpha: 0.8),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
@@ -1293,13 +1310,13 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
         child: SizedBox(
           width: 32,
           height: 32,
-          child: Icon(icon, size: 20, color: RequestColors.textPrimary),
+          child: Icon(icon, size: 20, color: isDark ? AppColors.darkText : RequestColors.textPrimary),
         ),
       ),
     );
   }
 
-  Widget _buildDayCell(DateTime day, DateTime selectedDay) {
+  Widget _buildDayCell(DateTime day, DateTime selectedDay, bool isDark) {
     final status = _controller.statusFor(day);
     final selected = isSameDay(day, selectedDay);
     final isToday = isSameDay(day, DateTime.now());
@@ -1308,10 +1325,10 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
 
     final Color background = selected
         ? color
-        : (hasStatus ? color.withValues(alpha: 0.12) : Colors.transparent);
+        : (hasStatus ? color.withValues(alpha: isDark ? 0.25 : 0.12) : Colors.transparent);
     final Color foreground = selected
         ? Colors.white
-        : (hasStatus ? color : RequestColors.textPrimary);
+        : (hasStatus ? color : (isDark ? AppColors.darkText : RequestColors.textPrimary));
 
     return Padding(
       padding: const EdgeInsets.all(3),
@@ -1321,7 +1338,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
           color: background,
           borderRadius: BorderRadius.circular(12),
           border: isToday && !selected
-              ? Border.all(color: RequestColors.primary, width: 1.5)
+              ? Border.all(color: isDark ? AppColors.primaryOnDark : RequestColors.primary, width: 1.5)
               : null,
           boxShadow: selected
               ? [
@@ -1345,7 +1362,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
     );
   }
 
-  Widget _legendDot(Color color, String label) {
+  Widget _legendDot(Color color, String label, bool isDark) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1357,9 +1374,9 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: RequestColors.textSecondary,
+            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -1369,6 +1386,11 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.darkText : RequestColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary;
+
     return Obx(() {
       final focusedDay = _controller.focusedDay.value;
       final selectedDay = _controller.selectedDay.value;
@@ -1378,7 +1400,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
 
       return Container(
         padding: const EdgeInsets.all(16),
-        decoration: appleCardDecoration(radius: 20),
+        decoration: appleCardDecoration(context: context, radius: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1391,17 +1413,17 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                   children: [
                     Text(
                       'Calendar View'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
-                        color: RequestColors.textPrimary,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       DateText.monthYear(focusedDay),
-                      style: const TextStyle(
-                        color: RequestColors.textSecondary,
+                      style: TextStyle(
+                        color: textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -1412,11 +1434,13 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                     _navArrow(
                       FluentIcons.chevron_left_24_regular,
                       () => _changeMonth(next: false),
+                      isDark,
                     ),
                     const SizedBox(width: 8),
                     _navArrow(
                       FluentIcons.chevron_right_24_regular,
                       () => _changeMonth(next: true),
+                      isDark,
                     ),
                   ],
                 ),
@@ -1439,14 +1463,14 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
               calendarStyle: const CalendarStyle(outsideDaysVisible: false),
               calendarBuilders: CalendarBuilders(
                 prioritizedBuilder: (context, day, focused) =>
-                    _buildDayCell(day, selectedDay),
+                    _buildDayCell(day, selectedDay, isDark),
                 dowBuilder: (context, day) => Center(
                   child: Text(
                     DateText.weekdayShort(day.weekday),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: RequestColors.textSecondary,
+                      color: textSecondary,
                     ),
                   ),
                 ),
@@ -1496,10 +1520,10 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                         children: [
                           Text(
                             '${DateText.weekdayShort(selectedDay.weekday)}, ${DateText.monthName(selectedDay.month)} ${selectedDay.day}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: RequestColors.textPrimary,
+                              color: textPrimary,
                             ),
                           ),
                           if (isAbsent)
@@ -1559,11 +1583,11 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
               spacing: 14,
               runSpacing: 8,
               children: [
-                _legendDot(_statusColor(DayStatus.worked), 'Worked'.tr),
-                _legendDot(_statusColor(DayStatus.absent), 'Absent'.tr),
-                _legendDot(_statusColor(DayStatus.dayOff), 'Day off'.tr),
-                _legendDot(_statusColor(DayStatus.overtime), 'Overtime'.tr),
-                _legendDot(_statusColor(DayStatus.leave), 'Leave'.tr),
+                _legendDot(_statusColor(DayStatus.worked), 'Worked'.tr, isDark),
+                _legendDot(_statusColor(DayStatus.absent), 'Absent'.tr, isDark),
+                _legendDot(_statusColor(DayStatus.dayOff), 'Day off'.tr, isDark),
+                _legendDot(_statusColor(DayStatus.overtime), 'Overtime'.tr, isDark),
+                _legendDot(_statusColor(DayStatus.leave), 'Leave'.tr, isDark),
               ],
             ),
           ],

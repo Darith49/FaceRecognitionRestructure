@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
@@ -80,7 +81,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
         }
 
         if (_controller.errorMessage.value.isNotEmpty && _controller.teamData.value == null) {
-          return _buildErrorState();
+          return _buildErrorState(context);
         }
 
         final tabs = _controller.tabs;
@@ -97,14 +98,14 @@ class _MyteamScreenState extends State<MyteamScreen> {
               // Search bar
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                child: _buildSearchBar(),
+                child: _buildSearchBar(context),
               ),
 
               // Segmented tabs (e.g. Managers/Branches, My Leaders/Team, etc.)
               if (tabs.length > 1) ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildSegmentedTabs(tabs),
+                  child: _buildSegmentedTabs(tabs, context),
                 ),
                 const SizedBox(height: 14),
               ],
@@ -128,8 +129,8 @@ class _MyteamScreenState extends State<MyteamScreen> {
                       ...pinned.map((m) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: (m.isCeo || m.isManager)
-                            ? _buildFeaturedCard(m, isPinned: true)
-                            : _buildMemberCard(m, isPinned: true),
+                            ? _buildFeaturedCard(m, isPinned: true, context: context)
+                            : _buildMemberCard(m, isPinned: true, context: context),
                       )),
                       const SizedBox(height: 10),
                     ],
@@ -145,14 +146,14 @@ class _MyteamScreenState extends State<MyteamScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: currentTab.isBranchList
-                                ? _buildBranchCard(item as MyTeamBranch)
-                                : _buildMemberItem(item as MyTeamMember),
+                                ? _buildBranchCard(item as MyTeamBranch, context: context)
+                                : _buildMemberItem(item as MyTeamMember, context: context),
                           );
                         })
                       else
-                        _buildEmptyState(),
+                        _buildEmptyState(context),
                     ] else if (pinned.isEmpty) ...[
-                      _buildEmptyState(),
+                      _buildEmptyState(context),
                     ],
                   ],
                 ),
@@ -168,27 +169,28 @@ class _MyteamScreenState extends State<MyteamScreen> {
   // Search Bar
   // ---------------------------------------------------------------------------
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: _softShadow,
+        boxShadow: isDark ? const [BoxShadow(color: Color(0x33000000), blurRadius: 10, offset: Offset(0, 4))] : _softShadow,
       ),
       child: TextField(
         controller: _searchController,
         onChanged: _controller.updateSearch,
         textInputAction: TextInputAction.search,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
-          color: RequestColors.textPrimary,
+          color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
         ),
         decoration: InputDecoration(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: isDark ? AppColors.darkSurface : Colors.white,
           hintText: 'Search by name, role, or branch'.tr,
-          hintStyle: const TextStyle(
-            color: RequestColors.textSecondary,
+          hintStyle: TextStyle(
+            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
             fontSize: 14,
           ),
           prefixIcon: const Icon(
@@ -198,9 +200,9 @@ class _MyteamScreenState extends State<MyteamScreen> {
           ),
           suffixIcon: _controller.searchQuery.value.isNotEmpty
               ? IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     FluentIcons.dismiss_24_regular,
-                    color: RequestColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                     size: 18,
                   ),
                   onPressed: () {
@@ -215,7 +217,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+            borderSide: isDark ? const BorderSide(color: AppColors.darkBorder) : BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -233,13 +235,15 @@ class _MyteamScreenState extends State<MyteamScreen> {
   // Segmented Tabs
   // ---------------------------------------------------------------------------
 
-  Widget _buildSegmentedTabs(List<MyTeamTab> tabs) {
+  Widget _buildSegmentedTabs(List<MyTeamTab> tabs, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 44,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8E8ED),
+        color: isDark ? AppColors.darkCard : const Color(0xFFE8E8ED),
         borderRadius: BorderRadius.circular(14),
+        border: isDark ? Border.all(color: AppColors.darkBorder) : null,
       ),
       child: Row(
         children: List.generate(tabs.length, (i) {
@@ -253,12 +257,15 @@ class _MyteamScreenState extends State<MyteamScreen> {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOut,
                 decoration: BoxDecoration(
-                  color: selected ? Colors.white : Colors.transparent,
+                  color: selected
+                      ? (isDark ? AppColors.darkSurface : Colors.white)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
+                  border: selected && isDark ? Border.all(color: AppColors.darkBorder) : null,
                   boxShadow: selected
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -276,8 +283,8 @@ class _MyteamScreenState extends State<MyteamScreen> {
                         fontSize: 13,
                         fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                         color: selected
-                            ? RequestColors.textPrimary
-                            : RequestColors.textSecondary,
+                            ? (isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary)
+                            : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -286,7 +293,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                       decoration: BoxDecoration(
                         color: selected
                             ? RequestColors.primary.withValues(alpha: 0.12)
-                            : Colors.black.withValues(alpha: 0.06),
+                            : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06)),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -296,7 +303,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                           fontWeight: FontWeight.w700,
                           color: selected
                               ? RequestColors.primary
-                              : RequestColors.textSecondary,
+                              : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
                         ),
                       ),
                     ),
@@ -314,18 +321,18 @@ class _MyteamScreenState extends State<MyteamScreen> {
   // Member item router
   // ---------------------------------------------------------------------------
 
-  Widget _buildMemberItem(MyTeamMember member) {
+  Widget _buildMemberItem(MyTeamMember member, {required BuildContext context}) {
     if (member.isCeo || member.isManager) {
-      return _buildFeaturedCard(member, isPinned: _controller.isPinned(member.id));
+      return _buildFeaturedCard(member, isPinned: _controller.isPinned(member.id), context: context);
     }
-    return _buildMemberCard(member, isPinned: _controller.isPinned(member.id));
+    return _buildMemberCard(member, isPinned: _controller.isPinned(member.id), context: context);
   }
 
   // ---------------------------------------------------------------------------
   // Featured / Gradient Card (CEO & Manager)
   // ---------------------------------------------------------------------------
 
-  Widget _buildFeaturedCard(MyTeamMember member, {required bool isPinned}) {
+  Widget _buildFeaturedCard(MyTeamMember member, {required bool isPinned, required BuildContext context}) {
     final loginController = Get.isRegistered<LoginController>() ? Get.find<LoginController>() : null;
     final currentUser = loginController?.currentuser.value;
     final isSelf = currentUser != null && (
@@ -459,7 +466,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          _buildMemberActions(member, isPinned: isPinned, onDark: true),
+          _buildMemberActions(member, isPinned: isPinned, onDark: true, context: context),
         ],
       ),
     );
@@ -469,8 +476,9 @@ class _MyteamScreenState extends State<MyteamScreen> {
   // Standard Member Card (Leader & Employee)
   // ---------------------------------------------------------------------------
 
-  Widget _buildMemberCard(MyTeamMember member, {required bool isPinned}) {
+  Widget _buildMemberCard(MyTeamMember member, {required bool isPinned, required BuildContext context}) {
     final color = member.roleColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final loginController = Get.isRegistered<LoginController>() ? Get.find<LoginController>() : null;
     final currentUser = loginController?.currentuser.value;
@@ -489,11 +497,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: _softShadow,
-      ),
+      decoration: appleCardDecoration(context: context, radius: 18),
       child: Row(
         children: [
           _withPinBadge(avatar, isPinned),
@@ -510,10 +514,10 @@ class _MyteamScreenState extends State<MyteamScreen> {
                         member.fullname,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
-                          color: RequestColors.textPrimary,
+                          color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                         ),
                       ),
                     ),
@@ -536,7 +540,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
+                        color: color.withValues(alpha: isDark ? 0.22 : 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -555,9 +559,9 @@ class _MyteamScreenState extends State<MyteamScreen> {
                   member.organizationSubtitle.tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: RequestColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -565,9 +569,9 @@ class _MyteamScreenState extends State<MyteamScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: RequestColors.softSurface,
+                    color: isDark ? AppColors.darkCard : RequestColors.softSurface,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: isDark ? AppColors.darkBorder : Colors.grey.shade300),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -579,8 +583,8 @@ class _MyteamScreenState extends State<MyteamScreen> {
                           '${member.formattedShiftSummary} • ${member.formattedWorkDays}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: RequestColors.textPrimary,
+                          style: TextStyle(
+                            color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -593,7 +597,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          _buildMemberActions(member, isPinned: isPinned, onDark: false),
+          _buildMemberActions(member, isPinned: isPinned, onDark: false, context: context),
         ],
       ),
     );
@@ -603,14 +607,12 @@ class _MyteamScreenState extends State<MyteamScreen> {
   // Branch Card (For CEO Branches tab)
   // ---------------------------------------------------------------------------
 
-  Widget _buildBranchCard(MyTeamBranch branch) {
+  Widget _buildBranchCard(MyTeamBranch branch, {required BuildContext context}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: _softShadow,
-      ),
+      decoration: appleCardDecoration(context: context, radius: 18),
       child: Row(
         children: [
           const Padding(
@@ -630,19 +632,19 @@ class _MyteamScreenState extends State<MyteamScreen> {
                   branch.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: RequestColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       FluentIcons.person_24_regular,
                       size: 14,
-                      color: RequestColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -650,9 +652,9 @@ class _MyteamScreenState extends State<MyteamScreen> {
                         '${'Manager'.tr}: ${branch.managerName}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: RequestColors.textSecondary,
+                          color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -664,7 +666,7 @@ class _MyteamScreenState extends State<MyteamScreen> {
                   '${branch.totalEmployees} ${'Employees'.tr} • ${branch.totalDepartments} ${'Departments'.tr}',
                   style: TextStyle(
                     fontSize: 11,
-                    color: RequestColors.textSecondary.withValues(alpha: 0.8),
+                    color: (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary).withValues(alpha: 0.8),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -679,10 +681,10 @@ class _MyteamScreenState extends State<MyteamScreen> {
                 : 'No phone number available'.tr,
             background: branch.hasManagerPhone
                 ? RequestColors.primary.withValues(alpha: 0.12)
-                : RequestColors.background,
+                : (isDark ? AppColors.darkCard : RequestColors.background),
             iconColor: branch.hasManagerPhone
                 ? RequestColors.primary
-                : RequestColors.textSecondary.withValues(alpha: 0.4),
+                : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.4) : RequestColors.textSecondary.withValues(alpha: 0.4)),
             onTap: () {
               _controller.makePhoneCall(
                 branch.managerPhone,
@@ -732,15 +734,17 @@ class _MyteamScreenState extends State<MyteamScreen> {
     MyTeamMember member, {
     required bool isPinned,
     required bool onDark,
+    required BuildContext context,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color pinBackground = onDark
         ? Colors.white.withValues(alpha: isPinned ? 0.32 : 0.16)
         : (isPinned
             ? RequestColors.primary.withValues(alpha: 0.12)
-            : RequestColors.background.withValues(alpha: 0.6));
+            : (isDark ? AppColors.darkCard : RequestColors.background.withValues(alpha: 0.6)));
     final Color pinIconColor = onDark
         ? Colors.white
-        : (isPinned ? RequestColors.primary : RequestColors.textSecondary);
+        : (isPinned ? RequestColors.primary : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary));
 
     final bool hasPhone = member.hasPhoneNumber;
 
@@ -774,12 +778,12 @@ class _MyteamScreenState extends State<MyteamScreen> {
               ? Colors.white
               : (hasPhone
                   ? RequestColors.primary.withValues(alpha: 0.10)
-                  : RequestColors.background),
+                  : (isDark ? AppColors.darkCard : RequestColors.background)),
           iconColor: onDark
               ? RequestColors.primary
               : (hasPhone
                   ? RequestColors.primary
-                  : RequestColors.textSecondary.withValues(alpha: 0.4)),
+                  : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.4) : RequestColors.textSecondary.withValues(alpha: 0.4))),
           onTap: () => _controller.makePhoneCall(member.phoneNumber, member.fullname, context),
         ),
       ],
@@ -815,7 +819,8 @@ class _MyteamScreenState extends State<MyteamScreen> {
   // Empty & Error States
   // ---------------------------------------------------------------------------
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(top: 48),
       child: Column(
@@ -823,10 +828,11 @@ class _MyteamScreenState extends State<MyteamScreen> {
           Container(
             width: 72,
             height: 72,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : Colors.white,
               shape: BoxShape.circle,
-              boxShadow: _softShadow,
+              border: isDark ? Border.all(color: AppColors.darkBorder) : null,
+              boxShadow: isDark ? const [BoxShadow(color: Color(0x33000000), blurRadius: 10, offset: Offset(0, 4))] : _softShadow,
             ),
             child: const Icon(
               FluentIcons.search_info_24_regular,
@@ -837,24 +843,25 @@ class _MyteamScreenState extends State<MyteamScreen> {
           const SizedBox(height: 16),
           Text(
             'No team members found'.tr,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
-              color: RequestColors.textPrimary,
+              color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'Try searching by a different name, role, or branch.'.tr,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: RequestColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -864,10 +871,11 @@ class _MyteamScreenState extends State<MyteamScreen> {
             Container(
               width: 72,
               height: 72,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurface : Colors.white,
                 shape: BoxShape.circle,
-                boxShadow: _softShadow,
+                border: isDark ? Border.all(color: AppColors.darkBorder) : null,
+                boxShadow: isDark ? const [BoxShadow(color: Color(0x33000000), blurRadius: 10, offset: Offset(0, 4))] : _softShadow,
               ),
               child: const Icon(
                 FluentIcons.cloud_dismiss_24_regular,
@@ -878,19 +886,19 @@ class _MyteamScreenState extends State<MyteamScreen> {
             const SizedBox(height: 16),
             Text(
               'Failed to load team data'.tr,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: RequestColors.textPrimary,
+                color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               _controller.errorMessage.value,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: RequestColors.textSecondary,
+                color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
               ),
             ),
             const SizedBox(height: 20),
@@ -931,16 +939,17 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(left: 2, bottom: 12),
       child: Row(
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
-              color: RequestColors.textPrimary,
+              color: isDark ? AppColors.darkTextPrimary : RequestColors.textPrimary,
             ),
           ),
           if (badge != null) ...[

@@ -7,6 +7,7 @@ import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/clock_screen/controller/clock_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
+import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -305,19 +306,64 @@ class _ClockGreetingHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              // Notification bell
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
-                ),
-                child: const Icon(
-                  FluentIcons.alert_24_regular,
-                  size: 18,
-                  color: RequestColors.textSecondary,
-                ),
+              // Notification bell (live-wired)
+              Builder(
+                builder: (ctx) {
+                  final isDark = Theme.of(ctx).brightness == Brightness.dark;
+                  return Obx(() {
+                    final notifCtrl = Get.isRegistered<NotificationController>()
+                        ? Get.find<NotificationController>()
+                        : Get.put(NotificationController());
+                    final count = notifCtrl.unreadCount.value;
+                    return GestureDetector(
+                      onTap: () => Get.toNamed(AppRoutes.notifications),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isDark ? AppColors.darkSurface : Colors.white,
+                              border: Border.all(
+                                color: isDark ? AppColors.darkBorder : const Color(0xFFE5E5EA),
+                                width: 1,
+                              ),
+                            ),
+                            child: Icon(
+                              FluentIcons.alert_24_regular,
+                              size: 18,
+                              color: isDark ? AppColors.darkText : RequestColors.textSecondary,
+                            ),
+                          ),
+                          if (count > 0)
+                            Positioned(
+                              right: -2,
+                              top: -2,
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '$count',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  });
+                },
               ),
             ],
           );

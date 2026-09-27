@@ -1,9 +1,13 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
+import 'package:face_recognition_attendance/features/Leave_screen/view/leave_screen.dart';
+import 'package:face_recognition_attendance/features/Overtime_screen/view/request_overtime_screen.dart';
+import 'package:face_recognition_attendance/features/Suggestion_screen/view/suggestion_screen.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
 import 'package:face_recognition_attendance/features/permission_screen/controller/permission_controller.dart';
+import 'package:face_recognition_attendance/features/permission_screen/view/request_permission_screen.dart';
 import 'package:face_recognition_attendance/features/request_screen/controller/request_screen_controller.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
@@ -592,6 +596,57 @@ class RequestScreen extends StatelessWidget {
     );
   }
 
+  /// Opens any request form as an inline bottom sheet so the tracker
+  /// remains visible underneath. The named routes are kept alive for
+  /// deep-links/notifications.
+  void _showFormSheet(BuildContext context, Widget formScreen) {
+    final controller = Get.find<RequestScreenController>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.92,
+        minChildSize: 0.5,
+        maxChildSize: 0.97,
+        expand: false,
+        builder: (sheetCtx, scrollController) {
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkBackground : RequestColors.background,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // Handle bar
+                Padding(
+                  padding: const EdgeInsets.only(top: 10, bottom: 4),
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : Colors.black.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: formScreen,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    ).then((_) {
+      // Refresh the tracker once the sheet is dismissed
+      controller.fetchMyRequests();
+    });
+  }
+
   Widget _buildQuickActionGrid(BuildContext context, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -603,7 +658,10 @@ class RequestScreen extends StatelessWidget {
               subtitle: 'Early / Off'.tr,
               icon: FluentIcons.beach_24_regular,
               color: const Color(0xFFF59E0B),
-              onTap: () => Get.toNamed(AppRoutes.leave),
+              onTap: () => _showFormSheet(
+                context,
+                const LeaveScreen(),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -613,7 +671,10 @@ class RequestScreen extends StatelessWidget {
               subtitle: 'Extra work'.tr,
               icon: FluentIcons.clock_24_regular,
               color: const Color(0xFF7C3AED),
-              onTap: () => Get.toNamed(AppRoutes.overtime),
+              onTap: () => _showFormSheet(
+                context,
+                const RequestOvertimeScreen(),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -623,7 +684,10 @@ class RequestScreen extends StatelessWidget {
               subtitle: 'Exception'.tr,
               icon: FluentIcons.person_passkey_24_regular,
               color: RequestColors.primary,
-              onTap: () => Get.toNamed(AppRoutes.permission),
+              onTap: () => _showFormSheet(
+                context,
+                const RequestPermissionScreen(),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -633,7 +697,10 @@ class RequestScreen extends StatelessWidget {
               subtitle: 'Feedback'.tr,
               icon: FluentIcons.lightbulb_24_regular,
               color: const Color(0xFF10B981),
-              onTap: () => Get.toNamed(AppRoutes.suggestion),
+              onTap: () => _showFormSheet(
+                context,
+                const SuggestionScreen(),
+              ),
             ),
           ),
         ],

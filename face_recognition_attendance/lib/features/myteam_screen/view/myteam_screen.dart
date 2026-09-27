@@ -926,7 +926,12 @@ class _MyteamScreenState extends State<MyteamScreen> {
   }
 
   Widget _buildOrgQuickHub(BuildContext context, bool isDark) {
+    // Intentional: Leaders can approve requests (see canApprove in RequestScreenController)
+    // but do NOT get org-structure management shortcuts. Branch/Department/Employee
+    // administration is a structural, infrequent task – keeping that boundary is good
+    // least-privilege design. Only CEO and Manager roles need it day-to-day.
     if (!_controller.isCeo && !_controller.isManager) return const SizedBox.shrink();
+
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),

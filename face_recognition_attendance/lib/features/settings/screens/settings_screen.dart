@@ -34,59 +34,26 @@ class SettingsScreen extends GetView<SettingsController> {
                 Container(
                   decoration: appleCardDecoration(context: context),
                   clipBehavior: Clip.antiAlias,
-                  child: Column(
+                  padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+                  child: Row(
                     children: [
-                      // Visual Mockup Preview Cards
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
-                        child: Row(
-                          children: [
-                            _ThemePreviewCard(
-                              title: 'System'.tr,
-                              mode: ThemeMode.system,
-                              isSelected: ctrl.isSystemMode,
-                              onTap: () => ctrl.changeThemeToSystem(),
-                            ),
-                            const SizedBox(width: 10),
-                            _ThemePreviewCard(
-                              title: 'Light'.tr,
-                              mode: ThemeMode.light,
-                              isSelected: ctrl.isLightMode,
-                              onTap: () => ctrl.changeThemeToLight(),
-                            ),
-                            const SizedBox(width: 10),
-                            _ThemePreviewCard(
-                              title: 'Dark'.tr,
-                              mode: ThemeMode.dark,
-                              isSelected: ctrl.isDarkMode,
-                              onTap: () => ctrl.changeThemeToDark(),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Divider(height: 1, color: dividerColor),
-
-                      // Detailed Selection Tiles
-                      _ThemeOptionTile(
-                        icon: FluentIcons.phone_laptop_24_regular,
-                        title: 'System Default'.tr,
-                        subtitle: 'Match device appearance automatically'.tr,
+                      _ThemePreviewCard(
+                        title: 'System'.tr,
+                        mode: ThemeMode.system,
                         isSelected: ctrl.isSystemMode,
                         onTap: () => ctrl.changeThemeToSystem(),
                       ),
-                      Divider(height: 1, indent: 56, endIndent: 16, color: dividerColor),
-                      _ThemeOptionTile(
-                        icon: FluentIcons.weather_sunny_24_regular,
-                        title: 'Light Mode'.tr,
-                        subtitle: 'Always use light theme'.tr,
+                      const SizedBox(width: 10),
+                      _ThemePreviewCard(
+                        title: 'Light'.tr,
+                        mode: ThemeMode.light,
                         isSelected: ctrl.isLightMode,
                         onTap: () => ctrl.changeThemeToLight(),
                       ),
-                      Divider(height: 1, indent: 56, endIndent: 16, color: dividerColor),
-                      _ThemeOptionTile(
-                        icon: FluentIcons.weather_moon_24_regular,
-                        title: 'Dark Mode'.tr,
-                        subtitle: 'Always use dark theme'.tr,
+                      const SizedBox(width: 10),
+                      _ThemePreviewCard(
+                        title: 'Dark'.tr,
+                        mode: ThemeMode.dark,
                         isSelected: ctrl.isDarkMode,
                         onTap: () => ctrl.changeThemeToDark(),
                       ),
@@ -539,88 +506,6 @@ class _ThemePreviewCard extends StatelessWidget {
   }
 }
 
-/// Detailed list row for Theme option
-class _ThemeOptionTile extends StatelessWidget {
-  const _ThemeOptionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.primaryOnDark : AppColors.primary;
-    final textPrimary = isDark ? AppColors.darkText : RequestColors.textPrimary;
-    final textSecondary = isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary;
-
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? primaryColor.withValues(alpha: 0.15)
-                    : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                icon,
-                color: isSelected
-                    ? primaryColor
-                    : (isDark ? AppColors.darkTextSecondary : const Color(0xFF64748B)),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              Icon(
-                FluentIcons.checkmark_24_regular,
-                color: primaryColor,
-                size: 22,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _LanguageTile extends StatelessWidget {
   const _LanguageTile({

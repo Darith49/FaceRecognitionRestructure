@@ -284,19 +284,31 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Builder(
-                  builder: (context) {
-                    final isKhmer = Get.isRegistered<LanguageService>() && Get.find<LanguageService>().isKhmer;
-                    final langLabel = isKhmer ? 'ភាសាខ្មែរ' : 'English (US)';
-                    final themeName = Get.isRegistered<ThemeService>() ? Get.find<ThemeService>().themeModeName.tr : 'System'.tr;
-                    return _SettingsTile(
-                      icon: FluentIcons.settings_24_regular,
+                child: Column(
+                  children: [
+                    _SettingsTile(
+                      icon: FluentIcons.calendar_clock_24_regular,
                       iconColor: RequestColors.primary,
-                      title: 'Settings & Appearance'.tr,
-                      subtitle: '$langLabel • $themeName',
-                      onTap: () => Get.toNamed(AppRoutes.settings),
-                    );
-                  },
+                      title: 'Work Schedule'.tr,
+                      subtitle: 'Weekly shifts, work hours & holidays'.tr,
+                      onTap: () => Get.toNamed(AppRoutes.schedule),
+                    ),
+                    const SizedBox(height: 10),
+                    Builder(
+                      builder: (context) {
+                        final isKhmer = Get.isRegistered<LanguageService>() && Get.find<LanguageService>().isKhmer;
+                        final langLabel = isKhmer ? 'ភាសាខ្មែរ' : 'English (US)';
+                        final themeName = Get.isRegistered<ThemeService>() ? Get.find<ThemeService>().themeModeName.tr : 'System'.tr;
+                        return _SettingsTile(
+                          icon: FluentIcons.settings_24_regular,
+                          iconColor: const Color(0xFF6366F1),
+                          title: 'Settings & Appearance'.tr,
+                          subtitle: '$langLabel • $themeName',
+                          onTap: () => Get.toNamed(AppRoutes.settings),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
 

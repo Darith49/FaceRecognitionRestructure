@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
@@ -103,6 +104,46 @@ class SettingsScreen extends GetView<SettingsController> {
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(
                     'App content and interface language'.tr,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: captionColor,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                // ============== WORK & NOTIFICATIONS SECTION ==============
+                _SectionLabel('WORK & NOTIFICATIONS'.tr),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: appleCardDecoration(context: context),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      _SettingsActionTile(
+                        icon: FluentIcons.calendar_clock_24_regular,
+                        iconColor: RequestColors.primary,
+                        title: 'Work Schedule'.tr,
+                        subtitle: 'Weekly shifts, work hours & holidays'.tr,
+                        onTap: () => Get.toNamed(AppRoutes.schedule),
+                      ),
+                      Divider(height: 1, indent: 16, endIndent: 16, color: dividerColor),
+                      _SettingsActionTile(
+                        icon: FluentIcons.alert_24_regular,
+                        iconColor: const Color(0xFFF59E0B),
+                        title: 'Notifications'.tr,
+                        subtitle: 'Activity alerts & request updates'.tr,
+                        onTap: () => Get.toNamed(AppRoutes.notifications),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    'Manage your schedules and notification preferences'.tr,
                     style: TextStyle(
                       fontSize: 12,
                       color: captionColor,
@@ -613,6 +654,79 @@ class _AboutRow extends StatelessWidget {
                 size: 20,
                 color: textSecondary,
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsActionTile extends StatelessWidget {
+  const _SettingsActionTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.darkText : RequestColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: iconColor),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(
+              FluentIcons.chevron_right_24_regular,
+              size: 20,
+              color: textSecondary,
+            ),
           ],
         ),
       ),

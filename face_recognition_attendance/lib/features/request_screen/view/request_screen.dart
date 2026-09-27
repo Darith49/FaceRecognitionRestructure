@@ -4,7 +4,6 @@ import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
 import 'package:face_recognition_attendance/features/permission_screen/controller/permission_controller.dart';
-import 'package:face_recognition_attendance/features/permission_screen/model/permission_request.dart';
 import 'package:face_recognition_attendance/features/request_screen/controller/request_screen_controller.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
@@ -38,9 +37,19 @@ class RequestScreen extends StatelessWidget {
       backgroundColor: isDark ? AppColors.darkBackground : RequestColors.background,
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(bottom: showBackButton ? 24 : 120),
-          child: Column(
+        child: RefreshIndicator(
+          color: RequestColors.primary,
+          onRefresh: () async {
+            await Future.wait([
+              controller.fetchIncoming(),
+              controller.fetchMyRequests(),
+              homeCtrl.fetchTodayAttendanceStatus(),
+            ]);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(bottom: showBackButton ? 24 : 120),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
@@ -146,8 +155,9 @@ class RequestScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSegmentedTabBar(
     BuildContext context,
@@ -427,18 +437,38 @@ class RequestScreen extends StatelessWidget {
     PermissionController permissionCtrl,
     bool isDark,
   ) {
+    final controller = Get.find<RequestScreenController>();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        // ─── CLOCK ATTENDANCE (Inline) ───────────────────────────────────
+
+        // 1. QUICK REQUEST ACTIONS
         Padding(
-          padding: const EdgeInsets.only(left: 20, right: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            'SUBMIT NEW REQUEST'.tr,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _buildQuickActionGrid(context, isDark),
+        const SizedBox(height: 22),
+
+        // 2. UNIFIED STATUS TRACKER
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'CLOCK ATTENDANCE'.tr,
+                'MY REQUEST TRACKER'.tr,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -446,29 +476,85 @@ class RequestScreen extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              GestureDetector(
-                onTap: () => Get.toNamed(AppRoutes.clock),
-                child: Text(
-                  'Full View'.tr,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: RequestColors.primary,
-                  ),
+              Obx(() => Text(
+                '${controller.filteredMyRequests.length} ${'Items'.tr}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: RequestColors.primary,
                 ),
-              ),
+              )),
             ],
           ),
         ),
         const SizedBox(height: 10),
-        _RequestClockAttendanceCard(homeCtrl: homeCtrl),
-        const SizedBox(height: 20),
 
-        // MANAGEMENT & SERVICES Section
+        // Category Filter Chips
+        _buildCategoryFilterChips(context, controller, isDark),
+        const SizedBox(height: 8),
+
+        // Status Filter Chips
+        _buildStatusFilterChips(context, controller, isDark),
+        const SizedBox(height: 12),
+
+        // Live Request Tracker List
+        Obx(() {
+          final items = controller.filteredMyRequests;
+          if (items.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                decoration: appleCardDecoration(context: context),
+                child: Column(
+                  children: [
+                    Icon(
+                      FluentIcons.document_bullet_list_multiple_24_regular,
+                      size: 36,
+                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No requests found'.tr,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.darkText : RequestColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tap above to submit a new request.'.tr,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return Column(
+            children: items.map((req) {
+              return _buildUnifiedRequestCard(
+                context: context,
+                request: req,
+                isDark: isDark,
+              );
+            }).toList(),
+          );
+        }),
+
+        const SizedBox(height: 24),
+
+        // 3. UTILITIES & SCHEDULE
         Padding(
-          padding: const EdgeInsets.only(left: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            'MANAGEMENT & SERVICES'.tr,
+            'UTILITIES & ARCHIVE'.tr,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -488,177 +574,312 @@ class RequestScreen extends StatelessWidget {
                 _ServiceRow(
                   icon: FluentIcons.calendar_ltr_24_regular,
                   iconColor: RequestColors.primary,
-                  title: 'My Schedule'.tr,
+                  title: 'My Work Schedule'.tr,
                   onTap: () => Get.toNamed(AppRoutes.schedule),
                 ),
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
                 _ServiceRow(
-                  icon: FluentIcons.beach_24_regular,
-                  iconColor: RequestColors.approvedStatus,
-                  title: 'Leave Request'.tr,
-                  onTap: () => Get.toNamed(AppRoutes.leave),
+                  icon: FluentIcons.history_24_regular,
+                  iconColor: const Color(0xFF7C3AED),
+                  title: 'Historical Records & Archive'.tr,
+                  onTap: () => Get.toNamed(AppRoutes.requestInformation),
                 ),
-                Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
-                _ServiceRow(
-                  icon: FluentIcons.clock_24_regular,
-                  iconColor: RequestColors.gold,
-                  title: 'Overtime'.tr,
-                  onTap: () => Get.toNamed(AppRoutes.overtime),
-                ),
-                Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
-                _ServiceRow(
-                  icon: FluentIcons.lightbulb_24_regular,
-                  iconColor: RequestColors.gold,
-                  title: 'Suggestion Box'.tr,
-                  onTap: () => Get.toNamed(AppRoutes.suggestion),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 14),
-
-        // Permission & Authorization
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Material(
-            color: isDark ? AppColors.darkSurface : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => Get.toNamed(AppRoutes.permission),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: isDark ? Border.all(color: AppColors.darkBorder, width: 0.5) : null,
-                  boxShadow: isDark ? null : appleSoftShadow,
-                ),
-                child: Row(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(
-                        FluentIcons.person_passkey_24_regular,
-                        size: 26,
-                        color: Color(0xFF7C3AED),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Permission & Authorization'.tr,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? AppColors.darkText : RequestColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Request permissions or authorization changes'.tr,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      'Apply'.tr,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: RequestColors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      FluentIcons.chevron_right_24_regular,
-                      size: 20,
-                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // REQUEST ACTIVITY Section
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'REQUEST ACTIVITY'.tr,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => Get.toNamed(AppRoutes.requestInformation),
-                child: Text(
-                  'History'.tr,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: RequestColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Container(
-            decoration: appleCardDecoration(context: context),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                Obx(() {
-                  final pendingList = permissionCtrl.requestsWithStatus(RequestStatus.pending);
-                  return _ActivityRow(
-                    icon: FluentIcons.clock_24_regular,
-                    iconColor: RequestColors.gold,
-                    title: 'Unauthorized'.tr,
-                    subtitle: 'Pending review'.tr,
-                    badgeText: '${pendingList.length} ${'Pending'.tr}',
-                    badgeColor: RequestColors.gold,
-                    onTap: () => Get.toNamed(AppRoutes.requestUnauthorized),
-                  );
-                }),
-                Divider(height: 1, indent: 56, color: isDark ? AppColors.darkBorder : null),
-                Obx(() {
-                  final approvedList = permissionCtrl.requestsWithStatus(RequestStatus.approved);
-                  return _ActivityRow(
-                    icon: FluentIcons.checkmark_circle_24_regular,
-                    iconColor: RequestColors.approvedStatus,
-                    title: 'Authorized'.tr,
-                    subtitle: 'Completed & archived'.tr,
-                    badgeText: '${approvedList.length} ${'Total'.tr}',
-                    badgeColor: RequestColors.approvedStatus,
-                    onTap: () => Get.toNamed(AppRoutes.requestAuthorized),
-                  );
-                }),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildQuickActionGrid(BuildContext context, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _QuickRequestTile(
+              title: 'Leave'.tr,
+              subtitle: 'Early / Off'.tr,
+              icon: FluentIcons.beach_24_regular,
+              color: const Color(0xFFF59E0B),
+              onTap: () => Get.toNamed(AppRoutes.leave),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _QuickRequestTile(
+              title: 'Overtime'.tr,
+              subtitle: 'Extra work'.tr,
+              icon: FluentIcons.clock_24_regular,
+              color: const Color(0xFF7C3AED),
+              onTap: () => Get.toNamed(AppRoutes.overtime),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _QuickRequestTile(
+              title: 'Permission'.tr,
+              subtitle: 'Exception'.tr,
+              icon: FluentIcons.person_passkey_24_regular,
+              color: RequestColors.primary,
+              onTap: () => Get.toNamed(AppRoutes.permission),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _QuickRequestTile(
+              title: 'Suggestion'.tr,
+              subtitle: 'Feedback'.tr,
+              icon: FluentIcons.lightbulb_24_regular,
+              color: const Color(0xFF10B981),
+              onTap: () => Get.toNamed(AppRoutes.suggestion),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilterChips(
+    BuildContext context,
+    RequestScreenController controller,
+    bool isDark,
+  ) {
+    final categories = ['All', 'Leave', 'Overtime', 'Permission', 'Suggestion'];
+    return Obx(() {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: categories.map((cat) {
+            final isSelected = controller.selectedCategoryFilter.value == cat;
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                label: Text(
+                  cat.tr,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
+                  ),
+                ),
+                selected: isSelected,
+                selectedColor: RequestColors.primary,
+                backgroundColor: isDark ? AppColors.darkSurface : const Color(0xFFF1F2F6),
+                side: BorderSide(
+                  color: isSelected
+                      ? RequestColors.primary
+                      : (isDark ? AppColors.darkBorder : Colors.transparent),
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onSelected: (_) => controller.selectedCategoryFilter.value = cat,
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    });
+  }
+
+  Widget _buildStatusFilterChips(
+    BuildContext context,
+    RequestScreenController controller,
+    bool isDark,
+  ) {
+    final statuses = ['All', 'Pending', 'Approved', 'Rejected'];
+    return Obx(() {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: statuses.map((status) {
+            final isSelected = controller.selectedStatusFilter.value == status;
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: FilterChip(
+                label: Text(
+                  status.tr,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
+                  ),
+                ),
+                selected: isSelected,
+                selectedColor: status == 'Approved'
+                    ? RequestColors.approvedStatus
+                    : (status == 'Rejected' ? RequestColors.danger : RequestColors.primary),
+                backgroundColor: isDark ? AppColors.darkSurface : const Color(0xFFF8F9FA),
+                side: BorderSide(
+                  color: isSelected
+                      ? Colors.transparent
+                      : (isDark ? AppColors.darkBorder : const Color(0xFFE5E5EA)),
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onSelected: (_) => controller.selectedStatusFilter.value = status,
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    });
+  }
+
+  Widget _buildUnifiedRequestCard({
+    required BuildContext context,
+    required UnifiedRequestModel request,
+    required bool isDark,
+  }) {
+    Color statusColor;
+    Color statusBg;
+    String statusLabel = request.status.capitalizeFirst ?? request.status;
+
+    switch (request.status.toLowerCase()) {
+      case 'approved':
+        statusColor = RequestColors.approvedStatus;
+        statusBg = RequestColors.approvedStatus.withValues(alpha: 0.12);
+        break;
+      case 'rejected':
+        statusColor = RequestColors.danger;
+        statusBg = RequestColors.danger.withValues(alpha: 0.12);
+        break;
+      default:
+        statusColor = RequestColors.gold;
+        statusBg = RequestColors.gold.withValues(alpha: 0.14);
+        statusLabel = 'Pending'.tr;
+    }
+
+    IconData typeIcon;
+    Color typeColor;
+    switch (request.category) {
+      case 'Leave':
+        typeIcon = FluentIcons.beach_24_regular;
+        typeColor = const Color(0xFFF59E0B);
+        break;
+      case 'Overtime':
+        typeIcon = FluentIcons.clock_24_regular;
+        typeColor = const Color(0xFF7C3AED);
+        break;
+      case 'Permission':
+        typeIcon = FluentIcons.person_passkey_24_regular;
+        typeColor = RequestColors.primary;
+        break;
+      default:
+        typeIcon = FluentIcons.lightbulb_24_regular;
+        typeColor = const Color(0xFF10B981);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          switch (request.category) {
+            case 'Leave':
+              Get.toNamed(AppRoutes.leave);
+              break;
+            case 'Overtime':
+              Get.toNamed(AppRoutes.overtime);
+              break;
+            case 'Permission':
+              Get.toNamed(AppRoutes.permission);
+              break;
+            case 'Suggestion':
+              Get.toNamed(AppRoutes.suggestionStatus);
+              break;
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: appleCardDecoration(context: context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: typeColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(typeIcon, size: 20, color: typeColor),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          request.title.tr,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? AppColors.darkText : RequestColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          request.detail,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      statusLabel.tr,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (request.reason.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkSurface : const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${'Reason'.tr}: ${request.reason}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -770,480 +991,83 @@ class RequestScreen extends StatelessWidget {
   }
 }
 
-// ─── Inline Clock Attendance Card ────────────────────────────────────────────
-
-class _RequestClockAttendanceCard extends StatelessWidget {
-  const _RequestClockAttendanceCard({required this.homeCtrl});
-
-  final HomeController homeCtrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Obx(() {
-        final state = homeCtrl.state.value;
-        final isDone = state == CheckState.completed || state == CheckState.checkedOut;
-        final hasFace = homeCtrl.hasFaceRegistered;
-
-        // Determine button color & label
-        Color buttonColor;
-        String buttonLabel;
-        IconData buttonIcon;
-
-        if (!hasFace) {
-          buttonColor = const Color(0xFF7C3AED);
-          buttonLabel = 'Register Face'.tr;
-          buttonIcon = FluentIcons.person_star_24_regular;
-        } else if (isDone) {
-          buttonColor = RequestColors.approvedStatus;
-          buttonLabel = 'Completed'.tr;
-          buttonIcon = FluentIcons.checkmark_24_regular;
-        } else {
-          switch (state) {
-            case CheckState.session1NotCheckedIn:
-            case CheckState.notCheckedIn:
-            case CheckState.session2NotCheckedIn:
-              buttonColor = RequestColors.primary;
-              buttonLabel = 'Check In'.tr;
-              buttonIcon = FluentIcons.fingerprint_24_regular;
-              break;
-            case CheckState.session1CheckedIn:
-            case CheckState.checkedIn:
-            case CheckState.session2CheckedIn:
-              buttonColor = RequestColors.danger;
-              buttonLabel = 'Check Out'.tr;
-              buttonIcon = FluentIcons.sign_out_24_regular;
-              break;
-            default:
-              buttonColor = RequestColors.primary;
-              buttonLabel = 'Check In'.tr;
-              buttonIcon = FluentIcons.fingerprint_24_regular;
-          }
-        }
-
-        // Determine active session label
-        String sessionLabel;
-        switch (state) {
-          case CheckState.session1NotCheckedIn:
-          case CheckState.notCheckedIn:
-          case CheckState.session1CheckedIn:
-          case CheckState.checkedIn:
-            sessionLabel = 'Session 1 • Morning'.tr;
-            break;
-          case CheckState.session2NotCheckedIn:
-          case CheckState.session2CheckedIn:
-            sessionLabel = 'Session 2 • Afternoon'.tr;
-            break;
-          case CheckState.completed:
-          case CheckState.checkedOut:
-            sessionLabel = 'All Sessions Done'.tr;
-            break;
-        }
-
-        return Container(
-          decoration: appleCardDecoration(context: context, radius: 20),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              // Header row
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Icon(
-                        FluentIcons.clock_24_regular,
-                        size: 28,
-                        color: buttonColor,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Clock Attendance'.tr,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? AppColors.darkText
-                                  : RequestColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            sessionLabel,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: buttonColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Status badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isDone
-                            ? RequestColors.approvedStatus.withValues(alpha: 0.12)
-                            : buttonColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isDone ? 'Done'.tr : (hasFace ? 'Active'.tr : 'Setup'.tr),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isDone ? RequestColors.approvedStatus : buttonColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Session tiles
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Row(
-                  children: [
-                    // Session 1
-                    Expanded(
-                      child: _MiniSessionTile(
-                        label: 'SESSION 1'.tr,
-                        icon: FluentIcons.weather_sunny_24_filled,
-                        iconColor: const Color(0xFFF59E0B),
-                        checkIn: homeCtrl.session1CheckInText,
-                        checkOut: homeCtrl.session1CheckOutText,
-                        isActive: homeCtrl.isSession1Active,
-                        isDone: homeCtrl.isSession1Done,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Session 2
-                    Expanded(
-                      child: _MiniSessionTile(
-                        label: 'SESSION 2'.tr,
-                        icon: FluentIcons.weather_moon_24_filled,
-                        iconColor: const Color(0xFF6366F1),
-                        checkIn: homeCtrl.session2CheckInText,
-                        checkOut: homeCtrl.session2CheckOutText,
-                        isActive: homeCtrl.isSession2Active,
-                        isDone: homeCtrl.isSession2Done,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Progress bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          homeCtrl.totalHoursText,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: homeCtrl.goalProgress >= 1.0
-                                ? RequestColors.approvedStatus
-                                : (Theme.of(context).brightness == Brightness.dark
-                                    ? AppColors.darkText
-                                    : RequestColors.textPrimary),
-                          ),
-                        ),
-                        Text(
-                          '${(homeCtrl.goalProgress * 100).toInt()}% ${'of'.tr} ${homeCtrl.goalHours.toStringAsFixed(0)}h',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.darkTextSecondary
-                                : RequestColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: homeCtrl.goalProgress,
-                        minHeight: 5,
-                        backgroundColor: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkBorder
-                            : const Color(0xFFE5E5EA),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          homeCtrl.goalProgress >= 1.0
-                              ? RequestColors.approvedStatus
-                              : RequestColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // Check In / Check Out button
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton.icon(
-                    onPressed: isDone ? null : () => homeCtrl.onMainButtonPressed(),
-                    icon: Icon(buttonIcon, size: 20),
-                    label: Text(
-                      buttonLabel,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonColor,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: RequestColors.approvedStatus.withValues(alpha: 0.15),
-                      disabledForegroundColor: RequestColors.approvedStatus,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _MiniSessionTile extends StatelessWidget {
-  const _MiniSessionTile({
-    required this.label,
-    required this.icon,
-    required this.iconColor,
-    required this.checkIn,
-    required this.checkOut,
-    required this.isActive,
-    required this.isDone,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color iconColor;
-  final String checkIn;
-  final String checkOut;
-  final bool isActive;
-  final bool isDone;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    Color borderColor;
-    Color bgColor;
-    if (isDone) {
-      borderColor = RequestColors.approvedStatus.withValues(alpha: 0.3);
-      bgColor = RequestColors.approvedStatus.withValues(alpha: isDark ? 0.12 : 0.04);
-    } else if (isActive) {
-      borderColor = RequestColors.primary.withValues(alpha: 0.35);
-      bgColor = RequestColors.primary.withValues(alpha: isDark ? 0.12 : 0.04);
-    } else {
-      borderColor = isDark ? AppColors.darkBorder : const Color(0xFFEBECEF);
-      bgColor = isDark ? AppColors.darkSurface : const Color(0xFFF9FAFB);
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: isActive ? 1.4 : 1.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: iconColor),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: isActive
-                      ? RequestColors.primary
-                      : (isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary),
-                  letterSpacing: 0.3,
-                ),
-              ),
-              const Spacer(),
-              if (isDone)
-                const Icon(FluentIcons.checkmark_circle_24_filled, size: 14, color: RequestColors.approvedStatus),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'IN'.tr,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    Text(
-                      checkIn,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: checkIn != '-- : --'
-                            ? (isDark ? AppColors.darkText : RequestColors.textPrimary)
-                            : const Color(0xFFB0B0B0),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'OUT'.tr,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    Text(
-                      checkOut,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: checkOut != '-- : --'
-                            ? (isDark ? AppColors.darkText : RequestColors.textPrimary)
-                            : const Color(0xFFB0B0B0),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Activity Row ────────────────────────────────────────────────────────────
-
-class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({
-    required this.icon,
-    required this.iconColor,
+class _QuickRequestTile extends StatelessWidget {
+  const _QuickRequestTile({
     required this.title,
     required this.subtitle,
-    required this.badgeText,
-    required this.badgeColor,
+    required this.icon,
+    required this.color,
     required this.onTap,
   });
 
-  final IconData icon;
-  final Color iconColor;
   final String title;
   final String subtitle;
-  final String badgeText;
-  final Color badgeColor;
+  final IconData icon;
+  final Color color;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(icon, size: 24, color: iconColor),
+    return Material(
+      color: isDark ? AppColors.darkSurface : Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : const Color(0xFFEFEFF4),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.darkText : RequestColors.textPrimary,
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-                    ),
-                  ),
-                ],
+                  ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 20, color: color),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                badgeText,
+              const SizedBox(height: 8),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: badgeColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.darkText : RequestColors.textPrimary,
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              FluentIcons.chevron_right_24_regular,
-              size: 20,
-              color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 9,
+                  color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

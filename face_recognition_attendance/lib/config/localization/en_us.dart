@@ -16,6 +16,7 @@ const Map<String, String> enUS = {
 
   // ============== NAVIGATION ==============
   'nav_home': 'Home',
+  'nav_clock': 'Clock',
   'nav_schedule': 'Schedule',
   'nav_create': 'Create',
   'nav_myteam': 'MyTeam',
@@ -690,4 +691,8 @@ const Map<String, String> enUS = {
   'Role': 'Role',
   'Pass': 'Pass',
   'Admin': 'Admin',
+  'WORK & NOTIFICATIONS': 'WORK & NOTIFICATIONS',
+  'Weekly shifts, work hours & holidays': 'Weekly shifts, work hours & holidays',
+  'Activity alerts & request updates': 'Activity alerts & request updates',
+  'Manage your schedules and notification preferences': 'Manage your schedules and notification preferences',
 };

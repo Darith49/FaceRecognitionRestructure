@@ -16,6 +16,7 @@ const Map<String, String> kmKH = {
 
   // ============== NAVIGATION ==============
   'nav_home': 'ទំព័រដើម',
+  'nav_clock': 'វត្តមាន',
   'nav_schedule': 'កាលវិភាគ',
   'nav_create': 'បង្កើត',
   'nav_myteam': 'ក្រុមការងារ',
@@ -690,4 +691,8 @@ const Map<String, String> kmKH = {
   'Role': 'តួនាទី',
   'Pass': 'លេខសម្ងាត់',
   'Admin': 'អ្នកគ្រប់គ្រងប្រព័ន្ធ',
+  'WORK & NOTIFICATIONS': 'ការងារ និងការជូនដំណឹង',
+  'Weekly shifts, work hours & holidays': 'វេនប្រចាំសប្តាហ៍ ម៉ោងធ្វើការ និងថ្ងៃឈប់សម្រាក',
+  'Activity alerts & request updates': 'ការដាស់តឿនសកម្មភាព និងបច្ចុប្បន្នភាពសំណើ',
+  'Manage your schedules and notification preferences': 'គ្រប់គ្រងកាលវិភាគ និងការកំណត់ការជូនដំណឹងរបស់អ្នក',
 };

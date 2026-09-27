@@ -1,3 +1,4 @@
+import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/widgets/app_avatar.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
@@ -95,9 +96,12 @@ class _MyteamScreenState extends State<MyteamScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Organization Hub for CEO & Manager
+              _buildOrgQuickHub(context, Theme.of(context).brightness == Brightness.dark),
+
               // Search bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 child: _buildSearchBar(context),
               ),
 
@@ -916,6 +920,164 @@ class _MyteamScreenState extends State<MyteamScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrgQuickHub(BuildContext context, bool isDark) {
+    if (!_controller.isCeo && !_controller.isManager) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.darkBorder : const Color(0xFFEFEFF4),
+          ),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      FluentIcons.organization_24_regular,
+                      size: 16,
+                      color: RequestColors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'ORGANIZATION HUB'.tr,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                        color: isDark ? AppColors.darkTextSecondary : RequestColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_controller.isCeo)
+                  GestureDetector(
+                    onTap: () => Get.toNamed(AppRoutes.ceoPanel),
+                    child: const Row(
+                      children: [
+                        Text(
+                          'CEO Panel',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: RequestColors.primary,
+                          ),
+                        ),
+                        Icon(
+                          FluentIcons.chevron_right_24_regular,
+                          size: 14,
+                          color: RequestColors.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _OrgQuickChip(
+                    icon: FluentIcons.building_bank_24_regular,
+                    color: const Color(0xFF3B82F6),
+                    label: 'Branches'.tr,
+                    onTap: () => Get.toNamed(AppRoutes.branchList),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _OrgQuickChip(
+                    icon: FluentIcons.organization_horizontal_24_regular,
+                    color: const Color(0xFF8B5CF6),
+                    label: 'Departments'.tr,
+                    onTap: () => Get.toNamed(AppRoutes.departmentList),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _OrgQuickChip(
+                    icon: FluentIcons.people_24_regular,
+                    color: const Color(0xFF10B981),
+                    label: 'Staff'.tr,
+                    onTap: () => Get.toNamed(AppRoutes.employeeList),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OrgQuickChip extends StatelessWidget {
+  const _OrgQuickChip({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Material(
+      color: color.withValues(alpha: isDark ? 0.16 : 0.08),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

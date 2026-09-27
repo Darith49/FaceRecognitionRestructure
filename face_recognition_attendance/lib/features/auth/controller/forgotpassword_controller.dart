@@ -1,4 +1,4 @@
-import 'package:face_recognition_attendance/core/service/firebase_service.dart';
+import 'package:face_recognition_attendance/core/services/firebase_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

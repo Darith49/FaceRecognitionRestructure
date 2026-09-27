@@ -1,4 +1,4 @@
-import 'package:face_recognition_attendance/core/service/firebase_service.dart';
+import 'package:face_recognition_attendance/core/services/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/employee/model/employee_model.dart';

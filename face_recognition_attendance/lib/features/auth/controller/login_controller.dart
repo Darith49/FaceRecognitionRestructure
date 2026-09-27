@@ -1,6 +1,6 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
-import 'package:face_recognition_attendance/core/service/firebase_service.dart';
+import 'package:face_recognition_attendance/core/services/firebase_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
 import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';

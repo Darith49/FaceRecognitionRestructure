@@ -18,11 +18,16 @@ class RequestScreenController extends GetxController {
   final RxInt selectedTab = 0.obs;
   bool _hasInitializedTab = false;
 
+  final RxList<UnifiedRequestModel> myRequests = <UnifiedRequestModel>[].obs;
+  final RxString selectedCategoryFilter = 'All'.obs;
+  final RxString selectedStatusFilter = 'All'.obs;
+
   @override
   void onInit() {
     super.onInit();
     _checkRole();
     fetchIncoming();
+    fetchMyRequests();
   }
 
   void _checkRole() {
@@ -35,6 +40,56 @@ class RequestScreenController extends GetxController {
             user.role == UserRole.leader;
       }
     }
+  }
+
+  Future<void> fetchMyRequests() async {
+    try {
+      final results = await Future.wait([
+        _apiService.get('/requests/leave/'),
+        _apiService.get('/requests/overtime/'),
+        _apiService.get('/requests/suggestions/'),
+        _apiService.get('/permissions/'),
+      ]);
+
+      final List<UnifiedRequestModel> items = [];
+      if (results[0] is List) {
+        for (final item in results[0] as List) {
+          items.add(UnifiedRequestModel.fromLeave(Map<String, dynamic>.from(item)));
+        }
+      }
+      if (results[1] is List) {
+        for (final item in results[1] as List) {
+          items.add(UnifiedRequestModel.fromOvertime(Map<String, dynamic>.from(item)));
+        }
+      }
+      if (results[2] is List) {
+        for (final item in results[2] as List) {
+          items.add(UnifiedRequestModel.fromSuggestion(Map<String, dynamic>.from(item)));
+        }
+      }
+      if (results[3] is List) {
+        for (final item in results[3] as List) {
+          items.add(UnifiedRequestModel.fromPermission(Map<String, dynamic>.from(item)));
+        }
+      }
+
+      items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      myRequests.assignAll(items);
+    } catch (e) {
+      debugPrint('Error fetching my requests: $e');
+    }
+  }
+
+  List<UnifiedRequestModel> get filteredMyRequests {
+    return myRequests.where((req) {
+      if (selectedCategoryFilter.value != 'All' && req.category != selectedCategoryFilter.value) {
+        return false;
+      }
+      if (selectedStatusFilter.value != 'All' && req.status.toLowerCase() != selectedStatusFilter.value.toLowerCase()) {
+        return false;
+      }
+      return true;
+    }).toList();
   }
 
   Future<void> fetchIncoming() async {
@@ -134,5 +189,143 @@ class RequestScreenController extends GetxController {
         'Failed to review permission request: $e',
       );
     }
+  }
+}
+
+class UnifiedRequestModel {
+  final int id;
+  final String category; // 'Leave', 'Overtime', 'Permission', 'Suggestion'
+  final String title;
+  final String detail;
+  final String status; // 'pending', 'approved', 'rejected'
+  final DateTime createdAt;
+  final String dateText;
+  final String reason;
+  final Map<String, dynamic> rawData;
+
+  const UnifiedRequestModel({
+    required this.id,
+    required this.category,
+    required this.title,
+    required this.detail,
+    required this.status,
+    required this.createdAt,
+    required this.dateText,
+    required this.reason,
+    required this.rawData,
+  });
+
+  factory UnifiedRequestModel.fromLeave(Map<String, dynamic> json) {
+    final sess = json['session'] as num? ?? 1;
+    final mode = json['leave_mode']?.toString() ?? 'full_section';
+    final earlyTime = json['early_leave_time']?.toString() ?? '';
+    final dateStr = json['from_date']?.toString() ?? '';
+    String detailStr = dateStr;
+    if (sess == 1) {
+      detailStr = mode == 'early_leave' && earlyTime.isNotEmpty
+          ? 'Section 1 • Early at $earlyTime'
+          : 'Section 1 (Morning)';
+    } else if (sess == 2) {
+      detailStr = mode == 'early_leave' && earlyTime.isNotEmpty
+          ? 'Section 2 • Early at $earlyTime'
+          : 'Section 2 (Afternoon)';
+    } else if (sess == 0) {
+      detailStr = 'Full Day';
+    }
+
+    DateTime dt;
+    try {
+      dt = DateTime.parse(json['created_at']?.toString() ?? json['from_date']?.toString() ?? '');
+    } catch (_) {
+      dt = DateTime.now();
+    }
+
+    return UnifiedRequestModel(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      category: 'Leave',
+      title: (json['day_type'] ?? json['leave_type'] ?? 'Leave Request').toString(),
+      detail: '$detailStr • $dateStr',
+      status: json['status']?.toString().toLowerCase() ?? 'pending',
+      createdAt: dt,
+      dateText: dateStr,
+      reason: json['reason']?.toString() ?? '',
+      rawData: json,
+    );
+  }
+
+  factory UnifiedRequestModel.fromOvertime(Map<String, dynamic> json) {
+    final dateStr = json['date']?.toString() ?? '';
+    final startStr = json['start_time']?.toString() ?? '';
+    final endStr = json['end_time']?.toString() ?? '';
+    final totalH = json['total_hours']?.toString() ?? '';
+
+    DateTime dt;
+    try {
+      dt = DateTime.parse(json['created_at']?.toString() ?? dateStr);
+    } catch (_) {
+      dt = DateTime.now();
+    }
+
+    return UnifiedRequestModel(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      category: 'Overtime',
+      title: 'Overtime Request',
+      detail: '$dateStr ($startStr - $endStr)${totalH.isNotEmpty ? " • ${totalH}h" : ""}',
+      status: json['status']?.toString().toLowerCase() ?? 'pending',
+      createdAt: dt,
+      dateText: dateStr,
+      reason: json['reason']?.toString() ?? '',
+      rawData: json,
+    );
+  }
+
+  factory UnifiedRequestModel.fromPermission(Map<String, dynamic> json) {
+    final dateStr = json['date']?.toString() ?? '';
+    final schedTime = json['schedule_time']?.toString() ?? '';
+    final titleStr = json['title']?.toString() ?? json['category']?.toString() ?? 'Permission';
+
+    DateTime dt;
+    try {
+      dt = DateTime.parse(json['created_at']?.toString() ?? dateStr);
+    } catch (_) {
+      dt = DateTime.now();
+    }
+
+    return UnifiedRequestModel(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      category: 'Permission',
+      title: titleStr,
+      detail: '$dateStr • $schedTime',
+      status: json['status']?.toString().toLowerCase() ?? 'pending',
+      createdAt: dt,
+      dateText: dateStr,
+      reason: json['reason']?.toString() ?? '',
+      rawData: json,
+    );
+  }
+
+  factory UnifiedRequestModel.fromSuggestion(Map<String, dynamic> json) {
+    final titleStr = json['title']?.toString() ?? 'Suggestion';
+    final topic = json['topic']?.toString() ?? '';
+    final dateStr = json['created_at']?.toString() ?? '';
+
+    DateTime dt;
+    try {
+      dt = DateTime.parse(dateStr);
+    } catch (_) {
+      dt = DateTime.now();
+    }
+
+    return UnifiedRequestModel(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      category: 'Suggestion',
+      title: titleStr,
+      detail: topic.isNotEmpty ? topic : (json['description']?.toString() ?? ''),
+      status: json['status']?.toString().toLowerCase() ?? 'pending',
+      createdAt: dt,
+      dateText: dateStr.contains('T') ? dateStr.split('T').first : dateStr,
+      reason: json['description']?.toString() ?? '',
+      rawData: json,
+    );
   }
 }

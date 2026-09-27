@@ -1,11 +1,11 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/services/theme_service.dart';
+import 'package:face_recognition_attendance/features/clock_screen/view/clock_screen.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/home_screen.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/view/myteam_screen.dart';
 import 'package:face_recognition_attendance/features/profile_screen/view/profile_screen.dart';
 import 'package:face_recognition_attendance/features/request_screen/view/request_screen.dart';
-import 'package:face_recognition_attendance/features/schedule_screen/view/schedule_screen.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -35,9 +35,9 @@ class NavigationScreen extends GetView<NavigationController> {
             index: currentIndex,
             children: const [
               HomeScreen(),
-              ScheduleScreen(),
-              MyteamScreen(),
+              ClockScreen(showBackButton: false),
               RequestScreen(),
+              MyteamScreen(),
               ProfileScreen(),
             ],
           ),
@@ -60,19 +60,19 @@ class NavigationScreen extends GetView<NavigationController> {
                   label: 'nav_home'.tr,
                 ),
                 GlassTab(
-                  icon: const Icon(FluentIcons.calendar_ltr_24_regular),
-                  activeIcon: const Icon(FluentIcons.calendar_ltr_24_filled),
-                  label: 'nav_schedule'.tr,
-                ),
-                GlassTab(
-                  icon: const Icon(FluentIcons.people_community_24_regular),
-                  activeIcon: const Icon(FluentIcons.people_community_24_filled),
-                  label: 'nav_myteam'.tr,
+                  icon: const Icon(FluentIcons.fingerprint_24_regular),
+                  activeIcon: const Icon(FluentIcons.fingerprint_24_filled),
+                  label: 'nav_clock'.tr,
                 ),
                 GlassTab(
                   icon: const Icon(FluentIcons.document_bullet_list_multiple_24_regular),
                   activeIcon: const Icon(FluentIcons.document_bullet_list_multiple_24_filled),
                   label: 'nav_request'.tr,
+                ),
+                GlassTab(
+                  icon: const Icon(FluentIcons.people_community_24_regular),
+                  activeIcon: const Icon(FluentIcons.people_community_24_filled),
+                  label: 'nav_myteam'.tr,
                 ),
               ],
               extraButton: GlassTabBarExtraButton(

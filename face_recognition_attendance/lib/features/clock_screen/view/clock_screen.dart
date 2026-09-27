@@ -18,7 +18,9 @@ import 'package:get/get.dart';
 /// - Interactive Animated Concentric Check-In Button (pulsing dashed ring, tap bounce, state transitions)
 /// - Wi-Fi Status Pill & Next Schedule info
 class ClockScreen extends StatefulWidget {
-  const ClockScreen({super.key});
+  const ClockScreen({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   State<ClockScreen> createState() => _ClockScreenState();
@@ -100,6 +102,7 @@ class _ClockScreenState extends State<ClockScreen>
     return RequestScaffold(
       title: 'Clock Attendance'.tr,
       backLabel: 'Requests'.tr,
+      showBackButton: widget.showBackButton,
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 32),
         child: Column(

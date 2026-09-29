@@ -157,18 +157,22 @@ class LocalAuthService {
     final branches = _db.getBranches();
     final departments = _db.getDepartments();
 
-    final bId = branchId ?? (branches.isNotEmpty ? (branches.first['id'] as int) : 1);
+    final bId = branchId;
     String bName = branchName ?? '';
-    if (bName.isEmpty) {
+    if (bName.isEmpty && bId != null) {
       final matchB = branches.firstWhereOrNull((b) => b['id'] == bId);
-      bName = matchB?['name']?.toString() ?? 'Phnom Penh Headquarters';
+      bName = matchB?['name']?.toString() ?? 'Unassigned';
+    } else if (bName.isEmpty) {
+      bName = 'Unassigned';
     }
 
-    final dId = departmentId ?? (departments.isNotEmpty ? (departments.first['id'] as int) : 1);
+    final dId = departmentId;
     String dName = departmentName ?? '';
-    if (dName.isEmpty) {
+    if (dName.isEmpty && dId != null) {
       final matchD = departments.firstWhereOrNull((d) => d['id'] == dId);
-      dName = matchD?['name']?.toString() ?? 'Software Engineering';
+      dName = matchD?['name']?.toString() ?? 'Unassigned';
+    } else if (dName.isEmpty) {
+      dName = 'Unassigned';
     }
 
     final autoEmpId = employeeId != null && employeeId.trim().isNotEmpty

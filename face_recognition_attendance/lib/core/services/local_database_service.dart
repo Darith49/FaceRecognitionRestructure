@@ -123,7 +123,21 @@ class LocalDatabaseService {
         }
       }
       if (demoEmps.isNotEmpty) _box.write('demo_employees', demoEmps);
-      if (realEmps.isNotEmpty) _box.write('real_employees', realEmps);
+      if (realEmps.isNotEmpty) {
+        final existingRaw = _box.read<List>('real_employees') ?? [];
+        final currentReal = List<Map<String, dynamic>>.from(existingRaw.map((x) => Map<String, dynamic>.from(x as Map)));
+        for (final re in realEmps) {
+          final idx = currentReal.indexWhere((x) =>
+              x['email']?.toString().toLowerCase().trim() == re['email']?.toString().toLowerCase().trim() ||
+              (x['id'] != null && x['id'].toString() == re['id']?.toString()));
+          if (idx >= 0) {
+            currentReal[idx] = {...currentReal[idx], ...re};
+          } else {
+            currentReal.add(re);
+          }
+        }
+        _box.write('real_employees', currentReal);
+      }
     }
 
     if (data.containsKey('branches') && data['branches'] is List) {
@@ -245,6 +259,41 @@ class LocalDatabaseService {
       if (realPerm.isNotEmpty) _box.write('real_permissions', realPerm);
     }
 
+    // Ensure all real user vault accounts exist in real_employees
+    final vault = _getUserVault();
+    final currentRealRaw = _box.read<List>('real_employees') ?? [];
+    final currentRealList = List<Map<String, dynamic>>.from(currentRealRaw.map((x) => Map<String, dynamic>.from(x as Map)));
+    bool updatedReal = false;
+    vault.forEach((email, v) {
+      if (!isDemoAccountEmail(email) && v is Map && v['fullname'] != null) {
+        final exists = currentRealList.any((e) => e['email']?.toString().toLowerCase().trim() == email.toLowerCase().trim());
+        if (!exists) {
+          int nextId = 1;
+          if (currentRealList.isNotEmpty) {
+            nextId = currentRealList.map((e) => (e['id'] as num?)?.toInt() ?? 0).reduce(max) + 1;
+          }
+          currentRealList.add({
+            'id': nextId,
+            'fullname': v['fullname'],
+            'email': email,
+            'role': v['role'] ?? 'employee',
+            'password': v['password'],
+            'employee_id': v['employee_id'] ?? 'EMP-${nextId.toString().padLeft(3, '0')}',
+            'firebase_uid': 'local_uid_${v['employee_id'] ?? nextId}',
+            'branch': v['branch'],
+            'department': v['department'],
+            'status': 'active',
+            'is_demo': false,
+            'created_at': DateTime.now().toIso8601String(),
+          });
+          updatedReal = true;
+        }
+      }
+    });
+    if (updatedReal) {
+      _box.write('real_employees', currentRealList);
+    }
+
     _syncDemoAccounts();
   }
 
@@ -257,7 +306,15 @@ class LocalDatabaseService {
     vault[cleanEmail] = existing;
     _box.write('user_account_vault', vault);
 
-    // Synchronize profile picture with SQLite backend
+    // Synchronize account credentials and profile picture with SQLite backend
+    onSyncHook?.call(
+      type: 'user_vault',
+      payload: {
+        'email': cleanEmail,
+        'vault': existing,
+      },
+    );
+
     if (updates.containsKey('profile_picture') && updates['profile_picture'] != null) {
       onSyncHook?.call(
         type: 'profile_picture',
@@ -1147,6 +1204,22 @@ class LocalDatabaseService {
         if (empEmail == target) return e;
       }
     }
+    // Fallback to user account vault if not yet in employee list
+    final vaultEntry = getUserAccountData(target);
+    if (vaultEntry != null && vaultEntry['fullname'] != null) {
+      return {
+        'fullname': vaultEntry['fullname'],
+        'email': target,
+        'role': vaultEntry['role'] ?? 'employee',
+        'password': vaultEntry['password'],
+        'branch': vaultEntry['branch'],
+        'department': vaultEntry['department'],
+        'employee_id': vaultEntry['employee_id'] ?? 'EMP-001',
+        'firebase_uid': 'local_uid_${vaultEntry['employee_id'] ?? target}',
+        'status': 'active',
+        'is_demo': isDemoEmail,
+      };
+    }
     return null;
   }
 
@@ -1171,6 +1244,29 @@ class LocalDatabaseService {
         }
       }
     }
+    // Fallback to user account vault
+    final vault = _getUserVault();
+    for (final entry in vault.entries) {
+      final v = entry.value;
+      if (v is Map) {
+        final empId = v['employee_id']?.toString();
+        final localUid = 'local_uid_${empId ?? entry.key}';
+        if (empId == target || localUid == target || entry.key == target) {
+          return {
+            'fullname': v['fullname'] ?? 'User',
+            'email': entry.key,
+            'role': v['role'] ?? 'employee',
+            'password': v['password'],
+            'branch': v['branch'],
+            'department': v['department'],
+            'employee_id': empId ?? 'EMP-001',
+            'firebase_uid': localUid,
+            'status': 'active',
+            'is_demo': isDemoAccountEmail(entry.key),
+          };
+        }
+      }
+    }
     return null;
   }
 
@@ -1191,6 +1287,9 @@ class LocalDatabaseService {
     newEmp['is_demo'] = useDemo;
     list.add(newEmp);
     _box.write(empKey, list);
+
+    onSyncHook?.call(type: 'employee', payload: newEmp);
+
     return newEmp;
   }
 
@@ -1213,6 +1312,8 @@ class LocalDatabaseService {
     updates.forEach((k, v) => updated[k] = v);
     list[idx] = updated;
     _box.write(empKey, list);
+
+    onSyncHook?.call(type: 'employee', payload: updated);
 
     // Keep vault in sync
     final email = updated['email']?.toString().toLowerCase().trim();
@@ -1264,6 +1365,9 @@ class LocalDatabaseService {
     newDept['is_demo'] = useDemo;
     list.add(newDept);
     _box.write(key, list);
+
+    onSyncHook?.call(type: 'department', payload: newDept);
+
     return newDept;
   }
 
@@ -1277,6 +1381,9 @@ class LocalDatabaseService {
     updates.forEach((k, v) => updated[k] = v);
     list[idx] = updated;
     _box.write(key, list);
+
+    onSyncHook?.call(type: 'department', payload: updated);
+
     return updated;
   }
 
@@ -1311,6 +1418,9 @@ class LocalDatabaseService {
     newBranch['is_demo'] = useDemo;
     list.add(newBranch);
     _box.write(key, list);
+
+    onSyncHook?.call(type: 'branch', payload: newBranch);
+
     return newBranch;
   }
 
@@ -1324,6 +1434,9 @@ class LocalDatabaseService {
     updates.forEach((k, v) => updated[k] = v);
     list[idx] = updated;
     _box.write(key, list);
+
+    onSyncHook?.call(type: 'branch', payload: updated);
+
     return updated;
   }
 

@@ -68,6 +68,7 @@ class RegisterController extends GetxController {
       );
 
       // Save user session
+      await SecureStorageService().setRememberMe(true);
       final token = await _firebaseService.getIdToken(forceRefresh: true);
       final firebaseUser = _firebaseService.getCurrentUser();
 

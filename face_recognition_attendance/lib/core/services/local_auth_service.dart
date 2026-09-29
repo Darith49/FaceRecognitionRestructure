@@ -1,10 +1,10 @@
-import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
+import 'package:face_recognition_attendance/core/services/sqlite_sync_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_status.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
-import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get_storage/get_storage.dart';
 
 /// Local User credential representation for offline authentication
@@ -47,6 +47,10 @@ class LocalAuthService {
       if (emp == null) {
         emp = _db.getEmployeeByUid(cachedUid, forDemo: true);
         if (emp != null) isDemo = true;
+      }
+      if (emp == null) {
+        emp = _db.getEmployeeByUid(cachedUid);
+        if (emp != null) isDemo = isDemoAccountEmail(emp['email']);
       }
       if (emp != null) {
         _currentUser = LocalUser(
@@ -213,14 +217,21 @@ class LocalAuthService {
     };
 
     final savedEmp = _db.saveEmployee(empData);
-    _db.saveUserAccountData(cleanEmail, {
+    final vaultData = {
       'fullname': fullname.trim(),
       'role': userRoleToString(role),
       'password': password,
       'branch': bId,
       'department': dId,
       'employee_id': autoEmpId,
-    });
+    };
+    _db.saveUserAccountData(cleanEmail, vaultData);
+
+    // Explicitly sync with persistent SQLite backend immediately
+    try {
+      SqliteSyncService().syncEmployee(savedEmp);
+      SqliteSyncService().syncUserVault(email: cleanEmail, vaultData: vaultData);
+    } catch (_) {}
 
     return _createAndCacheUser(savedEmp);
   }

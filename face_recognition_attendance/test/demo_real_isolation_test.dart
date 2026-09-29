@@ -158,6 +158,31 @@ void main() {
   assert(hydratedRealEmps.first['email'] == 'realceo@company.com');
   print('Hydration partitioning simulation passed.');
 
+  // Test 5: Verify account creation persistence & restore across restarts
+  print('\n[Test 5] Testing saveEmployee with password and credentials across restarts...');
+  final createdEmp = sqliteDb.saveEmployee({
+    'fullname': 'Newly Created Admin',
+    'email': 'newadmin@corporate.com',
+    'password': 'password999',
+    'role': 'admin',
+    'employee_id': 'EMP-777',
+    'is_demo': 0,
+  });
+  assert(createdEmp['email'] == 'newadmin@corporate.com');
+  assert(createdEmp['password'] == 'password999');
+
+  // Verify in bootstrap snapshot
+  final snapshot = sqliteDb.getBootstrapData();
+  final employeesList = snapshot['employees'] as List<Map<String, dynamic>>;
+  final empMatch = employeesList.firstWhere((e) => e['email'] == 'newadmin@corporate.com');
+  assert(empMatch['password'] == 'password999', 'Password should persist in employees');
+
+  final vaultMap = snapshot['user_vault'] as Map<String, dynamic>;
+  assert(vaultMap.containsKey('newadmin@corporate.com'), 'User vault must contain new account');
+  assert(vaultMap['newadmin@corporate.com']['password'] == 'password999', 'Vault must retain password');
+  assert(vaultMap['newadmin@corporate.com']['fullname'] == 'Newly Created Admin', 'Vault must retain fullname');
+  print('Account creation & bootstrap recovery passed.');
+
   sqliteDb.close();
   if (File(testDbFile).existsSync()) {
     File(testDbFile).deleteSync();

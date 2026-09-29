@@ -100,7 +100,7 @@ class AppSqliteDatabase {
   }
 
   void _createTables() {
-    // 1. Persistent User Account Vault (Profile picture, face recognition templates & photo)
+    // 1. Persistent User Account Vault (Profile picture, face recognition templates & photo, credentials)
     _db!.execute('''
       CREATE TABLE IF NOT EXISTS user_vault (
         email TEXT PRIMARY KEY,
@@ -109,14 +109,20 @@ class AppSqliteDatabase {
         face_templates TEXT,
         face_jpg TEXT,
         face_registered_at TEXT,
-        updated_at TEXT
+        updated_at TEXT,
+        fullname TEXT,
+        role TEXT,
+        password TEXT,
+        employee_id TEXT,
+        branch INTEGER,
+        department INTEGER
       );
     ''');
 
     // 2. Branches
     _db!.execute('''
       CREATE TABLE IF NOT EXISTS branches (
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         address TEXT,
         latitude REAL,
@@ -129,7 +135,7 @@ class AppSqliteDatabase {
     // 3. Departments
     _db!.execute('''
       CREATE TABLE IF NOT EXISTS departments (
-        id INTEGER PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         code TEXT,
         description TEXT,
@@ -164,7 +170,9 @@ class AppSqliteDatabase {
         has_face_registered INTEGER DEFAULT 0,
         face_templates TEXT,
         face_jpg TEXT,
-        face_registered_at TEXT
+        face_registered_at TEXT,
+        password TEXT,
+        is_demo INTEGER DEFAULT 0
       );
     ''');
 
@@ -266,6 +274,17 @@ class AppSqliteDatabase {
     for (final t in tables) {
       try {
         _db!.execute('ALTER TABLE $t ADD COLUMN is_demo INTEGER DEFAULT 0;');
+      } catch (_) {}
+    }
+
+    try {
+      _db!.execute('ALTER TABLE employees ADD COLUMN password TEXT;');
+    } catch (_) {}
+
+    final vaultCols = ['fullname', 'role', 'password', 'employee_id', 'branch', 'department'];
+    for (final col in vaultCols) {
+      try {
+        _db!.execute('ALTER TABLE user_vault ADD COLUMN $col TEXT;');
       } catch (_) {}
     }
   }
@@ -418,10 +437,16 @@ class AppSqliteDatabase {
       'face_jpg': row['face_jpg'],
       'face_registered_at': row['face_registered_at'],
       'updated_at': row['updated_at'],
+      'fullname': row['fullname'],
+      'role': row['role'],
+      'password': row['password'],
+      'employee_id': row['employee_id'],
+      'branch': row['branch'],
+      'department': row['department'],
     };
   }
 
-  void saveUserVault(String email, Map<String, dynamic> data) {
+  void saveUserVault(String email, Map<String, dynamic> data, {bool mirrorToEmployee = true}) {
     final cleanEmail = email.trim().toLowerCase();
     if (cleanEmail.isEmpty) return;
     final existing = getUserVault(cleanEmail) ?? {};
@@ -442,14 +467,23 @@ class AppSqliteDatabase {
         : null;
 
     _db!.execute('''
-      INSERT INTO user_vault (email, profile_picture, has_face_registered, face_templates, face_jpg, face_registered_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO user_vault (
+        email, profile_picture, has_face_registered, face_templates, face_jpg, face_registered_at, updated_at,
+        fullname, role, password, employee_id, branch, department
+      )
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?, ?, ?)
       ON CONFLICT(email) DO UPDATE SET
         profile_picture = CASE WHEN excluded.profile_picture IS NOT NULL THEN excluded.profile_picture ELSE user_vault.profile_picture END,
         has_face_registered = COALESCE(excluded.has_face_registered, user_vault.has_face_registered),
         face_templates = COALESCE(excluded.face_templates, user_vault.face_templates),
         face_jpg = COALESCE(excluded.face_jpg, user_vault.face_jpg),
         face_registered_at = COALESCE(excluded.face_registered_at, user_vault.face_registered_at),
+        fullname = COALESCE(excluded.fullname, user_vault.fullname),
+        role = COALESCE(excluded.role, user_vault.role),
+        password = COALESCE(excluded.password, user_vault.password),
+        employee_id = COALESCE(excluded.employee_id, user_vault.employee_id),
+        branch = COALESCE(excluded.branch, user_vault.branch),
+        department = COALESCE(excluded.department, user_vault.department),
         updated_at = datetime('now');
     ''', [
       cleanEmail,
@@ -458,26 +492,32 @@ class AppSqliteDatabase {
       templatesJson,
       merged['face_jpg'],
       merged['face_registered_at'] ?? DateTime.now().toIso8601String(),
+      merged['fullname']?.toString(),
+      merged['role']?.toString(),
+      merged['password']?.toString(),
+      merged['employee_id']?.toString(),
+      merged['branch'] != null ? int.tryParse(merged['branch'].toString()) : null,
+      merged['department'] != null ? int.tryParse(merged['department'].toString()) : null,
     ]);
 
     // Also update employees table if user exists there
-    _db!.execute('''
-      UPDATE employees SET
-        profile_picture = CASE WHEN ? IS NOT NULL THEN ? ELSE profile_picture END,
-        has_face_registered = CASE WHEN ? = 1 THEN 1 ELSE has_face_registered END,
-        face_templates = COALESCE(?, face_templates),
-        face_jpg = COALESCE(?, face_jpg),
-        face_registered_at = COALESCE(?, face_registered_at)
-      WHERE LOWER(email) = ?;
-    ''', [
-      merged['profile_picture'],
-      merged['profile_picture'],
-      (merged['has_face_registered'] == true) ? 1 : 0,
-      templatesJson,
-      merged['face_jpg'],
-      merged['face_registered_at'],
-      cleanEmail,
-    ]);
+    if (mirrorToEmployee) {
+      final empUpdates = <String, dynamic>{};
+      if (merged['profile_picture'] != null) empUpdates['profile_picture'] = merged['profile_picture'];
+      if (merged['has_face_registered'] == true) empUpdates['has_face_registered'] = true;
+      if (merged['face_templates'] != null) empUpdates['face_templates'] = merged['face_templates'];
+      if (merged['face_jpg'] != null) empUpdates['face_jpg'] = merged['face_jpg'];
+      if (merged['password'] != null) empUpdates['password'] = merged['password'];
+      if (merged['fullname'] != null) empUpdates['fullname'] = merged['fullname'];
+      if (merged['role'] != null) empUpdates['role'] = merged['role'];
+
+      if (empUpdates.isNotEmpty) {
+        final emp = getEmployeeByEmail(cleanEmail);
+        if (emp != null) {
+          updateEmployee(emp['id'], empUpdates, mirrorToVault: false);
+        }
+      }
+    }
   }
 
   // ==================== EMPLOYEES ====================
@@ -523,7 +563,71 @@ class AppSqliteDatabase {
     return m;
   }
 
-  void updateEmployee(dynamic id, Map<String, dynamic> updates) {
+  Map<String, dynamic> saveEmployee(Map<String, dynamic> data) {
+    final cleanEmail = (data['email']?.toString() ?? '').trim().toLowerCase();
+    final existing = cleanEmail.isNotEmpty ? getEmployeeByEmail(cleanEmail) : null;
+    if (existing != null) {
+      updateEmployee(existing['id'], data);
+      return getEmployeeById(existing['id'])!;
+    }
+
+    final autoEmpId = data['employee_id']?.toString() ?? 
+        'EMP-${(DateTime.now().millisecondsSinceEpoch % 10000).toString().padLeft(4, '0')}';
+    final uid = data['firebase_uid']?.toString() ?? data['uid']?.toString() ?? 'local_uid_$autoEmpId';
+    final isDemo = (data['is_demo'] == 1 || data['is_demo'] == true) ? 1 : 0;
+
+    _db!.execute('''
+      INSERT INTO employees (
+        firebase_uid, employee_id, fullname, email, role,
+        branch, branch_name, department, department_name, status,
+        section1_start, section1_end, section2_start, section2_end, work_days,
+        created_by, created_at, profile_picture, has_face_registered, face_templates, face_jpg,
+        password, is_demo
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    ''', [
+      uid,
+      autoEmpId,
+      data['fullname']?.toString() ?? 'Employee',
+      cleanEmail,
+      data['role']?.toString() ?? 'employee',
+      data['branch'] as int?,
+      data['branch_name']?.toString(),
+      data['department'] as int?,
+      data['department_name']?.toString(),
+      data['status']?.toString() ?? 'active',
+      data['section1_start']?.toString() ?? '08:00:00',
+      data['section1_end']?.toString() ?? '12:00:00',
+      data['section2_start']?.toString() ?? '13:00:00',
+      data['section2_end']?.toString() ?? '17:00:00',
+      data['work_days']?.toString() ?? 'mon,tue,wed,thu,fri',
+      data['created_by']?.toString() ?? 'system',
+      data['created_at']?.toString() ?? DateTime.now().toIso8601String(),
+      data['profile_picture']?.toString(),
+      data['has_face_registered'] == true ? 1 : 0,
+      data['face_templates'] != null ? jsonEncode(data['face_templates']) : null,
+      data['face_jpg']?.toString(),
+      data['password']?.toString(),
+      isDemo,
+    ]);
+
+    final id = _db!.lastInsertRowId;
+
+    // Also mirror to user_vault
+    if (cleanEmail.isNotEmpty) {
+      saveUserVault(cleanEmail, {
+        'fullname': data['fullname'],
+        'role': data['role'],
+        'password': data['password'],
+        'employee_id': autoEmpId,
+        'branch': data['branch'],
+        'department': data['department'],
+      }, mirrorToEmployee: false);
+    }
+
+    return getEmployeeById(id) ?? (Map<String, dynamic>.from(data)..['id'] = id);
+  }
+
+  void updateEmployee(dynamic id, Map<String, dynamic> updates, {bool mirrorToVault = true}) {
     final emp = getEmployeeById(id);
     if (emp == null) return;
 
@@ -537,6 +641,7 @@ class AppSqliteDatabase {
       'section1_start', 'section1_end', 'section2_start', 'section2_end',
       'work_days', 'created_by', 'created_at', 'profile_picture',
       'has_face_registered', 'face_templates', 'face_jpg', 'face_registered_at',
+      'password', 'is_demo',
     };
 
     final fields = <String>[];
@@ -562,6 +667,9 @@ class AppSqliteDatabase {
             : picStr;
         fields.add('profile_picture = ?');
         values.add(cleanPic);
+      } else if (col == 'is_demo') {
+        fields.add('is_demo = ?');
+        values.add((v == 1 || v == true) ? 1 : 0);
       } else if (col != 'id') {
         fields.add('$col = ?');
         values.add(v);
@@ -573,17 +681,40 @@ class AppSqliteDatabase {
       _db!.execute('UPDATE employees SET ${fields.join(', ')} WHERE id = ?;', values);
     }
 
-    // Mirror updates to vault if email exists and biometrics or avatar were updated
-    final vaultUpdates = <String, dynamic>{};
-    if (updates.containsKey('profile_picture')) vaultUpdates['profile_picture'] = updates['profile_picture'];
-    if (updates.containsKey('profile_url')) vaultUpdates['profile_picture'] = updates['profile_url'];
-    if (updates.containsKey('has_face_registered')) vaultUpdates['has_face_registered'] = updates['has_face_registered'];
-    if (updates.containsKey('face_templates')) vaultUpdates['face_templates'] = updates['face_templates'];
-    if (updates.containsKey('face_jpg')) vaultUpdates['face_jpg'] = updates['face_jpg'];
+    // Mirror updates to vault if email exists
+    if (mirrorToVault) {
+      final vaultUpdates = <String, dynamic>{};
+      if (updates.containsKey('profile_picture')) vaultUpdates['profile_picture'] = updates['profile_picture'];
+      if (updates.containsKey('profile_url')) vaultUpdates['profile_picture'] = updates['profile_url'];
+      if (updates.containsKey('has_face_registered')) vaultUpdates['has_face_registered'] = updates['has_face_registered'];
+      if (updates.containsKey('face_templates')) vaultUpdates['face_templates'] = updates['face_templates'];
+      if (updates.containsKey('face_jpg')) vaultUpdates['face_jpg'] = updates['face_jpg'];
+      if (updates.containsKey('password')) vaultUpdates['password'] = updates['password'];
+      if (updates.containsKey('fullname')) vaultUpdates['fullname'] = updates['fullname'];
+      if (updates.containsKey('role')) vaultUpdates['role'] = updates['role'];
 
-    if (email.isNotEmpty && vaultUpdates.isNotEmpty) {
-      saveUserVault(email, vaultUpdates);
+      if (email.isNotEmpty && vaultUpdates.isNotEmpty) {
+        saveUserVault(email, vaultUpdates, mirrorToEmployee: false);
+      }
     }
+  }
+
+  void deleteEmployee(dynamic id) {
+    final emp = getEmployeeById(id);
+    if (emp != null) {
+      final email = emp['email']?.toString() ?? '';
+      _db!.execute('DELETE FROM employees WHERE id = ?;', [emp['id']]);
+      if (email.isNotEmpty) {
+        _db!.execute('DELETE FROM user_vault WHERE lower(email) = lower(?);', [email]);
+      }
+    }
+  }
+
+  void deleteEmployeeByEmail(String email) {
+    final clean = email.trim().toLowerCase();
+    if (clean.isEmpty) return;
+    _db!.execute('DELETE FROM employees WHERE lower(email) = ?;', [clean]);
+    _db!.execute('DELETE FROM user_vault WHERE lower(email) = ?;', [clean]);
   }
 
   // ==================== PERSONS (BIOMETRIC RECOGNITION REGISTRY) ====================
@@ -847,9 +978,67 @@ class AppSqliteDatabase {
     return rows.map((r) => Map<String, dynamic>.from(r)).toList();
   }
 
+  Map<String, dynamic> saveDepartment(Map<String, dynamic> data) {
+    final name = data['name']?.toString() ?? 'Department';
+    final code = data['code']?.toString() ?? '';
+    final desc = data['description']?.toString() ?? '';
+    final manager = data['manager_name']?.toString() ?? '';
+    final count = data['employee_count'] as int? ?? 0;
+    final isDemo = (data['is_demo'] == 1 || data['is_demo'] == true) ? 1 : 0;
+    final createdAt = data['created_at']?.toString() ?? DateTime.now().toIso8601String();
+
+    if (data['id'] != null) {
+      final existing = getDepartments().where((d) => d['id'].toString() == data['id'].toString()).firstOrNull;
+      if (existing != null) {
+        _db!.execute('''
+          UPDATE departments SET name = ?, code = ?, description = ?, manager_name = ?, employee_count = ?, is_demo = ?
+          WHERE id = ?;
+        ''', [name, code, desc, manager, count, isDemo, existing['id']]);
+        return Map<String, dynamic>.from(data)..['id'] = existing['id'];
+      }
+    }
+
+    _db!.execute('''
+      INSERT INTO departments (name, code, description, manager_name, employee_count, created_at, is_demo)
+      VALUES (?, ?, ?, ?, ?, ?, ?);
+    ''', [name, code, desc, manager, count, createdAt, isDemo]);
+
+    final id = _db!.lastInsertRowId;
+    return Map<String, dynamic>.from(data)..['id'] = id;
+  }
+
   List<Map<String, dynamic>> getBranches() {
     final rows = _db!.select('SELECT * FROM branches ORDER BY id ASC;');
     return rows.map((r) => Map<String, dynamic>.from(r)).toList();
+  }
+
+  Map<String, dynamic> saveBranch(Map<String, dynamic> data) {
+    final name = data['name']?.toString() ?? 'Branch';
+    final address = data['address']?.toString() ?? '';
+    final lat = (data['latitude'] as num?)?.toDouble() ?? 11.5564;
+    final lng = (data['longitude'] as num?)?.toDouble() ?? 104.9282;
+    final rad = (data['radius'] as num?)?.toDouble() ?? 500.0;
+    final isDemo = (data['is_demo'] == 1 || data['is_demo'] == true) ? 1 : 0;
+    final createdAt = data['created_at']?.toString() ?? DateTime.now().toIso8601String();
+
+    if (data['id'] != null) {
+      final existing = getBranches().where((b) => b['id'].toString() == data['id'].toString()).firstOrNull;
+      if (existing != null) {
+        _db!.execute('''
+          UPDATE branches SET name = ?, address = ?, latitude = ?, longitude = ?, radius = ?, is_demo = ?
+          WHERE id = ?;
+        ''', [name, address, lat, lng, rad, isDemo, existing['id']]);
+        return Map<String, dynamic>.from(data)..['id'] = existing['id'];
+      }
+    }
+
+    _db!.execute('''
+      INSERT INTO branches (name, address, latitude, longitude, radius, created_at, is_demo)
+      VALUES (?, ?, ?, ?, ?, ?, ?);
+    ''', [name, address, lat, lng, rad, createdAt, isDemo]);
+
+    final id = _db!.lastInsertRowId;
+    return Map<String, dynamic>.from(data)..['id'] = id;
   }
 
   List<Map<String, dynamic>> getSuggestions() {
@@ -885,6 +1074,12 @@ class AppSqliteDatabase {
           'face_jpg': r['face_jpg'],
           'face_registered_at': r['face_registered_at'],
           'updated_at': r['updated_at'],
+          'fullname': r['fullname'],
+          'role': r['role'],
+          'password': r['password'],
+          'employee_id': r['employee_id'],
+          'branch': r['branch'],
+          'department': r['department'],
         };
       }
     }

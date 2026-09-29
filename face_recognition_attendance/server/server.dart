@@ -185,10 +185,42 @@ class BackendServer {
         return;
       }
 
-      if (path == '/api/employees/' || path == '/api/employees') {
+      if (path == '/api/employees/' || path == '/api/employees' || path.contains('/api/employees') || path.contains('/api/auth/register')) {
         if (method == 'GET') {
           final list = db.getEmployees();
           _sendJson(request.response, {'results': list, 'count': list.length});
+          return;
+        }
+        if (method == 'POST') {
+          final body = await _readJsonBody(request);
+          final emp = db.saveEmployee(body);
+          _sendJson(request.response, {
+            'status': 'success',
+            'message': 'Employee account saved in SQLite database.',
+            'employee': emp,
+            'user': emp,
+          }, statusCode: HttpStatus.created);
+          return;
+        }
+      }
+
+      if (path.contains('/api/user-vault') || path.contains('/api/user_vault')) {
+        if (method == 'POST' || method == 'PUT' || method == 'PATCH') {
+          final body = await _readJsonBody(request);
+          final email = body['email']?.toString() ?? '';
+          if (email.isNotEmpty) {
+            db.saveUserVault(email, body);
+            _sendJson(request.response, {
+              'status': 'success',
+              'message': 'User vault saved in SQLite database.',
+            });
+            return;
+          }
+        }
+        if (method == 'GET') {
+          final email = request.uri.queryParameters['email'] ?? '';
+          final vault = email.isNotEmpty ? db.getUserVault(email) : null;
+          _sendJson(request.response, {'vault': vault});
           return;
         }
       }
@@ -310,12 +342,24 @@ class BackendServer {
 
       // 8. Branches & Departments
       if (path.contains('/api/branches')) {
+        if (method == 'POST') {
+          final body = await _readJsonBody(request);
+          final res = db.saveBranch(body);
+          _sendJson(request.response, res, statusCode: HttpStatus.created);
+          return;
+        }
         final list = db.getBranches();
         _sendJson(request.response, {'results': list, 'count': list.length});
         return;
       }
 
       if (path.contains('/api/departments')) {
+        if (method == 'POST') {
+          final body = await _readJsonBody(request);
+          final res = db.saveDepartment(body);
+          _sendJson(request.response, res, statusCode: HttpStatus.created);
+          return;
+        }
         final list = db.getDepartments();
         _sendJson(request.response, {'results': list, 'count': list.length});
         return;

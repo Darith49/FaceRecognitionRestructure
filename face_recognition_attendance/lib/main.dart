@@ -27,12 +27,14 @@ Future<void> main() async {
   Get.put<LanguageService>(LanguageService(), permanent: true);
   Get.put<ThemeService>(ThemeService(), permanent: true);
 
-  // Initialize Local Standalone Database & Auth
+  // Initialize Local Standalone Database
   await LocalDatabaseService().init();
-  await LocalAuthService().init();
 
-  // Connect to persistent SQLite backend if available and pull disk state
+  // Connect to persistent SQLite backend if available and pull disk state FIRST
   await SqliteSyncService().init();
+
+  // Initialize Local Standalone Auth (after SQLite state is fully hydrated)
+  await LocalAuthService().init();
 
   // Fast session check for instant launch
   final secureStorage = SecureStorageService();

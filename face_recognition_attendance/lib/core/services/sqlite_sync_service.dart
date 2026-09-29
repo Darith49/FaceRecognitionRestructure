@@ -42,6 +42,18 @@ class SqliteSyncService extends GetxService {
           faceMatched: payload['faceMatched'] == true,
           confidence: (payload['confidence'] as num?)?.toDouble() ?? 0.95,
         );
+      } else if (type == 'employee') {
+        syncEmployee(payload);
+      } else if (type == 'user_vault') {
+        final email = payload['email']?.toString() ?? '';
+        final vault = payload['vault'] is Map ? Map<String, dynamic>.from(payload['vault'] as Map) : <String, dynamic>{};
+        if (email.isNotEmpty) {
+          syncUserVault(email: email, vaultData: vault);
+        }
+      } else if (type == 'branch') {
+        syncBranch(payload);
+      } else if (type == 'department') {
+        syncDepartment(payload);
       }
     };
   }
@@ -226,6 +238,62 @@ class SqliteSyncService extends GetxService {
       debugPrint('[SqliteSync] Overtime request synchronized with SQLite');
     } catch (e) {
       debugPrint('[SqliteSync] Failed to sync overtime to SQLite: $e');
+    }
+  }
+
+  /// Synchronizes an employee account (registration / update) with SQLite
+  Future<void> syncEmployee(Map<String, dynamic> data) async {
+    if (!isBackendAvailable.value) {
+      await init();
+    }
+    if (!isBackendAvailable.value) return;
+
+    try {
+      final res = await _client.post('$baseUrl/employees/', data);
+      debugPrint('[SqliteSync] Employee synchronized with SQLite backend for ${data['email']} (status: ${res.statusCode})');
+    } catch (e) {
+      debugPrint('[SqliteSync] Failed to sync employee to SQLite: $e');
+    }
+  }
+
+  /// Synchronizes user vault account credentials with SQLite
+  Future<void> syncUserVault({
+    required String email,
+    required Map<String, dynamic> vaultData,
+  }) async {
+    if (!isBackendAvailable.value) {
+      await init();
+    }
+    if (!isBackendAvailable.value) return;
+
+    try {
+      final payload = Map<String, dynamic>.from(vaultData)..['email'] = email;
+      final res = await _client.post('$baseUrl/user-vault/', payload);
+      debugPrint('[SqliteSync] User vault synchronized with SQLite backend for $email (status: ${res.statusCode})');
+    } catch (e) {
+      debugPrint('[SqliteSync] Failed to sync user vault to SQLite: $e');
+    }
+  }
+
+  /// Synchronizes a branch with SQLite
+  Future<void> syncBranch(Map<String, dynamic> data) async {
+    if (!isBackendAvailable.value) return;
+    try {
+      await _client.post('$baseUrl/branches/', data);
+      debugPrint('[SqliteSync] Branch synchronized with SQLite backend');
+    } catch (e) {
+      debugPrint('[SqliteSync] Failed to sync branch to SQLite: $e');
+    }
+  }
+
+  /// Synchronizes a department with SQLite
+  Future<void> syncDepartment(Map<String, dynamic> data) async {
+    if (!isBackendAvailable.value) return;
+    try {
+      await _client.post('$baseUrl/departments/', data);
+      debugPrint('[SqliteSync] Department synchronized with SQLite backend');
+    } catch (e) {
+      debugPrint('[SqliteSync] Failed to sync department to SQLite: $e');
     }
   }
 }

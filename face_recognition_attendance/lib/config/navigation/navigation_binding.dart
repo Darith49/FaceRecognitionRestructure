@@ -1,4 +1,5 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
+import 'package:face_recognition_attendance/features/ceo_manage/controller/ceo_manage_controller.dart';
 import 'package:face_recognition_attendance/features/clock_screen/controller/clock_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
@@ -16,6 +17,7 @@ class NavigationBinding extends Bindings {
     Get.lazyPut<RequestScreenController>(() => RequestScreenController(), fenix: true);
     Get.lazyPut<MyTeamController>(() => MyTeamController(), fenix: true);
     Get.lazyPut<ScheduleController>(() => ScheduleController(), fenix: true);
+    Get.lazyPut<CeoManageController>(() => CeoManageController(), fenix: true);
     // NotificationController registered globally so unread badge works on all tabs
     Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
   }

@@ -1,8 +1,13 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/services/theme_service.dart';
+import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
+import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
+import 'package:face_recognition_attendance/features/ceo_manage/view/ceo_manage_screen.dart';
 import 'package:face_recognition_attendance/features/clock_screen/view/clock_screen.dart';
+import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/home_screen.dart';
+import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/view/myteam_screen.dart';
 import 'package:face_recognition_attendance/features/profile_screen/view/profile_screen.dart';
 import 'package:face_recognition_attendance/features/request_screen/view/request_screen.dart';
@@ -14,6 +19,21 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 class NavigationScreen extends GetView<NavigationController> {
   const NavigationScreen({super.key});
 
+  bool _isCeoUser() {
+    final loginCtrl = Get.isRegistered<LoginController>() ? Get.find<LoginController>() : null;
+    final role = loginCtrl?.currentuser.value?.role;
+    if (role == UserRole.ceo) return true;
+    if (loginCtrl?.isCeo == true) return true;
+
+    final homeCtrl = Get.isRegistered<HomeController>() ? Get.find<HomeController>() : null;
+    if (homeCtrl?.isCeo == true) return true;
+
+    final myTeamCtrl = Get.isRegistered<MyTeamController>() ? Get.find<MyTeamController>() : null;
+    if (myTeamCtrl?.currentRole.toLowerCase() == 'ceo' || myTeamCtrl?.isCeo == true) return true;
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -24,21 +44,22 @@ class NavigationScreen extends GetView<NavigationController> {
       final loc = Get.locale?.toString() ?? 'en_US';
       final currentIndex = controller.currentIndex.value;
       final isProfileSelected = currentIndex == 4;
+      final isCeo = _isCeoUser();
 
       return GlassScaffold(
         backgroundColor: isDark ? AppColors.darkBackground : AppColors.canvasParchment,
         extendBody: true,
         edgeFade: true,
         body: KeyedSubtree(
-          key: ValueKey('$loc-$isDark'),
+          key: ValueKey('$loc-$isDark-$isCeo'),
           child: IndexedStack(
             index: currentIndex,
-            children: const [
-              HomeScreen(),
-              ClockScreen(showBackButton: false),
-              RequestScreen(),
-              MyteamScreen(),
-              ProfileScreen(),
+            children: [
+              const HomeScreen(),
+              isCeo ? const CeoManageScreen() : const ClockScreen(showBackButton: false),
+              const RequestScreen(),
+              const MyteamScreen(),
+              const ProfileScreen(),
             ],
           ),
         ),
@@ -60,9 +81,9 @@ class NavigationScreen extends GetView<NavigationController> {
                   label: 'nav_home'.tr,
                 ),
                 GlassTab(
-                  icon: const Icon(FluentIcons.fingerprint_24_regular),
-                  activeIcon: const Icon(FluentIcons.fingerprint_24_filled),
-                  label: 'nav_clock'.tr,
+                  icon: Icon(isCeo ? FluentIcons.chart_multiple_24_regular : FluentIcons.fingerprint_24_regular),
+                  activeIcon: Icon(isCeo ? FluentIcons.chart_multiple_24_filled : FluentIcons.fingerprint_24_filled),
+                  label: isCeo ? 'nav_manage'.tr : 'nav_clock'.tr,
                 ),
                 GlassTab(
                   icon: const Icon(FluentIcons.document_bullet_list_multiple_24_regular),

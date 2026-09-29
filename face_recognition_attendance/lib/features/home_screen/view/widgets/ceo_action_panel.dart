@@ -118,6 +118,59 @@ class CeoActionPanel extends StatelessWidget {
             ),
           ),
 
+          const SizedBox(height: 12),
+
+          // ─── 1.6. Executive Attendance Reports Entry Card ───
+          InkWell(
+            onTap: () => Get.toNamed(AppRoutes.ceoManage),
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F766E), Color(0xFF0D9488)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0D9488).withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(FluentIcons.chart_multiple_24_filled, color: Colors.white, size: 26),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Attendance & Branch Analytics'.tr,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Branch performance, employee drilldown & Excel/CSV export'.tr,
+                          style: const TextStyle(fontSize: 11, color: Color(0xFFCCFBF1)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(FluentIcons.chevron_right_24_regular, color: Colors.white70, size: 18),
+                ],
+              ),
+            ),
+          ),
+
           const SizedBox(height: 16),
 
           // ─── 2. Administrative Action Tiles ───

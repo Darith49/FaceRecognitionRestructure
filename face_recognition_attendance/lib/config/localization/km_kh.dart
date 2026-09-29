@@ -28,6 +28,7 @@ const Map<String, String> kmKH = {
   'nav_myteam': 'ក្រុមការងារ',
   'nav_request': 'សំណើ',
   'nav_profile': 'គណនី',
+  'nav_manage': 'គ្រប់គ្រង',
 
   // ============== ATTENDANCE & CLOCK ==============
   'attendance_title': 'វត្តមាន',

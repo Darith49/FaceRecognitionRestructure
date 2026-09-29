@@ -28,6 +28,7 @@ const Map<String, String> enUS = {
   'nav_myteam': 'MyTeam',
   'nav_request': 'Request',
   'nav_profile': 'Profile',
+  'nav_manage': 'Manage',
 
   // ============== ATTENDANCE & CLOCK ==============
   'attendance_title': 'Attendance',

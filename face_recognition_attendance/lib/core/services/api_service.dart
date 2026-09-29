@@ -8,6 +8,7 @@ import 'package:face_recognition_attendance/core/services/local_auth_service.dar
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
 import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
+import 'package:face_recognition_attendance/features/ceo_manage/service/ceo_report_service.dart';
 import 'package:face_recognition_attendance/features/face/model/person_model.dart';
 import 'package:get/get.dart';
 
@@ -242,7 +243,52 @@ class ApiService {
       };
     }
 
+    // 8. CEO Attendance Reports
+    if (clean.contains('/reports/attendance/branches-summary')) {
+      final period = queryParams?['period']?.toString() ?? 'this_month';
+      final y = int.tryParse(queryParams?['year']?.toString() ?? '');
+      final m = int.tryParse(queryParams?['month']?.toString() ?? '');
+      final service = CeoReportService();
+      final rep = await service.getBranchesSummary(period: period, year: y, month: m);
+      return rep.toJson();
+    }
+    if (clean.contains('/reports/attendance/branch/')) {
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      final branchId = int.tryParse(parts.lastWhere((p) => int.tryParse(p) != null, orElse: () => '1')) ?? 1;
+      final period = queryParams?['period']?.toString() ?? 'this_month';
+      final y = int.tryParse(queryParams?['year']?.toString() ?? '');
+      final m = int.tryParse(queryParams?['month']?.toString() ?? '');
+      final service = CeoReportService();
+      final rep = await service.getBranchDetail(branchId: branchId, period: period, year: y, month: m);
+      return rep.toJson();
+    }
+    if (clean.contains('/reports/attendance/employee/')) {
+      final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
+      final empId = int.tryParse(parts.lastWhere((p) => int.tryParse(p) != null, orElse: () => '1')) ?? 1;
+      final period = queryParams?['period']?.toString() ?? 'this_month';
+      final y = int.tryParse(queryParams?['year']?.toString() ?? '');
+      final m = int.tryParse(queryParams?['month']?.toString() ?? '');
+      final service = CeoReportService();
+      final rep = await service.getEmployeeDetail(employeeId: empId, period: period, year: y, month: m);
+      return rep.toJson();
+    }
+
     return {'results': []};
+  }
+
+  /// GET request returning raw bytes (e.g., Excel/CSV export)
+  Future<List<int>> getBytes(String endpoint, {Map<String, dynamic>? queryParams}) async {
+    final clean = endpoint.toLowerCase();
+    if (clean.contains('/reports/attendance/export')) {
+      final scope = queryParams?['scope']?.toString() ?? 'all';
+      final branchId = int.tryParse(queryParams?['branch_id']?.toString() ?? '');
+      final period = queryParams?['period']?.toString() ?? 'this_month';
+      final y = int.tryParse(queryParams?['year']?.toString() ?? '');
+      final m = int.tryParse(queryParams?['month']?.toString() ?? '');
+      final service = CeoReportService();
+      return await service.exportExcelBytes(scope: scope, branchId: branchId, period: period, year: y, month: m);
+    }
+    return [];
   }
 
   Future<dynamic> post(String endpoint, {dynamic body}) async {

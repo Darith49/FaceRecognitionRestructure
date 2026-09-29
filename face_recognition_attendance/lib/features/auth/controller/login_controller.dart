@@ -28,6 +28,7 @@ class LoginController extends GetxController {
   final RxBool isDemoExpanded = false.obs;
 
   bool get isLoggedIn => currentuser.value != null;
+  bool get isCeo => currentuser.value?.role == UserRole.ceo;
 
   @override
   void onInit() {

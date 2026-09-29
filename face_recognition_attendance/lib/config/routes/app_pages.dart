@@ -46,6 +46,8 @@ import 'package:face_recognition_attendance/features/settings/binding/settings_b
 import 'package:face_recognition_attendance/features/settings/screens/settings_screen.dart';
 import 'package:face_recognition_attendance/features/ceo_panel/binding/ceo_panel_binding.dart';
 import 'package:face_recognition_attendance/features/ceo_panel/view/ceo_control_panel_screen.dart';
+import 'package:face_recognition_attendance/features/ceo_manage/controller/ceo_manage_controller.dart';
+import 'package:face_recognition_attendance/features/ceo_manage/view/ceo_manage_screen.dart';
 import 'package:get/get.dart';
 
 class AppPages {
@@ -255,6 +257,15 @@ class AppPages {
       name: AppRoutes.ceoPanel,
       page: () => const CeoControlPanelScreen(),
       binding: CeoPanelBinding(),
+    ),
+
+    // ----------- CEO Manage & Reports -----------
+    GetPage(
+      name: AppRoutes.ceoManage,
+      page: () => const CeoManageScreen(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<CeoManageController>(() => CeoManageController(), fenix: true);
+      }),
     ),
   ];
 }

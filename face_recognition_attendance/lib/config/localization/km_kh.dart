@@ -13,6 +13,12 @@ const Map<String, String> kmKH = {
   'auth_welcome_back': 'សូមស្វាគមន៍មកកាន់ប្រព័ន្ធ',
   'auth_enter_details': 'សូមបញ្ចូលព័ត៌មានលម្អិតរបស់អ្នក',
   'auth_google_sign_in': 'ចូលគណនីតាមរយៈ Google',
+  'auth_register_title': 'បង្កើតគណនីថ្មី',
+  'auth_register_subtitle': 'សូមបំពេញព័ត៌មាន និងជ្រើសរើសតួនាទីក្នុងស្ថាប័នរបស់អ្នក',
+  'auth_full_name': 'ឈ្មោះពេញ',
+  'auth_confirm_password': 'ផ្ទៀងផ្ទាត់ពាក្យសម្ងាត់',
+  'auth_select_role': 'ជ្រើសរើសតួនាទីក្នុងស្ថាប័ន',
+  'Create Account (Select Role)': 'បង្កើតគណនីថ្មី (ជ្រើសរើសតួនាទី)',
 
   // ============== NAVIGATION ==============
   'nav_home': 'ទំព័រដើម',

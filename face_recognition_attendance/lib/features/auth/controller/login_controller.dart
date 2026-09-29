@@ -25,6 +25,7 @@ class LoginController extends GetxController {
   final RxBool rememberMe = true.obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
+  final RxBool isDemoExpanded = false.obs;
 
   bool get isLoggedIn => currentuser.value != null;
 

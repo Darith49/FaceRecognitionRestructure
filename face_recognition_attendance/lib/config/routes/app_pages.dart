@@ -17,8 +17,10 @@ import 'package:face_recognition_attendance/features/attendance_screen/binding/a
 import 'package:face_recognition_attendance/features/attendance_screen/view/attendance_screen.dart';
 import 'package:face_recognition_attendance/features/auth/binding/forgotpassowrd_binding.dart';
 import 'package:face_recognition_attendance/features/auth/binding/login_binding.dart';
+import 'package:face_recognition_attendance/features/auth/binding/register_binding.dart';
 import 'package:face_recognition_attendance/features/auth/view/forgotpassword_screen.dart';
 import 'package:face_recognition_attendance/features/auth/view/login_screen.dart';
+import 'package:face_recognition_attendance/features/auth/view/register_screen.dart';
 import 'package:face_recognition_attendance/features/clock_screen/binding/clock_binding.dart';
 import 'package:face_recognition_attendance/features/clock_screen/view/clock_screen.dart';
 import 'package:face_recognition_attendance/features/permission_screen/binding/permission_binding.dart';
@@ -61,6 +63,12 @@ class AppPages {
       name: AppRoutes.login,
       page: () => LoginScreen(),
       binding: LoginBinding(),
+    ),
+
+    GetPage(
+      name: AppRoutes.register,
+      page: () => const RegisterScreen(),
+      binding: RegisterBinding(),
     ),
 
     GetPage(

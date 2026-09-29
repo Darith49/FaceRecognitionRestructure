@@ -4,6 +4,7 @@ import 'package:face_recognition_attendance/core/services/local_database_service
 import 'package:face_recognition_attendance/features/auth/model/enum_status.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
+import 'package:collection/collection.dart';
 import 'package:get_storage/get_storage.dart';
 
 /// Local User credential representation for offline authentication
@@ -81,6 +82,7 @@ class LocalAuthService {
           'department': cleanEmail == 'manager@gmail.com' ? 2 : 1,
           'department_name': cleanEmail == 'manager@gmail.com' ? 'Human Resources' : 'Software Engineering',
           'status': 'active',
+          'password': '123456',
         });
       } else if (emp['role'] != demo['role'] || emp['fullname'] != demo['name']) {
         emp = _db.updateEmployee(emp['id'], {
@@ -88,25 +90,122 @@ class LocalAuthService {
           'fullname': demo['name']!,
         }) ?? emp;
       }
+
+      final storedPass = emp['password']?.toString() ?? '123456';
+      if (password.isNotEmpty && password != storedPass && password != '123456') {
+        throw Exception('wrong-password');
+      }
+
       return _createAndCacheUser(emp);
     }
 
     if (emp == null) {
-      // If user not in database, create on the fly as an active employee
-      final newEmp = _db.saveEmployee({
-        'fullname': cleanEmail.split('@').first.capitalizeFirst,
-        'email': cleanEmail,
-        'role': 'employee',
-        'branch': 1,
-        'branch_name': 'Phnom Penh Headquarters',
-        'department': 1,
-        'department_name': 'Software Engineering',
-        'status': 'active',
-      });
-      return _createAndCacheUser(newEmp);
+      final vault = _db.getUserAccountData(cleanEmail);
+      if (vault != null && vault['fullname'] != null) {
+        emp = _db.saveEmployee({
+          'fullname': vault['fullname'],
+          'email': cleanEmail,
+          'role': vault['role'] ?? 'employee',
+          'password': vault['password'] ?? password,
+          'branch': vault['branch'] ?? 1,
+          'department': vault['department'] ?? 1,
+          'status': 'active',
+        });
+      }
+    }
+
+    if (emp == null) {
+      throw Exception('user-not-found');
+    }
+
+    final storedPass = emp['password']?.toString() ??
+        _db.getUserAccountData(cleanEmail)?['password']?.toString();
+    if (storedPass != null && storedPass.isNotEmpty) {
+      if (password != storedPass) {
+        throw Exception('wrong-password');
+      }
     }
 
     return _createAndCacheUser(emp);
+  }
+
+  /// Register a new user account with specified role
+  Future<UserModel> register({
+    required String fullname,
+    required String email,
+    required String password,
+    required UserRole role,
+    int? branchId,
+    String? branchName,
+    int? departmentId,
+    String? departmentName,
+    String? employeeId,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) {
+      throw Exception('invalid-email');
+    }
+    if (password.length < 6) {
+      throw Exception('weak-password');
+    }
+
+    final existing = _db.getEmployeeByEmail(cleanEmail);
+    if (existing != null) {
+      throw Exception('email-already-in-use');
+    }
+
+    final branches = _db.getBranches();
+    final departments = _db.getDepartments();
+
+    final bId = branchId ?? (branches.isNotEmpty ? (branches.first['id'] as int) : 1);
+    String bName = branchName ?? '';
+    if (bName.isEmpty) {
+      final matchB = branches.firstWhereOrNull((b) => b['id'] == bId);
+      bName = matchB?['name']?.toString() ?? 'Phnom Penh Headquarters';
+    }
+
+    final dId = departmentId ?? (departments.isNotEmpty ? (departments.first['id'] as int) : 1);
+    String dName = departmentName ?? '';
+    if (dName.isEmpty) {
+      final matchD = departments.firstWhereOrNull((d) => d['id'] == dId);
+      dName = matchD?['name']?.toString() ?? 'Software Engineering';
+    }
+
+    final autoEmpId = employeeId != null && employeeId.trim().isNotEmpty
+        ? employeeId.trim()
+        : 'EMP-${(DateTime.now().millisecondsSinceEpoch % 10000).toString().padLeft(4, '0')}';
+
+    final empData = {
+      'fullname': fullname.trim(),
+      'email': cleanEmail,
+      'role': userRoleToString(role),
+      'employee_id': autoEmpId,
+      'password': password,
+      'branch': bId,
+      'branch_name': bName,
+      'department': dId,
+      'department_name': dName,
+      'status': 'active',
+      'work_days': 'mon,tue,wed,thu,fri',
+      'section1_start': '08:00:00',
+      'section1_end': '12:00:00',
+      'section2_start': '13:00:00',
+      'section2_end': '17:00:00',
+      'created_at': DateTime.now().toIso8601String(),
+      'created_by': 'self_registration',
+    };
+
+    final savedEmp = _db.saveEmployee(empData);
+    _db.saveUserAccountData(cleanEmail, {
+      'fullname': fullname.trim(),
+      'role': userRoleToString(role),
+      'password': password,
+      'branch': bId,
+      'department': dId,
+      'employee_id': autoEmpId,
+    });
+
+    return _createAndCacheUser(savedEmp);
   }
 
   /// Face Login: log in instantly via biometric match

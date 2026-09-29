@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
+import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 
 /// Compatibility adapter for legacy FirebaseService imports.
@@ -12,6 +13,30 @@ class FirebaseService {
     required String password,
   }) {
     return _auth.login(email: email, password: password);
+  }
+
+  Future<UserModel> register({
+    required String fullname,
+    required String email,
+    required String password,
+    required UserRole role,
+    int? branchId,
+    String? branchName,
+    int? departmentId,
+    String? departmentName,
+    String? employeeId,
+  }) {
+    return _auth.register(
+      fullname: fullname,
+      email: email,
+      password: password,
+      role: role,
+      branchId: branchId,
+      branchName: branchName,
+      departmentId: departmentId,
+      departmentName: departmentName,
+      employeeId: employeeId,
+    );
   }
 
   Future<void> logout() {

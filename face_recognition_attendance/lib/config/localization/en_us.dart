@@ -13,6 +13,12 @@ const Map<String, String> enUS = {
   'auth_welcome_back': 'Welcome back',
   'auth_enter_details': 'Please enter your details.',
   'auth_google_sign_in': 'Sign in with Google',
+  'auth_register_title': 'Create Account',
+  'auth_register_subtitle': 'Sign up with your credentials and select your organizational role',
+  'auth_full_name': 'Full Name',
+  'auth_confirm_password': 'Confirm Password',
+  'auth_select_role': 'Select Organizational Role',
+  'Create Account (Select Role)': 'Create Account (Select Role)',
 
   // ============== NAVIGATION ==============
   'nav_home': 'Home',

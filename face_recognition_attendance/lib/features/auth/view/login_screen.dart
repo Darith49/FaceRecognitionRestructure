@@ -258,86 +258,167 @@ class LoginScreen extends GetView<LoginController> {
                       ),
                     ),
 
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 18),
 
-                    // FAST DEMO ACCESS Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.hairline,
+                    // Don't have an account? Sign Up Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'auth_no_account'.tr,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        TextButton(
+                          onPressed: () => Get.toNamed(AppRoutes.register),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'auth_signup'.tr,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Dedicated Create Account Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Get.toNamed(AppRoutes.register),
+                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
+                        label: Text(
+                          'Create Account (Select Role)'.tr,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: isDark ? AppColors.primaryOnDark : AppColors.primary,
+                          side: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            width: 1.4,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.flash_on_rounded,
-                                size: 18,
-                                color: AppColors.warning,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'FAST DEMO ACCESS'.tr,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.5,
-                                  color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
-                                ),
-                              ),
-                            ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Collapsible FAST DEMO ACCESS Card
+                    Obx(
+                      () => Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? AppColors.darkBorder : AppColors.hairline,
                           ),
-                          const SizedBox(height: 12),
-                          // Table header
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 70,
-                                child: Text(
-                                  'Role'.tr,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            InkWell(
+                              onTap: () => controller.isDemoExpanded.toggle(),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.flash_on_rounded,
+                                      size: 18,
+                                      color: AppColors.warning,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'FAST DEMO ACCESS'.tr,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.5,
+                                        color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Icon(
+                                      controller.isDemoExpanded.value
+                                          ? Icons.keyboard_arrow_up_rounded
+                                          : Icons.keyboard_arrow_down_rounded,
+                                      size: 20,
+                                      color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (controller.isDemoExpanded.value) ...[
+                              const SizedBox(height: 12),
+                              // Table header
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    width: 70,
+                                    child: Text(
+                                      'Role'.tr,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  'auth_email'.tr,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                  Expanded(
+                                    child: Text(
+                                      'auth_email'.tr,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  Text(
+                                    'Pass'.tr,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                'Pass'.tr,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
-                                ),
-                              ),
+                              const SizedBox(height: 8),
+                              _buildAccountRow('CEO', 'sonarseang@gmail.com', '123456', context),
+                              _accountDivider(),
+                              _buildAccountRow('Admin', 'admin@gmail.com', '123456', context),
+                              _accountDivider(),
+                              _buildAccountRow('Manager', 'manager@gmail.com', '123456', context),
+                              _accountDivider(),
+                              _buildAccountRow('Leader', 'leader@gmail.com', '123456', context),
+                              _accountDivider(),
+                              _buildAccountRow('Employee', 'employee@gmail.com', '123456', context),
                             ],
-                          ),
-                          const SizedBox(height: 8),
-                          _buildAccountRow('CEO', 'sonarseang@gmail.com', '123456', context),
-                          _accountDivider(),
-                          _buildAccountRow('Admin', 'admin@gmail.com', '123456', context),
-                          _accountDivider(),
-                          _buildAccountRow('Manager', 'manager@gmail.com', '123456', context),
-                          _accountDivider(),
-                          _buildAccountRow('Leader', 'leader@gmail.com', '123456', context),
-                          _accountDivider(),
-                          _buildAccountRow('Employee', 'employee@gmail.com', '123456', context),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
 

@@ -864,7 +864,7 @@ class LocalDatabaseService {
 
   Map<String, dynamic> saveEmployee(Map<String, dynamic> data) {
     final list = getEmployees();
-    final int nextId = list.isEmpty ? 1 : (list.map((e) => e['id'] as int).reduce((a, b) => a > b ? a : b) + 1);
+    final int nextId = list.isEmpty ? 1 : (list.map((e) => (e['id'] as num?)?.toInt() ?? 0).reduce((a, b) => a > b ? a : b) + 1);
     final newEmp = Map<String, dynamic>.from(data);
     newEmp['id'] = nextId;
     if (newEmp['employee_id'] == null || newEmp['employee_id'].toString().isEmpty) {

@@ -260,6 +260,14 @@ class AppSqliteDatabase {
         type TEXT DEFAULT 'system'
       );
     ''');
+
+    // Ensure is_demo column exists on all tables for partition isolation
+    final tables = ['branches', 'departments', 'employees', 'persons', 'attendance', 'leaves', 'overtimes', 'suggestions', 'notifications'];
+    for (final t in tables) {
+      try {
+        _db!.execute('ALTER TABLE $t ADD COLUMN is_demo INTEGER DEFAULT 0;');
+      } catch (_) {}
+    }
   }
 
   void _seedInitialDataIfEmpty() {
@@ -267,9 +275,9 @@ class AppSqliteDatabase {
     final branchCount = _db!.select('SELECT COUNT(*) as count FROM branches;').first['count'] as int;
     if (branchCount == 0) {
       _db!.execute('''
-        INSERT INTO branches (id, name, address, latitude, longitude, radius, created_at) VALUES
-        (1, 'Phnom Penh Headquarters', 'Russian Federation Blvd, Phnom Penh, Cambodia', 11.5564, 104.9282, 500.0, datetime('now', '-60 days')),
-        (2, 'Siem Reap Regional Hub', 'National Road 6, Siem Reap, Cambodia', 13.3633, 103.8564, 500.0, datetime('now', '-30 days'));
+        INSERT INTO branches (id, name, address, latitude, longitude, radius, created_at, is_demo) VALUES
+        (1, 'Phnom Penh Headquarters', 'Russian Federation Blvd, Phnom Penh, Cambodia', 11.5564, 104.9282, 500.0, datetime('now', '-60 days'), 1),
+        (2, 'Siem Reap Regional Hub', 'National Road 6, Siem Reap, Cambodia', 13.3633, 103.8564, 500.0, datetime('now', '-30 days'), 1);
       ''');
     }
 
@@ -277,11 +285,22 @@ class AppSqliteDatabase {
     final deptCount = _db!.select('SELECT COUNT(*) as count FROM departments;').first['count'] as int;
     if (deptCount == 0) {
       _db!.execute('''
-        INSERT INTO departments (id, name, code, description, manager_name, employee_count, created_at) VALUES
-        (1, 'Software Engineering', 'ENG', 'Mobile & Cloud Development team', 'Darith Admin', 5, datetime('now', '-60 days')),
-        (2, 'Human Resources', 'HR', 'Recruitment & Employee Relations', 'Sarah Manager', 2, datetime('now', '-60 days'));
+        INSERT INTO departments (id, name, code, description, manager_name, employee_count, created_at, is_demo) VALUES
+        (1, 'Software Engineering', 'ENG', 'Mobile & Cloud Development team', 'Darith Admin', 5, datetime('now', '-60 days'), 1),
+        (2, 'Human Resources', 'HR', 'Recruitment & Employee Relations', 'Sarah Manager', 2, datetime('now', '-60 days'), 1);
       ''');
     }
+
+    // Ensure demo flags are up to date
+    try {
+      _db!.execute('UPDATE branches SET is_demo = 1 WHERE id IN (1, 2);');
+      _db!.execute('UPDATE departments SET is_demo = 1 WHERE id IN (1, 2);');
+      _db!.execute('''
+        UPDATE employees SET is_demo = 1 WHERE email IN (
+          'sonarseang@gmail.com', 'admin@gmail.com', 'manager@gmail.com', 'leader@gmail.com', 'employee@gmail.com'
+        );
+      ''');
+    } catch (_) {}
 
     // 3. Seed Demo Employees
     final empCount = _db!.select('SELECT COUNT(*) as count FROM employees;').first['count'] as int;

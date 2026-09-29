@@ -29,7 +29,9 @@ class LocalUser {
 class LocalAuthService {
   static final LocalAuthService _instance = LocalAuthService._internal();
   factory LocalAuthService() => _instance;
-  LocalAuthService._internal();
+  LocalAuthService._internal() {
+    LocalDatabaseService.currentEmailProvider = () => _currentUser?.email;
+  }
 
   final LocalDatabaseService _db = LocalDatabaseService();
   final GetStorage _authBox = GetStorage('face_attendance_auth');
@@ -40,13 +42,19 @@ class LocalAuthService {
     await _authBox.initStorage;
     final cachedUid = _authBox.read<String>('current_user_uid');
     if (cachedUid != null && cachedUid.isNotEmpty) {
-      final emp = _db.getEmployeeByUid(cachedUid);
+      var emp = _db.getEmployeeByUid(cachedUid, forDemo: false);
+      bool isDemo = false;
+      if (emp == null) {
+        emp = _db.getEmployeeByUid(cachedUid, forDemo: true);
+        if (emp != null) isDemo = true;
+      }
       if (emp != null) {
         _currentUser = LocalUser(
           uid: emp['firebase_uid'] ?? emp['id'].toString(),
           email: emp['email'] ?? '',
           displayName: emp['fullname'],
         );
+        _db.setDemoMode(isDemo || isDemoAccountEmail(emp['email']));
       }
     }
   }
@@ -67,7 +75,9 @@ class LocalAuthService {
     required String password,
   }) async {
     final cleanEmail = email.trim().toLowerCase();
-    var emp = _db.getEmployeeByEmail(cleanEmail);
+    final isDemo = isDemoAccountEmail(cleanEmail);
+    _db.setDemoMode(isDemo);
+    var emp = _db.getEmployeeByEmail(cleanEmail, forDemo: isDemo);
 
     if (_demoProfiles.containsKey(cleanEmail)) {
       final demo = _demoProfiles[cleanEmail]!;
@@ -83,12 +93,12 @@ class LocalAuthService {
           'department_name': cleanEmail == 'manager@gmail.com' ? 'Human Resources' : 'Software Engineering',
           'status': 'active',
           'password': '123456',
-        });
+        }, forDemo: true);
       } else if (emp['role'] != demo['role'] || emp['fullname'] != demo['name']) {
         emp = _db.updateEmployee(emp['id'], {
           'role': demo['role']!,
           'fullname': demo['name']!,
-        }) ?? emp;
+        }, forDemo: true) ?? emp;
       }
 
       final storedPass = emp['password']?.toString() ?? '123456';
@@ -107,10 +117,10 @@ class LocalAuthService {
           'email': cleanEmail,
           'role': vault['role'] ?? 'employee',
           'password': vault['password'] ?? password,
-          'branch': vault['branch'] ?? 1,
-          'department': vault['department'] ?? 1,
+          'branch': vault['branch'],
+          'department': vault['department'],
           'status': 'active',
-        });
+        }, forDemo: false);
       }
     }
 
@@ -149,7 +159,10 @@ class LocalAuthService {
       throw Exception('weak-password');
     }
 
-    final existing = _db.getEmployeeByEmail(cleanEmail);
+    final isDemo = isDemoAccountEmail(cleanEmail);
+    _db.setDemoMode(isDemo);
+
+    final existing = _db.getEmployeeByEmail(cleanEmail, forDemo: isDemo);
     if (existing != null) {
       throw Exception('email-already-in-use');
     }
@@ -214,8 +227,14 @@ class LocalAuthService {
 
   /// Face Login: log in instantly via biometric match
   Future<UserModel?> loginWithFace(String employeeId) async {
-    final emp = _db.getEmployeeByUid(employeeId);
+    var emp = _db.getEmployeeByUid(employeeId, forDemo: false);
     if (emp != null) {
+      _db.setDemoMode(false);
+      return _createAndCacheUser(emp);
+    }
+    emp = _db.getEmployeeByUid(employeeId, forDemo: true);
+    if (emp != null) {
+      _db.setDemoMode(true);
       return _createAndCacheUser(emp);
     }
     return null;
@@ -228,6 +247,7 @@ class LocalAuthService {
       displayName: user.fullname,
     );
     _authBox.write('current_user_uid', user.uid);
+    _db.setDemoMode(isDemoAccountEmail(user.email));
   }
 
   UserModel _createAndCacheUser(Map<String, dynamic> emp) {
@@ -290,6 +310,7 @@ class LocalAuthService {
   Future<void> logout() async {
     _currentUser = null;
     await _authBox.remove('current_user_uid');
+    _db.setDemoMode(null);
   }
 
   Future<void> resetPassowrd({required String email}) async {

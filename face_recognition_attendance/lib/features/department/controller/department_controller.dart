@@ -22,8 +22,11 @@ class DepartmentController extends GetxController {
       errorMessage.value = '';
       final queryParams = branchId != null ? {'branch': branchId} : null;
       final data = await _apiService.get('/departments/', queryParams: queryParams);
-      if (data is List) {
-        departments.assignAll(data.map((item) => DepartmentModel.fromJson(item)).toList());
+      final rawList = data is List
+          ? data
+          : (data is Map && data['results'] is List ? data['results'] as List : null);
+      if (rawList != null) {
+        departments.assignAll(rawList.map((item) => DepartmentModel.fromJson(Map<String, dynamic>.from(item as Map))).toList());
       }
     } on ApiException catch (e) {
       errorMessage.value = e.message;

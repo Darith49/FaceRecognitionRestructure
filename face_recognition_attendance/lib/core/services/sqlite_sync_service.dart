@@ -11,7 +11,40 @@ import 'package:get/get.dart';
 class SqliteSyncService extends GetxService {
   static final SqliteSyncService _instance = SqliteSyncService._internal();
   factory SqliteSyncService() => _instance;
-  SqliteSyncService._internal();
+  SqliteSyncService._internal() {
+    _registerDbHook();
+  }
+
+  void _registerDbHook() {
+    LocalDatabaseService.onSyncHook = ({required type, required payload}) {
+      if (type == 'profile_picture') {
+        syncProfilePicture(
+          email: payload['email']?.toString() ?? '',
+          profilePictureBase64: payload['profile_picture']?.toString() ?? '',
+        );
+      } else if (type == 'face_registration') {
+        syncFaceRegistration(
+          email: payload['email']?.toString() ?? '',
+          uid: payload['uid']?.toString() ?? '',
+          employeeId: payload['employeeId']?.toString() ?? '',
+          name: payload['name']?.toString() ?? '',
+          templates: payload['templates'] as List<double>? ?? [],
+          referenceImage: payload['referenceImage']?.toString() ?? '',
+        );
+      } else if (type == 'attendance') {
+        syncAttendance(
+          employeeId: payload['employeeId']?.toString() ?? '',
+          employeeName: payload['employeeName']?.toString() ?? '',
+          type: payload['type']?.toString() ?? 'check-in',
+          time: payload['time']?.toString() ?? '',
+          date: payload['date']?.toString() ?? '',
+          checkType: payload['checkType']?.toString() ?? 'face',
+          faceMatched: payload['faceMatched'] == true,
+          confidence: (payload['confidence'] as num?)?.toDouble() ?? 0.95,
+        );
+      }
+    };
+  }
 
   final GetConnect _client = GetConnect(
     timeout: const Duration(milliseconds: 2500),

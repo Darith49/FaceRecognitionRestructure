@@ -21,8 +21,11 @@ class BranchController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
       final data = await _apiService.get('/branches/');
-      if (data is List) {
-        branches.assignAll(data.map((item) => BranchModel.fromJson(item)).toList());
+      final rawList = data is List
+          ? data
+          : (data is Map && data['results'] is List ? data['results'] as List : null);
+      if (rawList != null) {
+        branches.assignAll(rawList.map((item) => BranchModel.fromJson(Map<String, dynamic>.from(item as Map))).toList());
       }
     } on ApiException catch (e) {
       errorMessage.value = e.message;

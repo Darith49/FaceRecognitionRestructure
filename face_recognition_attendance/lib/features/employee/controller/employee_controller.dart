@@ -32,9 +32,12 @@ class EmployeeController extends GetxController {
         '/employees/',
         queryParams: queryParams.isNotEmpty ? queryParams : null,
       );
-      if (data is List) {
+      final rawList = data is List
+          ? data
+          : (data is Map && data['results'] is List ? data['results'] as List : null);
+      if (rawList != null) {
         employees.assignAll(
-          data.map((item) => EmployeeModel.fromJson(item)).toList(),
+          rawList.map((item) => EmployeeModel.fromJson(Map<String, dynamic>.from(item as Map))).toList(),
         );
       }
     } on ApiException catch (e) {

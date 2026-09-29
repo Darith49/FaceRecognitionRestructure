@@ -82,6 +82,7 @@ class LoginController extends GetxController {
             hasFaceRegistered: vault['has_face_registered'] == true || user.hasFaceRegistered,
           );
         }
+        LocalDatabaseService().setDemoMode(isDemoAccountEmail(user.email));
         currentuser.value = user;
         hasFaceRegistered.value = user.hasFaceRegistered;
         final token = await _firebaseService.getIdToken();
@@ -113,6 +114,7 @@ class LoginController extends GetxController {
               hasFaceRegistered: vault['has_face_registered'] == true || user.hasFaceRegistered,
             );
           }
+          LocalDatabaseService().setDemoMode(isDemoAccountEmail(user.email));
           currentuser.value = user;
           hasFaceRegistered.value = user.hasFaceRegistered;
           await checkFaceStatus();
@@ -141,6 +143,7 @@ class LoginController extends GetxController {
       );
 
       if (user != null) {
+        LocalDatabaseService().setDemoMode(isDemoAccountEmail(user.email));
         currentuser.value = user; // 1. Save user state
         hasFaceRegistered.value = user.hasFaceRegistered;
         if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
@@ -236,6 +239,7 @@ class LoginController extends GetxController {
     } catch (e) {
       debugPrint('Logout service error: $e');
     } finally {
+      LocalDatabaseService().setDemoMode(null);
       await SecureStorageService().clearSession();
       await SecureStorageService().setRememberMe(true);
       rememberMe.value = true;

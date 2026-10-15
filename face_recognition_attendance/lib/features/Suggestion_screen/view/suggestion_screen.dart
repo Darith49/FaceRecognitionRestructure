@@ -20,6 +20,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
   final TextEditingController _messageController = TextEditingController();
   int _tabIndex = 0;
   int _historyFilter = 0; // 0: All, 1: Pending, 2: Seen
+  String? _fieldError;
 
   @override
   void initState() {
@@ -37,9 +38,14 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final message = _messageController.text.trim();
     if (message.isEmpty) {
-      RequestSnack.show(messenger, 'Please input your suggestion.');
+      setState(() {
+        _fieldError = 'Please input your suggestion.'.tr;
+      });
       return;
     }
+    setState(() {
+      _fieldError = null;
+    });
 
     final success = await _controller.submit(message);
     if (success) {
@@ -130,7 +136,13 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
               minLines: 6,
               maxLines: 8,
               maxLength: 500,
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) {
+                if (_fieldError != null) {
+                  setState(() => _fieldError = null);
+                } else {
+                  setState(() {});
+                }
+              },
               style: const TextStyle(
                 fontSize: 15,
                 color: RequestColors.textPrimary,
@@ -141,12 +153,15 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                   fontSize: 15,
                   color: RequestColors.textSecondary,
                 ),
+                errorText: _fieldError,
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.all(16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
+                  borderSide: _fieldError != null
+                      ? const BorderSide(color: RequestColors.danger, width: 1.5)
+                      : BorderSide.none,
                 ),
                 counterText: '',
               ),

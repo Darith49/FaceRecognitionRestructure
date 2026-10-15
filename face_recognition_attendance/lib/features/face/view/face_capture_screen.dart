@@ -274,52 +274,43 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
 
       _showSuccessDialog(message, timeDisplay: timeDisplay, resultData: result);
     } on ApiException catch (e) {
-      final msg = e.message;
-      final isSecurityIssue = msg.toLowerCase().contains('security') ||
-          msg.toLowerCase().contains('mismatch') ||
-          msg.toLowerCase().contains('not match') ||
-          msg.toLowerCase().contains('unauthorized') ||
-          msg.toLowerCase().contains('not recognized');
+      final code = e.errorCode ?? '';
+      final status = e.statusCode;
 
-      final isQualityOrEnrollIssue = msg.toLowerCase().contains('liveness') ||
-          msg.toLowerCase().contains('no face') ||
-          msg.toLowerCase().contains('not registered') ||
-          msg.toLowerCase().contains('register your face') ||
-          msg.toLowerCase().contains('no enrolled') ||
-          msg.toLowerCase().contains('too dark') ||
-          msg.toLowerCase().contains('overexposed') ||
-          msg.toLowerCase().contains('contour');
+      final isSecurityIssue = status == 403 ||
+          code == 'BIOMETRIC_MISMATCH' ||
+          code == 'SECURITY_ALERT';
 
-      final isTimeIssue =
-          msg.toLowerCase().contains('section') ||
-          msg.toLowerCase().contains('scheduled') ||
-          msg.toLowerCase().contains('day off') ||
-          msg.toLowerCase().contains('current time');
-      final isLocationIssue =
-          msg.toLowerCase().contains('away from') ||
-          msg.toLowerCase().contains('radius');
+      final isQualityOrEnrollIssue = status == 422 ||
+          status == 404 ||
+          code == 'FACE_QUALITY_LOW' ||
+          code == 'FACE_NOT_ENROLLED' ||
+          code == 'FACE_EXTRACTION_FAILED';
+
+      final isTimeIssue = status == 423 || code == 'TIME_RESTRICTION';
+      final isLocationIssue = status == 424 || code == 'LOCATION_RESTRICTION';
 
       if (isSecurityIssue || isQualityOrEnrollIssue) {
         _showSecurityAlertDialog(
           title: isSecurityIssue
-              ? 'Security Alert: Biometric Mismatch'
-              : 'Face Verification Failed',
-          message: msg,
+              ? 'Security Alert: Biometric Mismatch'.tr
+              : 'Face Verification Failed'.tr,
+          message: e.message.tr,
           details: e.details,
         );
       } else if (isTimeIssue || isLocationIssue) {
         final title = isTimeIssue
-            ? 'Outside Check-In Window'
-            : 'Location Out of Range';
+            ? 'Outside Check-In Window'.tr
+            : 'Location Out of Range'.tr;
         _showRestrictionDialog(
           title: title,
-          message: msg,
+          message: e.message.tr,
           isTimeRestriction: isTimeIssue,
         );
       } else {
         Get.snackbar(
-          '${_getActionTitle()} Failed',
-          e.message,
+          '${_getActionTitle()} Failed'.tr,
+          e.message.tr,
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade600,
           colorText: Colors.white,

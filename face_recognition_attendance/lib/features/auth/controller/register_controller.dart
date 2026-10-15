@@ -23,6 +23,11 @@ class RegisterController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
+  final RxString fullnameError = ''.obs;
+  final RxString emailError = ''.obs;
+  final RxString passwordError = ''.obs;
+  final RxString confirmPasswordError = ''.obs;
+
   void selectRole(UserRole role) {
     selectedRole.value = role;
   }
@@ -34,26 +39,36 @@ class RegisterController extends GetxController {
     final confirmPassword = confirmPasswordController.text;
     final empId = employeeIdController.text.trim();
 
-    // Validation
+    fullnameError.value = '';
+    emailError.value = '';
+    passwordError.value = '';
+    confirmPasswordError.value = '';
+
+    bool hasError = false;
     if (fullname.isEmpty) {
-      _showError('Full name is required');
-      return;
+      fullnameError.value = 'Full name is required'.tr;
+      hasError = true;
     }
 
-    if (email.isEmpty || !GetUtils.isEmail(email)) {
-      _showError('Please enter a valid email address');
-      return;
+    if (email.isEmpty) {
+      emailError.value = 'Email is required'.tr;
+      hasError = true;
+    } else if (!GetUtils.isEmail(email)) {
+      emailError.value = 'Please enter a valid email address'.tr;
+      hasError = true;
     }
 
     if (password.length < 6) {
-      _showError('Password must be at least 6 characters');
-      return;
+      passwordError.value = 'Password must be at least 6 characters'.tr;
+      hasError = true;
     }
 
     if (password != confirmPassword) {
-      _showError('Passwords do not match');
-      return;
+      confirmPasswordError.value = 'Passwords do not match'.tr;
+      hasError = true;
     }
+
+    if (hasError) return;
 
     try {
       isLoading.value = true;
@@ -103,8 +118,17 @@ class RegisterController extends GetxController {
       Get.offAllNamed(AppRoutes.navigation);
     } catch (e) {
       final msg = _friendlyError(e);
-      errorMessage.value = msg;
-      _showError(msg);
+      final eStr = e.toString().toLowerCase();
+      if (eStr.contains('email-already-in-use')) {
+        emailError.value = 'That email address is already in use by another account.'.tr;
+      } else if (eStr.contains('weak-password')) {
+        passwordError.value = 'Password must be at least 6 characters.'.tr;
+      } else if (eStr.contains('invalid-email')) {
+        emailError.value = 'Please enter a valid email address.'.tr;
+      } else {
+        errorMessage.value = msg;
+        _showError(msg);
+      }
     } finally {
       isLoading.value = false;
     }

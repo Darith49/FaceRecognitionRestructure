@@ -25,6 +25,8 @@ class LoginController extends GetxController {
   final RxBool rememberMe = true.obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
+  final RxString emailError = ''.obs;
+  final RxString passwordError = ''.obs;
   final RxBool isDemoExpanded = false.obs;
 
   bool get isLoggedIn => currentuser.value != null;
@@ -141,6 +143,26 @@ class LoginController extends GetxController {
   }
 
   Future<bool> login({required String email, required String password}) async {
+    emailError.value = '';
+    passwordError.value = '';
+    errorMessage.value = '';
+
+    bool hasError = false;
+    if (email.trim().isEmpty) {
+      emailError.value = 'Email is required'.tr;
+      hasError = true;
+    } else if (!GetUtils.isEmail(email.trim())) {
+      emailError.value = 'That email address looks invalid.'.tr;
+      hasError = true;
+    }
+
+    if (password.isEmpty) {
+      passwordError.value = 'Password is required'.tr;
+      hasError = true;
+    }
+
+    if (hasError) return false;
+
     try {
       isLoading.value = true;
       errorMessage.value = "";
@@ -180,10 +202,10 @@ class LoginController extends GetxController {
         await _authService.logout(); // Clean up auth session so they aren't stuck in a half-logged-in state
         await SecureStorageService().clearAll();
 
-        errorMessage.value = "User profile not found in database. Please contact an administrator.";
+        errorMessage.value = "User profile not found in database. Please contact an administrator.".tr;
 
         Get.snackbar(
-          'Account Not Found',
+          'Account Not Found'.tr,
           errorMessage.value,
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade600,
@@ -196,9 +218,19 @@ class LoginController extends GetxController {
         return false;
       }
     } catch (e) {
-      errorMessage.value = _friendlyError(e);
+      final msg = _friendlyError(e);
+      final eStr = e.toString().toLowerCase();
+      if (eStr.contains('user-not-found') || eStr.contains('invalid-email')) {
+        emailError.value = msg;
+      } else if (eStr.contains('wrong-password')) {
+        passwordError.value = msg;
+      } else if (eStr.contains('invalid-credential') || eStr.contains('auth credential is incorrect')) {
+        emailError.value = 'Incorrect email or password. Please try again.'.tr;
+        passwordError.value = 'Incorrect email or password. Please try again.'.tr;
+      }
+      errorMessage.value = msg;
       Get.snackbar(
-        'Login Failed',
+        'Login Failed'.tr,
         errorMessage.value,
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
@@ -270,22 +302,22 @@ class LoginController extends GetxController {
     final msg = e.toString();
     if (msg.contains('invalid-credential') ||
         msg.contains('auth credential is incorrect')) {
-      return 'Incorrect email or password. Please try again.';
+      return 'Incorrect email or password. Please try again.'.tr;
     }
     if (msg.contains('email-already-in-use')) {
-      return 'That email is already registered.';
+      return 'That email is already registered.'.tr;
     }
     if (msg.contains('weak-password')) {
-      return 'Password must be at least 6 characters.';
+      return 'Password must be at least 6 characters.'.tr;
     }
     if (msg.contains('user-not-found')) {
-      return 'No account found with that email.';
+      return 'No account found with that email.'.tr;
     }
     if (msg.contains('wrong-password')) {
-      return 'Incorrect password.';
+      return 'Incorrect password.'.tr;
     }
     if (msg.contains('invalid-email')) {
-      return 'That email address looks invalid.';
+      return 'That email address looks invalid.'.tr;
     }
     return msg;
   }

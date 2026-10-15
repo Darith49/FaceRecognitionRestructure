@@ -78,30 +78,53 @@ class LoginScreen extends GetView<LoginController> {
                     ),
                     const SizedBox(height: 6),
                     // Email Field
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.hairline,
-                        ),
-                      ),
-                      child: TextField(
-                        controller: controller.emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDark ? AppColors.darkText : AppColors.ink,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
+                    Obx(() {
+                      final hasError = controller.emailError.value.isNotEmpty;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: hasError
+                                    ? AppColors.error
+                                    : (isDark ? AppColors.darkBorder : AppColors.hairline),
+                                width: hasError ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: TextField(
+                              controller: controller.emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDark ? AppColors.darkText : AppColors.ink,
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
+                          if (hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, left: 4),
+                              child: Text(
+                                controller.emailError.value,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    }),
 
                     const SizedBox(height: 18),
 
@@ -116,42 +139,65 @@ class LoginScreen extends GetView<LoginController> {
                     ),
                     const SizedBox(height: 6),
                     // Password Field
-                    Obx(
-                      () => Container(
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? AppColors.darkBorder : AppColors.hairline,
-                          ),
-                        ),
-                        child: TextField(
-                          controller: controller.passwordController,
-                          obscureText: controller.isPasswordHidden.value,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: isDark ? AppColors.darkText : AppColors.ink,
-                          ),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
+                    Obx(() {
+                      final hasError = controller.passwordError.value.isNotEmpty;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: hasError
+                                    ? AppColors.error
+                                    : (isDark ? AppColors.darkBorder : AppColors.hairline),
+                                width: hasError ? 1.5 : 1.0,
+                              ),
                             ),
-                            suffixIcon: GestureDetector(
-                              onTap: () => controller.isPasswordHidden.toggle(),
-                              child: Icon(
-                                controller.isPasswordHidden.value
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
-                                size: 20,
+                            child: TextField(
+                              controller: controller.passwordController,
+                              obscureText: controller.isPasswordHidden.value,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDark ? AppColors.darkText : AppColors.ink,
+                              ),
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                suffixIcon: GestureDetector(
+                                  onTap: () => controller.isPasswordHidden.toggle(),
+                                  child: Icon(
+                                    controller.isPasswordHidden.value
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: hasError
+                                        ? AppColors.error
+                                        : (isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48),
+                                    size: 20,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
+                          if (hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, left: 4),
+                              child: Text(
+                                controller.passwordError.value,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    }),
 
                     const SizedBox(height: 14),
 

@@ -16,11 +16,13 @@ class ApiException implements Exception {
   final int statusCode;
   final String message;
   final dynamic details;
+  final String? errorCode;
 
   ApiException({
     required this.statusCode,
     required this.message,
     this.details,
+    this.errorCode,
   });
 
   @override
@@ -593,7 +595,11 @@ class ApiService {
     // 1. Face Registration
     if (clean.contains('/face/register/')) {
       if (user == null) {
-        throw ApiException(statusCode: 401, message: 'Please log in before enrolling your face.');
+        throw ApiException(
+          statusCode: 401,
+          errorCode: 'AUTH_REQUIRED',
+          message: 'Please log in before enrolling your face.',
+        );
       }
 
       final emp = _db.getEmployeeByUid(user.uid) ?? _db.getEmployeeByEmail(user.email) ?? _db.getEmployees().first;
@@ -606,7 +612,8 @@ class ApiService {
         template = await _faceEngine.extractFaceTemplate(bytes);
       } catch (e) {
         throw ApiException(
-          statusCode: 400,
+          statusCode: 422,
+          errorCode: 'FACE_EXTRACTION_FAILED',
           message: 'Registration failed: $e',
         );
       }
@@ -614,7 +621,8 @@ class ApiService {
       final liveness = await _faceEngine.calculateLiveness(bytes);
       if (liveness < 0.50) {
         throw ApiException(
-          statusCode: 400,
+          statusCode: 422,
+          errorCode: 'FACE_QUALITY_LOW',
           message: 'Registration quality too low (${(liveness * 100).toStringAsFixed(0)}%). Please face the camera in bright lighting without glare.',
         );
       }
@@ -707,7 +715,8 @@ class ApiService {
 
       if (enrolledPerson == null) {
         throw ApiException(
-          statusCode: 400,
+          statusCode: 404,
+          errorCode: 'FACE_NOT_ENROLLED',
           message: 'No enrolled face profile found for $empName. Please go to Profile -> Register Face to enroll your face first.',
         );
       }
@@ -719,6 +728,7 @@ class ApiService {
         // REJECT! DO NOT CHECK IN!
         throw ApiException(
           statusCode: 403,
+          errorCode: 'BIOMETRIC_MISMATCH',
           message: verification.reason,
           details: {
             'similarity': verification.similarity,
@@ -796,7 +806,8 @@ class ApiService {
 
       if (enrolledPerson == null) {
         throw ApiException(
-          statusCode: 400,
+          statusCode: 404,
+          errorCode: 'FACE_NOT_ENROLLED',
           message: 'No enrolled face profile found for $empName. Please go to Profile -> Register Face to enroll your face first.',
         );
       }
@@ -808,6 +819,7 @@ class ApiService {
         // REJECT! DO NOT CHECK OUT!
         throw ApiException(
           statusCode: 403,
+          errorCode: 'BIOMETRIC_MISMATCH',
           message: verification.reason,
           details: {
             'similarity': verification.similarity,

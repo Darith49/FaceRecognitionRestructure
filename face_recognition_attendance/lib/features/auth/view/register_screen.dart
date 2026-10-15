@@ -92,12 +92,15 @@ class RegisterScreen extends GetView<RegisterController> {
                   isDark: isDark,
                 ),
                 const SizedBox(height: 6),
-                _buildInputField(
-                  controller: controller.fullnameController,
-                  hint: 'e.g. John Doe',
-                  icon: Icons.person_outline_rounded,
-                  isDark: isDark,
-                ),
+                Obx(() => _buildInputField(
+                      controller: controller.fullnameController,
+                      hint: 'e.g. John Doe',
+                      icon: Icons.person_outline_rounded,
+                      isDark: isDark,
+                      errorText: controller.fullnameError.value.isNotEmpty
+                          ? controller.fullnameError.value
+                          : null,
+                    )),
 
                 const SizedBox(height: 14),
 
@@ -107,13 +110,16 @@ class RegisterScreen extends GetView<RegisterController> {
                   isDark: isDark,
                 ),
                 const SizedBox(height: 6),
-                _buildInputField(
-                  controller: controller.emailController,
-                  hint: 'name@company.com',
-                  icon: Icons.mail_outline_rounded,
-                  keyboardType: TextInputType.emailAddress,
-                  isDark: isDark,
-                ),
+                Obx(() => _buildInputField(
+                      controller: controller.emailController,
+                      hint: 'name@company.com',
+                      icon: Icons.mail_outline_rounded,
+                      keyboardType: TextInputType.emailAddress,
+                      isDark: isDark,
+                      errorText: controller.emailError.value.isNotEmpty
+                          ? controller.emailError.value
+                          : null,
+                    )),
 
                 const SizedBox(height: 14),
 
@@ -141,6 +147,9 @@ class RegisterScreen extends GetView<RegisterController> {
                       isHidden: controller.isPasswordHidden.value,
                       onToggle: () => controller.isPasswordHidden.toggle(),
                       isDark: isDark,
+                      errorText: controller.passwordError.value.isNotEmpty
+                          ? controller.passwordError.value
+                          : null,
                     )),
 
                 const SizedBox(height: 14),
@@ -159,6 +168,9 @@ class RegisterScreen extends GetView<RegisterController> {
                       isHidden: controller.isConfirmPasswordHidden.value,
                       onToggle: () => controller.isConfirmPasswordHidden.toggle(),
                       isDark: isDark,
+                      errorText: controller.confirmPasswordError.value.isNotEmpty
+                          ? controller.confirmPasswordError.value
+                          : null,
                     )),
 
                 const SizedBox(height: 28),
@@ -269,37 +281,61 @@ class RegisterScreen extends GetView<RegisterController> {
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     required bool isDark,
+    String? errorText,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.hairline,
-        ),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        style: TextStyle(
-          fontSize: 15,
-          color: isDark ? AppColors.darkText : AppColors.ink,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.inkMuted48.withValues(alpha: 0.7),
-            fontSize: 14,
+    final hasError = errorText != null && errorText.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: hasError
+                  ? AppColors.error
+                  : (isDark ? AppColors.darkBorder : AppColors.hairline),
+              width: hasError ? 1.5 : 1.0,
+            ),
           ),
-          prefixIcon: Icon(
-            icon,
-            size: 20,
-            color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            style: TextStyle(
+              fontSize: 15,
+              color: isDark ? AppColors.darkText : AppColors.ink,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.inkMuted48.withValues(alpha: 0.7),
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(
+                icon,
+                size: 20,
+                color: hasError
+                    ? AppColors.error
+                    : (isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
           ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
-      ),
+        if (hasError)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Text(
+              errorText,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.error,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -309,45 +345,69 @@ class RegisterScreen extends GetView<RegisterController> {
     required bool isHidden,
     required VoidCallback onToggle,
     required bool isDark,
+    String? errorText,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.hairline,
-        ),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: isHidden,
-        style: TextStyle(
-          fontSize: 15,
-          color: isDark ? AppColors.darkText : AppColors.ink,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.inkMuted48.withValues(alpha: 0.7),
-            fontSize: 14,
-          ),
-          prefixIcon: Icon(
-            Icons.lock_outline_rounded,
-            size: 20,
-            color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
-          ),
-          suffixIcon: GestureDetector(
-            onTap: onToggle,
-            child: Icon(
-              isHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              size: 20,
-              color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+    final hasError = errorText != null && errorText.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : AppColors.canvasParchment,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: hasError
+                  ? AppColors.error
+                  : (isDark ? AppColors.darkBorder : AppColors.hairline),
+              width: hasError ? 1.5 : 1.0,
             ),
           ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: TextField(
+            controller: controller,
+            obscureText: isHidden,
+            style: TextStyle(
+              fontSize: 15,
+              color: isDark ? AppColors.darkText : AppColors.ink,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.inkMuted48.withValues(alpha: 0.7),
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(
+                Icons.lock_outline_rounded,
+                size: 20,
+                color: hasError
+                    ? AppColors.error
+                    : (isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48),
+              ),
+              suffixIcon: GestureDetector(
+                onTap: onToggle,
+                child: Icon(
+                  isHidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  size: 20,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
+                ),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+          ),
         ),
-      ),
+        if (hasError)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Text(
+              errorText,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.error,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

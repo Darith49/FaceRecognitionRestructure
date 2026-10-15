@@ -1,7 +1,6 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/features/auth/controller/register_controller.dart';
-import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -55,7 +54,7 @@ class RegisterScreen extends GetView<RegisterController> {
                       Text(
                         'auth_register_title'.tr.isNotEmpty && 'auth_register_title'.tr != 'auth_register_title'
                             ? 'auth_register_title'.tr
-                            : 'Create Account',
+                            : 'Create Employee Account',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
@@ -65,9 +64,7 @@ class RegisterScreen extends GetView<RegisterController> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'auth_register_subtitle'.tr.isNotEmpty && 'auth_register_subtitle'.tr != 'auth_register_subtitle'
-                            ? 'auth_register_subtitle'.tr
-                            : 'Sign up with your credentials and select your organizational role',
+                        'Sign up with your credentials to register as an employee',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
@@ -80,74 +77,7 @@ class RegisterScreen extends GetView<RegisterController> {
 
                 const SizedBox(height: 24),
 
-                // ==================== SECTION 1: ROLE SELECTION ====================
-                _buildSectionHeader(
-                  title: 'auth_select_role'.tr.isNotEmpty && 'auth_select_role'.tr != 'auth_select_role'
-                      ? 'auth_select_role'.tr
-                      : 'Select Organizational Role',
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 10),
-
-                // Compact role selector chips
-                Obx(() => Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildCompactRoleChip(
-                          role: UserRole.ceo,
-                          label: 'CEO',
-                          icon: Icons.workspace_premium_rounded,
-                          accentColor: const Color(0xFFE5A93C),
-                          isSelected: controller.selectedRole.value == UserRole.ceo,
-                          isDark: isDark,
-                        ),
-                        _buildCompactRoleChip(
-                          role: UserRole.admin,
-                          label: 'Admin',
-                          icon: Icons.admin_panel_settings_rounded,
-                          accentColor: const Color(0xFF6366F1),
-                          isSelected: controller.selectedRole.value == UserRole.admin,
-                          isDark: isDark,
-                        ),
-                        _buildCompactRoleChip(
-                          role: UserRole.manager,
-                          label: 'Manager',
-                          icon: Icons.manage_accounts_rounded,
-                          accentColor: const Color(0xFF0071E3),
-                          isSelected: controller.selectedRole.value == UserRole.manager,
-                          isDark: isDark,
-                        ),
-                        _buildCompactRoleChip(
-                          role: UserRole.leader,
-                          label: 'Leader',
-                          icon: Icons.groups_rounded,
-                          accentColor: const Color(0xFF10B981),
-                          isSelected: controller.selectedRole.value == UserRole.leader,
-                          isDark: isDark,
-                        ),
-                        _buildCompactRoleChip(
-                          role: UserRole.employee,
-                          label: 'Employee',
-                          icon: Icons.badge_rounded,
-                          accentColor: const Color(0xFF0EA5E9),
-                          isSelected: controller.selectedRole.value == UserRole.employee,
-                          isDark: isDark,
-                        ),
-                      ],
-                    )),
-
-                const SizedBox(height: 10),
-
-                // Dynamic selected role description banner
-                Obx(() => _buildRoleDescriptionCard(
-                      role: controller.selectedRole.value,
-                      isDark: isDark,
-                    )),
-
-                const SizedBox(height: 22),
-
-                // ==================== SECTION 2: PERSONAL & CREDENTIALS ====================
+                // ==================== PERSONAL & CREDENTIALS ====================
                 _buildSectionHeader(
                   title: 'Account Information',
                   isDark: isDark,
@@ -306,158 +236,6 @@ class RegisterScreen extends GetView<RegisterController> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildCompactRoleChip({
-    required UserRole role,
-    required String label,
-    required IconData icon,
-    required Color accentColor,
-    required bool isSelected,
-    required bool isDark,
-  }) {
-    return InkWell(
-      onTap: () => controller.selectRole(role),
-      borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark
-                  ? AppColors.primary.withValues(alpha: 0.22)
-                  : AppColors.primary.withValues(alpha: 0.1))
-              : (isDark ? AppColors.darkSurface : AppColors.canvasParchment),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : (isDark ? AppColors.darkBorder : AppColors.hairline),
-            width: isSelected ? 1.8 : 1.0,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? AppColors.primary : (isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-                    ? (isDark ? Colors.white : AppColors.primary)
-                    : (isDark ? AppColors.darkText : AppColors.ink),
-              ),
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 6),
-              const Icon(
-                Icons.check_circle_rounded,
-                size: 15,
-                color: AppColors.primary,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoleDescriptionCard({required UserRole role, required bool isDark}) {
-    String title;
-    String desc;
-    IconData icon;
-    Color color;
-
-    switch (role) {
-      case UserRole.ceo:
-        title = 'CEO / Executive';
-        desc = 'Full corporate oversight, CEO analytics panel, branches & company permissions.';
-        icon = Icons.workspace_premium_rounded;
-        color = const Color(0xFFE5A93C);
-        break;
-      case UserRole.admin:
-        title = 'System Administrator';
-        desc = 'System management, provisioning staff, and assigning branches/departments.';
-        icon = Icons.admin_panel_settings_rounded;
-        color = const Color(0xFF6366F1);
-        break;
-      case UserRole.manager:
-        title = 'Department Manager';
-        desc = 'Department operations, shift oversight, team leave & overtime approvals.';
-        icon = Icons.manage_accounts_rounded;
-        color = const Color(0xFF0071E3);
-        break;
-      case UserRole.leader:
-        title = 'Team Leader';
-        desc = 'Team attendance supervision and daily operational approvals.';
-        icon = Icons.groups_rounded;
-        color = const Color(0xFF10B981);
-        break;
-      case UserRole.employee:
-        title = 'Employee';
-        desc = 'Face biometric attendance check-in, leave & overtime requests, personal logs.';
-        icon = Icons.badge_rounded;
-        color = const Color(0xFF0EA5E9);
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.12 : 0.07),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkText : AppColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  desc,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.inkMuted48,
-                    height: 1.25,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Branch & department will be assigned by CEO / Admin afterwards.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

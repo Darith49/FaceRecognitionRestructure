@@ -1,6 +1,7 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_binding.dart';
 import 'package:face_recognition_attendance/config/navigation/navigation_screen.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
+import 'package:face_recognition_attendance/core/middlewares/auth_middleware.dart';
 import 'package:face_recognition_attendance/features/Leave_screen/binding/leave_binding.dart';
 import 'package:face_recognition_attendance/features/Leave_screen/view/leave_detail_screen.dart';
 import 'package:face_recognition_attendance/features/Leave_screen/view/leave_screen.dart';
@@ -59,6 +60,7 @@ class AppPages {
       name: AppRoutes.navigation,
       page: () => NavigationScreen(),
       binding: NavigationBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
@@ -84,59 +86,69 @@ class AppPages {
       name: AppRoutes.clock,
       page: () => const ClockScreen(),
       binding: ClockBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // The Request page opened on top of another page (it has a back arrow).
     GetPage(
       name: AppRoutes.request,
       page: () => const RequestScreen(showBackButton: true),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.requestInformation,
       page: () => const RequestInformationScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.requestUnauthorized,
       page: () => const RequestListScreen(status: RequestStatus.pending),
       binding: PermissionBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.requestAuthorized,
       page: () => const RequestListScreen(status: RequestStatus.approved),
       binding: PermissionBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.requestDetail,
       page: () => const RequestDetailScreen(),
       binding: PermissionBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.permission,
       page: () => const PermissionScreen(),
       binding: PermissionBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.requestPermission,
       page: () => const RequestPermissionScreen(),
       binding: PermissionBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.permissionSessions,
       page: () => const SessionListScreen(),
       binding: PermissionBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.attendance,
       page: () => const AttendanceScreen(),
       binding: AttendanceBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ---------- Leave ----------
@@ -144,18 +156,21 @@ class AppPages {
       name: AppRoutes.leave,
       page: () => const LeaveScreen(),
       binding: LeaveBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.requestLeave,
       page: () => const RequestLeaveScreen(),
       binding: LeaveBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.leaveDetail,
       page: () => const LeaveDetailScreen(),
       binding: LeaveBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ---------- Overtime ----------
@@ -163,18 +178,21 @@ class AppPages {
       name: AppRoutes.overtime,
       page: () => const OvertimeListScreen(),
       binding: OvertimeBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.requestOvertime,
       page: () => const RequestOvertimeScreen(),
       binding: OvertimeBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.overtimeDetail,
       page: () => const OvertimeDetailScreen(),
       binding: OvertimeBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ---------- Suggestion ----------
@@ -182,18 +200,21 @@ class AppPages {
       name: AppRoutes.suggestion,
       page: () => const SuggestionScreen(),
       binding: SuggestionBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.suggestionStatus,
       page: () => const SuggestionStatusScreen(),
       binding: SuggestionBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     GetPage(
       name: AppRoutes.suggestionDetail,
       page: () => const SuggestionDetailScreen(),
       binding: SuggestionBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ----------- Schedule -----------
@@ -201,6 +222,7 @@ class AppPages {
       name: AppRoutes.schedule,
       page: () => const ScheduleScreen(showBackButton: true),
       binding: ScheduleBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ----------- Settings -----------
@@ -208,48 +230,57 @@ class AppPages {
       name: AppRoutes.settings,
       page: () => const SettingsScreen(),
       binding: SettingsBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ----------- Branch Management -----------
     GetPage(
       name: AppRoutes.branchList,
       page: () => const BranchListScreen(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: AppRoutes.createBranch,
       page: () => const CreateBranchScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ----------- Department Management -----------
     GetPage(
       name: AppRoutes.departmentList,
       page: () => const DepartmentListScreen(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: AppRoutes.createDepartment,
       page: () => const CreateDepartmentScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ----------- Employee Directory -----------
     GetPage(
       name: AppRoutes.employeeList,
       page: () => const EmployeeListScreen(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: AppRoutes.createEmployee,
       page: () => const CreateEmployeeScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ----------- Face Registration & Capture -----------
     GetPage(
       name: AppRoutes.faceCapture,
       page: () => const FaceCaptureScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ----------- Notifications -----------
     GetPage(
       name: AppRoutes.notifications,
       page: () => const NotificationScreen(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ----------- CEO Control Panel -----------
@@ -257,6 +288,7 @@ class AppPages {
       name: AppRoutes.ceoPanel,
       page: () => const CeoControlPanelScreen(),
       binding: CeoPanelBinding(),
+      middlewares: [AuthMiddleware()],
     ),
 
     // ----------- CEO Manage & Reports -----------
@@ -266,6 +298,7 @@ class AppPages {
       binding: BindingsBuilder(() {
         Get.lazyPut<CeoManageController>(() => CeoManageController(), fenix: true);
       }),
+      middlewares: [AuthMiddleware()],
     ),
   ];
 }

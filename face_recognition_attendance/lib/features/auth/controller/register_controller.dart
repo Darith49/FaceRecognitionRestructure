@@ -63,7 +63,7 @@ class RegisterController extends GetxController {
         fullname: fullname,
         email: email,
         password: password,
-        role: selectedRole.value,
+        role: UserRole.employee,
         employeeId: empId.isNotEmpty ? empId : null,
       );
 

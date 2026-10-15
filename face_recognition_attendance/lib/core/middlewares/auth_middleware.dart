@@ -6,6 +6,9 @@ import 'package:get/get.dart';
 class AuthMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
+    if (!Get.isRegistered<LoginController>()) {
+      return const RouteSettings(name: AppRoutes.login);
+    }
     final authController = Get.find<LoginController>();
 
     if (!authController.isLoggedIn) {

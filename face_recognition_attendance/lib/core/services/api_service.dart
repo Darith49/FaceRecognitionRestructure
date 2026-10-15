@@ -735,6 +735,7 @@ class ApiService {
             'liveness': verification.liveness,
             'required_similarity': _faceEngine.defaultIdentifyThreshold,
             'required_liveness': _faceEngine.defaultLivenessThreshold,
+            'enrolled_photo': enrolledPerson.faceJpg,
           },
         );
       }
@@ -826,6 +827,7 @@ class ApiService {
             'liveness': verification.liveness,
             'required_similarity': _faceEngine.defaultIdentifyThreshold,
             'required_liveness': _faceEngine.defaultLivenessThreshold,
+            'enrolled_photo': enrolledPerson.faceJpg,
           },
         );
       }

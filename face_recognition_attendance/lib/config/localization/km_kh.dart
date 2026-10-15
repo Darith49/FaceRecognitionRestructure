@@ -702,4 +702,10 @@ const Map<String, String> kmKH = {
   'Weekly shifts, work hours & holidays': 'វេនប្រចាំសប្តាហ៍ ម៉ោងធ្វើការ និងថ្ងៃឈប់សម្រាក',
   'Activity alerts & request updates': 'ការដាស់តឿនសកម្មភាព និងបច្ចុប្បន្នភាពសំណើ',
   'Manage your schedules and notification preferences': 'គ្រប់គ្រងកាលវិភាគ និងការកំណត់ការជូនដំណឹងរបស់អ្នក',
+  'Attempt': 'ការប៉ុនប៉ង',
+  'Captured Face': 'ផ្ទៃមុខដែលបានថត',
+  'Enrolled Face': 'ផ្ទៃមុខដែលបានចុះឈ្មោះ',
+  'Contact Admin': 'ទាក់ទងអ្នកគ្រប់គ្រង',
+  'Contact Administrator': 'ទាក់ទងអ្នកគ្រប់គ្រងប្រព័ន្ធ',
+  'If face recognition repeatedly fails, your biometric profile may need to be updated or re-enrolled.': 'ប្រសិនបើការសម្គាល់ផ្ទៃមុខបរាជ័យជាបន្តបន្ទាប់ ប្រវត្តិរូបជីវមាត្ររបស់អ្នកអាចត្រូវការធ្វើបច្ចុប្បន្នភាព ឬចុះឈ្មោះឡើងវិញ។',
 };

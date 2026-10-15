@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:camera/camera.dart';
 import 'package:face_recognition_attendance/core/utils/file_picker_helper.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
+import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
+import 'package:face_recognition_attendance/core/services/local_database_service.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
@@ -28,6 +31,8 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
   String _statusText = '';
   bool _isPermissionDenied = false;
   Position? _currentPosition;
+  int _failedAttempts = 0;
+  Uint8List? _lastCapturedBytes;
 
   // Mode: 'register', 'check_in', or 'check_out'
   late String _action;
@@ -198,7 +203,8 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
   Future<void> _processImageBytes(Uint8List bytes, String filename) async {
     setState(() {
       _isProcessing = true;
-      _statusText = 'Scanning and processing face...';
+      _lastCapturedBytes = bytes;
+      _statusText = 'Scanning and processing face...'.tr;
     });
 
     try {
@@ -272,6 +278,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
           ? result['message'].toString()
           : 'Operation completed successfully.';
 
+      _failedAttempts = 0;
       _showSuccessDialog(message, timeDisplay: timeDisplay, resultData: result);
     } on ApiException catch (e) {
       final code = e.errorCode ?? '';
@@ -291,6 +298,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       final isLocationIssue = status == 424 || code == 'LOCATION_RESTRICTION';
 
       if (isSecurityIssue || isQualityOrEnrollIssue) {
+        _failedAttempts++;
         _showSecurityAlertDialog(
           title: isSecurityIssue
               ? 'Security Alert: Biometric Mismatch'.tr
@@ -469,53 +477,171 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     required String message,
     dynamic details,
   }) {
+    Uint8List? enrolledBytes;
+    if (details is Map && details['enrolled_photo'] != null) {
+      final ep = details['enrolled_photo'];
+      if (ep is Uint8List) {
+        enrolledBytes = ep;
+      } else if (ep is List) {
+        enrolledBytes = Uint8List.fromList(List<int>.from(ep));
+      } else if (ep is String && ep.isNotEmpty) {
+        try {
+          enrolledBytes = base64Decode(ep);
+        } catch (_) {}
+      }
+    }
+
+    if (enrolledBytes == null) {
+      try {
+        final db = LocalDatabaseService();
+        final user = LocalAuthService().getCurrentUser();
+        if (user != null) {
+          final person = db.getPersons().firstWhereOrNull(
+                (p) => p.id == user.uid || p.employeeId == user.uid,
+              );
+          if (person != null && person.faceJpg.isNotEmpty) {
+            enrolledBytes = person.faceJpg;
+          }
+        }
+      } catch (_) {}
+    }
+
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.gpp_bad_rounded,
-                  size: 44,
-                  color: Colors.red.shade600,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(width: 24),
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.gpp_bad_rounded,
+                      size: 32,
+                      color: Colors.red.shade600,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 22, color: Colors.black45),
+                    onPressed: () => Navigator.pop(ctx),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Text(
                 title.tr,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 17,
                   fontWeight: FontWeight.bold,
                   color: Colors.red.shade700,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _failedAttempts >= 3 ? Colors.red.shade100 : Colors.amber.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${"Attempt".tr}: $_failedAttempts / 3',
+                  style: TextStyle(
+                    color: _failedAttempts >= 3 ? Colors.red.shade900 : Colors.amber.shade900,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
               Text(
                 message.tr,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   color: Colors.grey.shade800,
-                  height: 1.4,
+                  height: 1.3,
                 ),
               ),
-              if (details is Map && details['similarity'] != null) ...[
+              if (_lastCapturedBytes != null || enrolledBytes != null) ...[
                 const SizedBox(height: 14),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.red.shade300, width: 2),
+                              color: Colors.black12,
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: _lastCapturedBytes != null && _lastCapturedBytes!.isNotEmpty
+                                ? Image.memory(_lastCapturedBytes!, fit: BoxFit.cover)
+                                : const Icon(Icons.person_outline, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Captured Face'.tr,
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red),
+                          ),
+                        ],
+                      ),
+                      Icon(Icons.compare_arrows_rounded, color: Colors.grey.shade400, size: 24),
+                      Column(
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.green.shade400, width: 2),
+                              color: Colors.black12,
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: enrolledBytes != null && enrolledBytes.isNotEmpty
+                                ? Image.memory(enrolledBytes, fit: BoxFit.cover)
+                                : const Icon(Icons.face_retouching_natural, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Enrolled Face'.tr,
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green.shade700),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              if (details is Map && details['similarity'] != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(10),
@@ -526,23 +652,23 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Biometric Match:'.tr, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                          Text('Biometric Match:'.tr, style: const TextStyle(fontSize: 11, color: Colors.black54)),
                           Text(
                             '${((details['similarity'] as num) * 100).toStringAsFixed(1)}% (Req: 80%)',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red),
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.red),
                           ),
                         ],
                       ),
                       if (details['liveness'] != null) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Liveness Score:'.tr, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                            Text('Liveness Score:'.tr, style: const TextStyle(fontSize: 11, color: Colors.black54)),
                             Text(
                               '${((details['liveness'] as num) * 100).toStringAsFixed(1)}% (Req: 70%)',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: (details['liveness'] as num) >= 0.70 ? Colors.green.shade700 : Colors.red,
                               ),
@@ -554,23 +680,140 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade600,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              const SizedBox(height: 18),
+              if (_failedAttempts >= 3) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _pickAndUploadPhoto();
+                    },
+                    icon: const Icon(Icons.upload_file_rounded, size: 18),
+                    label: Text('Upload Photo Instead'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: RequestColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
-                  child: Text('Try Again'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
-              ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showContactAdminDialog();
+                    },
+                    icon: const Icon(Icons.support_agent_rounded, size: 18),
+                    label: Text('Contact Admin'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey.shade800,
+                      side: BorderSide(color: Colors.grey.shade400),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('Try Again'.tr, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                ),
+              ] else ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade600,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text('Try Again'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _pickAndUploadPhoto();
+                  },
+                  icon: const Icon(Icons.upload_file_rounded, size: 16, color: RequestColors.primary),
+                  label: Text('Upload Photo Instead'.tr, style: const TextStyle(color: RequestColors.primary, fontSize: 13)),
+                ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showContactAdminDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.admin_panel_settings_rounded, color: RequestColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Contact Administrator'.tr,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'If face recognition repeatedly fails, your biometric profile may need to be updated or re-enrolled.'.tr,
+              style: const TextStyle(fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.email_outlined, size: 16, color: Colors.black54),
+                      SizedBox(width: 8),
+                      Text('admin@company.com', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.phone_outlined, size: 16, color: Colors.black54),
+                      SizedBox(width: 8),
+                      Text('+855 23 999 888', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Close'.tr),
+          ),
+        ],
       ),
     );
   }

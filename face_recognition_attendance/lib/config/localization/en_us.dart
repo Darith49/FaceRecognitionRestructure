@@ -702,4 +702,10 @@ const Map<String, String> enUS = {
   'Weekly shifts, work hours & holidays': 'Weekly shifts, work hours & holidays',
   'Activity alerts & request updates': 'Activity alerts & request updates',
   'Manage your schedules and notification preferences': 'Manage your schedules and notification preferences',
+  'Attempt': 'Attempt',
+  'Captured Face': 'Captured Face',
+  'Enrolled Face': 'Enrolled Face',
+  'Contact Admin': 'Contact Admin',
+  'Contact Administrator': 'Contact Administrator',
+  'If face recognition repeatedly fails, your biometric profile may need to be updated or re-enrolled.': 'If face recognition repeatedly fails, your biometric profile may need to be updated or re-enrolled.',
 };

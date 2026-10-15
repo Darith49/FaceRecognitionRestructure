@@ -154,8 +154,15 @@ class HomeController extends GetxController {
           state.value = CheckState.session1NotCheckedIn;
         }
       }
-    } catch (_) {
-      // Graceful fallback
+    } catch (e) {
+      Get.snackbar(
+        'Attendance Status'.tr,
+        'Could not refresh attendance status. Showing cached data.'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF374151),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
+import 'package:face_recognition_attendance/core/services/sqlite_sync_service.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/widgets/attendance_hero_card.dart';
@@ -8,6 +9,7 @@ import 'package:face_recognition_attendance/features/home_screen/view/widgets/ho
 import 'package:face_recognition_attendance/features/home_screen/view/widgets/home_quick_actions_bar.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/widgets/supervisor_team_live_card.dart';
 import 'package:face_recognition_attendance/features/home_screen/view/widgets/wifi_status_pill.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -108,6 +110,45 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 child: HomeGreetingHeader(controller: controller),
               ),
+
+              // Persistent SQLite Offline Sync Banner
+              Obx(() {
+                if (!SqliteSyncService().hasSyncFailed.value) {
+                  return const SizedBox.shrink();
+                }
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        FluentIcons.cloud_off_24_regular,
+                        size: 20,
+                        color: Color(0xFFB45309),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Offline mode — data saved on this device'.tr,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
 
               const SizedBox(height: 16),
 

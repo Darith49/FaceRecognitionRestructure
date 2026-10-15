@@ -1,6 +1,6 @@
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/features/attendance_screen/model/attendance_record.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class AttendanceController extends GetxController {
@@ -82,6 +82,14 @@ class AttendanceController extends GetxController {
       }
     } catch (e) {
       debugPrint('Error fetching department summary: $e');
+      Get.snackbar(
+        'Department Attendance'.tr,
+        'Could not load department attendance data.'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF374151),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
     } finally {
       isLoading.value = false;
     }

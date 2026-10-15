@@ -1,5 +1,5 @@
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Client synchronization service connecting the Flutter app to the local
@@ -66,7 +66,27 @@ class SqliteSyncService extends GetxService {
   String baseUrl = defaultBaseUrl;
 
   final RxBool isBackendAvailable = false.obs;
+  final RxBool hasSyncFailed = false.obs;
   bool _isSyncing = false;
+
+  void _notifySyncError(String item, Object error) {
+    hasSyncFailed.value = true;
+    debugPrint('[SqliteSync] Failed to sync $item to SQLite: $error');
+    if (Get.isSnackbarOpen != true) {
+      Get.snackbar(
+        'Offline Sync Notice'.tr,
+        'Could not sync $item with server. Data saved on this device.'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFD97706),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
+    }
+  }
+
+  void _markSyncSuccess() {
+    hasSyncFailed.value = false;
+  }
 
   /// Initializes connection to the local SQLite backend.
   /// Tries 127.0.0.1 first with a fast timeout so app launch is instantaneous.
@@ -82,6 +102,7 @@ class SqliteSyncService extends GetxService {
         if (res.isOk && res.body is Map && res.body['status'] == 'healthy') {
           baseUrl = candidate;
           isBackendAvailable.value = true;
+          _markSyncSuccess();
           debugPrint('[SqliteSync] Connected to local SQLite backend at $baseUrl');
           await bootstrapFromDatabase();
           return true;
@@ -92,6 +113,7 @@ class SqliteSyncService extends GetxService {
     }
 
     isBackendAvailable.value = false;
+    hasSyncFailed.value = true;
     debugPrint('[SqliteSync] Local SQLite backend not reachable on candidates. Operating in offline storage mode.');
     return false;
   }
@@ -106,10 +128,11 @@ class SqliteSyncService extends GetxService {
       if (res.isOk && res.body is Map) {
         final data = Map<String, dynamic>.from(res.body as Map);
         LocalDatabaseService().hydrateFromSqlite(data);
+        _markSyncSuccess();
         debugPrint('[SqliteSync] Successfully bootstrapped app from SQLite database.');
       }
     } catch (e) {
-      debugPrint('[SqliteSync] Error bootstrapping from SQLite: $e');
+      _notifySyncError('database records', e);
     } finally {
       _isSyncing = false;
     }
@@ -127,7 +150,10 @@ class SqliteSyncService extends GetxService {
     if (!isBackendAvailable.value) {
       await init();
     }
-    if (!isBackendAvailable.value) return;
+    if (!isBackendAvailable.value) {
+      _notifySyncError('face registration', 'Server offline');
+      return;
+    }
 
     try {
       await _client.post('$baseUrl/face/register/', {
@@ -139,9 +165,10 @@ class SqliteSyncService extends GetxService {
         'templates': templates,
         'reference_image': referenceImage,
       });
+      _markSyncSuccess();
       debugPrint('[SqliteSync] Face registration synchronized with SQLite for $email');
     } catch (e) {
-      debugPrint('[SqliteSync] Failed to sync face registration to SQLite: $e');
+      _notifySyncError('face registration', e);
     }
   }
 
@@ -155,7 +182,7 @@ class SqliteSyncService extends GetxService {
       await init();
     }
     if (!isBackendAvailable.value) {
-      debugPrint('[SqliteSync] Cannot sync profile picture: Backend server not reachable.');
+      _notifySyncError('profile picture', 'Server offline');
       return;
     }
 
@@ -174,9 +201,10 @@ class SqliteSyncService extends GetxService {
         'profile_picture': profilePictureBase64,
       });
 
+      _markSyncSuccess();
       debugPrint('[SqliteSync] Profile picture successfully synchronized with SQLite backend for $email (status: ${res.statusCode})');
     } catch (e) {
-      debugPrint('[SqliteSync] Failed to sync profile picture to SQLite: $e');
+      _notifySyncError('profile picture', e);
     }
   }
 
@@ -194,7 +222,10 @@ class SqliteSyncService extends GetxService {
     bool faceMatched = true,
     double confidence = 0.95,
   }) async {
-    if (!isBackendAvailable.value) return;
+    if (!isBackendAvailable.value) {
+      _notifySyncError('attendance record', 'Server offline');
+      return;
+    }
 
     try {
       final endpoint = type == 'check-in' ? '$baseUrl/attendance/check-in/' : '$baseUrl/attendance/check-out/';
@@ -211,33 +242,42 @@ class SqliteSyncService extends GetxService {
         'face_matched': faceMatched,
         'confidence': confidence,
       });
+      _markSyncSuccess();
       debugPrint('[SqliteSync] Attendance $type synchronized with SQLite for $employeeId');
     } catch (e) {
-      debugPrint('[SqliteSync] Failed to sync attendance to SQLite: $e');
+      _notifySyncError('attendance record', e);
     }
   }
 
   /// Synchronizes a newly submitted leave request.
   Future<void> syncLeave(Map<String, dynamic> data) async {
-    if (!isBackendAvailable.value) return;
+    if (!isBackendAvailable.value) {
+      _notifySyncError('leave request', 'Server offline');
+      return;
+    }
 
     try {
       await _client.post('$baseUrl/requests/leave/', data);
+      _markSyncSuccess();
       debugPrint('[SqliteSync] Leave request synchronized with SQLite');
     } catch (e) {
-      debugPrint('[SqliteSync] Failed to sync leave to SQLite: $e');
+      _notifySyncError('leave request', e);
     }
   }
 
   /// Synchronizes a newly submitted overtime request.
   Future<void> syncOvertime(Map<String, dynamic> data) async {
-    if (!isBackendAvailable.value) return;
+    if (!isBackendAvailable.value) {
+      _notifySyncError('overtime request', 'Server offline');
+      return;
+    }
 
     try {
       await _client.post('$baseUrl/requests/overtime/', data);
+      _markSyncSuccess();
       debugPrint('[SqliteSync] Overtime request synchronized with SQLite');
     } catch (e) {
-      debugPrint('[SqliteSync] Failed to sync overtime to SQLite: $e');
+      _notifySyncError('overtime request', e);
     }
   }
 
@@ -246,13 +286,17 @@ class SqliteSyncService extends GetxService {
     if (!isBackendAvailable.value) {
       await init();
     }
-    if (!isBackendAvailable.value) return;
+    if (!isBackendAvailable.value) {
+      _notifySyncError('employee record', 'Server offline');
+      return;
+    }
 
     try {
       final res = await _client.post('$baseUrl/employees/', data);
+      _markSyncSuccess();
       debugPrint('[SqliteSync] Employee synchronized with SQLite backend for ${data['email']} (status: ${res.statusCode})');
     } catch (e) {
-      debugPrint('[SqliteSync] Failed to sync employee to SQLite: $e');
+      _notifySyncError('employee record', e);
     }
   }
 
@@ -264,36 +308,48 @@ class SqliteSyncService extends GetxService {
     if (!isBackendAvailable.value) {
       await init();
     }
-    if (!isBackendAvailable.value) return;
+    if (!isBackendAvailable.value) {
+      _notifySyncError('vault data', 'Server offline');
+      return;
+    }
 
     try {
       final payload = Map<String, dynamic>.from(vaultData)..['email'] = email;
       final res = await _client.post('$baseUrl/user-vault/', payload);
+      _markSyncSuccess();
       debugPrint('[SqliteSync] User vault synchronized with SQLite backend for $email (status: ${res.statusCode})');
     } catch (e) {
-      debugPrint('[SqliteSync] Failed to sync user vault to SQLite: $e');
+      _notifySyncError('vault data', e);
     }
   }
 
   /// Synchronizes a branch with SQLite
   Future<void> syncBranch(Map<String, dynamic> data) async {
-    if (!isBackendAvailable.value) return;
+    if (!isBackendAvailable.value) {
+      _notifySyncError('branch', 'Server offline');
+      return;
+    }
     try {
       await _client.post('$baseUrl/branches/', data);
+      _markSyncSuccess();
       debugPrint('[SqliteSync] Branch synchronized with SQLite backend');
     } catch (e) {
-      debugPrint('[SqliteSync] Failed to sync branch to SQLite: $e');
+      _notifySyncError('branch', e);
     }
   }
 
   /// Synchronizes a department with SQLite
   Future<void> syncDepartment(Map<String, dynamic> data) async {
-    if (!isBackendAvailable.value) return;
+    if (!isBackendAvailable.value) {
+      _notifySyncError('department', 'Server offline');
+      return;
+    }
     try {
       await _client.post('$baseUrl/departments/', data);
+      _markSyncSuccess();
       debugPrint('[SqliteSync] Department synchronized with SQLite backend');
     } catch (e) {
-      debugPrint('[SqliteSync] Failed to sync department to SQLite: $e');
+      _notifySyncError('department', e);
     }
   }
 }

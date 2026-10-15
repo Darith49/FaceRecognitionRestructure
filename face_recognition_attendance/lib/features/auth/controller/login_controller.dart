@@ -57,8 +57,15 @@ class LoginController extends GetxController {
           await SecureStorageService().updateCachedUserData(currentuser.value!.toJson());
         }
       }
-    } catch (_) {
-      // Graceful fallback
+    } catch (e) {
+      Get.snackbar(
+        'Face Biometrics'.tr,
+        'Could not verify registered face status.'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF374151),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
     }
   }
 

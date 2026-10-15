@@ -935,19 +935,19 @@ class _RoleListTile extends StatelessWidget {
 
 class _AbsenceReasonInfo {
   final String leaveType;
-  final String reason;
-  final String approvedBy;
+  final String? reason;
   final String status;
-  final String timeRange;
-  final String documentNote;
+  final String? timeRange;
+  final String? documentNote;
+  final bool hasRealRecord;
 
   const _AbsenceReasonInfo({
     required this.leaveType,
-    required this.reason,
-    required this.approvedBy,
+    this.reason,
     required this.status,
-    required this.timeRange,
-    required this.documentNote,
+    this.timeRange,
+    this.documentNote,
+    this.hasRealRecord = false,
   });
 }
 
@@ -995,7 +995,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
     DayStatus.none => FluentIcons.calendar_ltr_24_regular,
   };
 
-  _AbsenceReasonInfo _getAbsenceReason(DateTime date) {
+  _AbsenceReasonInfo _getAbsenceReason(DateTime date, DayStatus dayStatus) {
     final dateStr =
         '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final matchingLeave = _controller.leaves.firstWhereOrNull((l) {
@@ -1005,37 +1005,21 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
     if (matchingLeave != null) {
       return _AbsenceReasonInfo(
         leaveType: matchingLeave.leaveType,
-        reason: matchingLeave.reason.isNotEmpty
-            ? matchingLeave.reason
-            : 'Scheduled approved leave.',
-        approvedBy: 'Management HR Department',
-        status: matchingLeave.status.capitalizeFirst ?? 'Approved',
-        timeRange: 'Full Day (08:00 AM – 05:00 PM)',
+        reason: matchingLeave.reason.isNotEmpty ? matchingLeave.reason : null,
+        status: matchingLeave.status.capitalizeFirst ?? _statusLabel(dayStatus),
+        timeRange: matchingLeave.fromDate == matchingLeave.toDate
+            ? matchingLeave.fromDate
+            : '${matchingLeave.fromDate} – ${matchingLeave.toDate}',
         documentNote:
-            'Leave record #${matchingLeave.id} approved in attendance system.',
+            matchingLeave.id > 0 ? 'Leave record #${matchingLeave.id}' : null,
+        hasRealRecord: true,
       );
     }
 
-    if (date.day == 3) {
-      return const _AbsenceReasonInfo(
-        leaveType: 'Sick Leave (Medical Consultation)',
-        reason:
-            'Severe fever and migraine. Visited clinic for checkup and prescribed bed rest.',
-        approvedBy: 'Heng Sokha (Operations Manager)',
-        status: 'Permission Approved',
-        timeRange: 'Full Day (07:00 AM – 05:00 PM)',
-        documentNote:
-            'Medical slip & doctor prescription verified by HR department.',
-      );
-    }
-    return const _AbsenceReasonInfo(
-      leaveType: 'Personal Leave (Family Matter)',
-      reason:
-          'Urgent family obligation in hometown. Permission requested in advance.',
-      approvedBy: 'Sophea Chan (HR Lead)',
-      status: 'Permission Approved',
-      timeRange: 'Full Day (07:00 AM – 05:00 PM)',
-      documentNote: 'Formal leave request form #REQ-2026-088 verified.',
+    return _AbsenceReasonInfo(
+      leaveType: _statusLabel(dayStatus),
+      status: _statusLabel(dayStatus),
+      hasRealRecord: false,
     );
   }
 
@@ -1057,9 +1041,11 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
   }
 
   void _showAbsenceReasonSheet(BuildContext context, DateTime day) {
-    final info = _getAbsenceReason(day);
+    final status = _controller.statusFor(day);
+    final info = _getAbsenceReason(day, status);
     final month = DateText.monthName(day.month);
     final weekday = DateText.weekdayShort(day.weekday);
+    final statusColor = _statusColor(status);
 
     showModalBottomSheet(
       context: context,
@@ -1101,11 +1087,11 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Icon(
-                      FluentIcons.calendar_cancel_24_regular,
-                      color: RequestColors.danger,
+                      _statusIcon(status),
+                      color: statusColor,
                       size: 28,
                     ),
                   ),
@@ -1115,7 +1101,7 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Absence Permission Info'.tr,
+                          '${_statusLabel(status)} Info'.tr,
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
@@ -1140,29 +1126,27 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: RequestColors.approvedBackground,
+                      color: statusColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: RequestColors.approvedStatus.withValues(
-                          alpha: 0.4,
-                        ),
+                        color: statusColor.withValues(alpha: 0.4),
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          FluentIcons.checkmark_circle_24_regular,
+                        Icon(
+                          _statusIcon(status),
                           size: 13,
-                          color: RequestColors.approvedText,
+                          color: statusColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Permitted'.tr,
-                          style: const TextStyle(
+                          info.status,
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: RequestColors.approvedText,
+                            color: statusColor,
                           ),
                         ),
                       ],
@@ -1185,78 +1169,100 @@ class _ProfileCalendarCardState extends State<_ProfileCalendarCard> {
                 child: Column(
                   children: [
                     _infoRow(
-                      icon: FluentIcons.document_bullet_list_24_regular,
-                      label: 'Leave Type'.tr,
-                      value: info.leaveType.tr,
+                      icon: FluentIcons.status_24_regular,
+                      label: 'Status'.tr,
+                      value: _statusLabel(status),
                       isBold: true,
                     ),
-                    const Divider(
-                      height: 18,
-                      thickness: 0.8,
-                      color: Color(0xFFE5E7EB),
-                    ),
-                    _infoRow(
-                      icon: FluentIcons.comment_24_regular,
-                      label: 'Reason'.tr,
-                      value: info.reason.tr,
-                    ),
-                    const Divider(
-                      height: 18,
-                      thickness: 0.8,
-                      color: Color(0xFFE5E7EB),
-                    ),
-                    _infoRow(
-                      icon: FluentIcons.shield_checkmark_24_regular,
-                      label: 'Approved By'.tr,
-                      value: info.approvedBy.tr,
-                    ),
-                    const Divider(
-                      height: 18,
-                      thickness: 0.8,
-                      color: Color(0xFFE5E7EB),
-                    ),
-                    _infoRow(
-                      icon: FluentIcons.clock_24_regular,
-                      label: 'Time Range'.tr,
-                      value: info.timeRange.tr,
-                    ),
-                    const Divider(
-                      height: 18,
-                      thickness: 0.8,
-                      color: Color(0xFFE5E7EB),
-                    ),
-                    _infoRow(
-                      icon: FluentIcons.attach_24_regular,
-                      label: 'Documentation'.tr,
-                      value: info.documentNote.tr,
-                    ),
+                    if (info.hasRealRecord) ...[
+                      const Divider(
+                        height: 18,
+                        thickness: 0.8,
+                        color: Color(0xFFE5E7EB),
+                      ),
+                      _infoRow(
+                        icon: FluentIcons.document_bullet_list_24_regular,
+                        label: 'Leave Type'.tr,
+                        value: info.leaveType.tr,
+                      ),
+                      if (info.reason != null && info.reason!.isNotEmpty) ...[
+                        const Divider(
+                          height: 18,
+                          thickness: 0.8,
+                          color: Color(0xFFE5E7EB),
+                        ),
+                        _infoRow(
+                          icon: FluentIcons.comment_24_regular,
+                          label: 'Reason'.tr,
+                          value: info.reason!,
+                        ),
+                      ],
+                      if (info.timeRange != null) ...[
+                        const Divider(
+                          height: 18,
+                          thickness: 0.8,
+                          color: Color(0xFFE5E7EB),
+                        ),
+                        _infoRow(
+                          icon: FluentIcons.clock_24_regular,
+                          label: 'Duration'.tr,
+                          value: info.timeRange!,
+                        ),
+                      ],
+                      if (info.documentNote != null) ...[
+                        const Divider(
+                          height: 18,
+                          thickness: 0.8,
+                          color: Color(0xFFE5E7EB),
+                        ),
+                        _infoRow(
+                          icon: FluentIcons.attach_24_regular,
+                          label: 'Record'.tr,
+                          value: info.documentNote!,
+                        ),
+                      ],
+                    ] else ...[
+                      const Divider(
+                        height: 18,
+                        thickness: 0.8,
+                        color: Color(0xFFE5E7EB),
+                      ),
+                      _infoRow(
+                        icon: FluentIcons.info_24_regular,
+                        label: 'Details'.tr,
+                        value: 'No absence remarks recorded'.tr,
+                      ),
+                    ],
                   ],
                 ),
               ),
 
               const SizedBox(height: 14),
 
-              // Explanatory note
+              // Real status note
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: RequestColors.primary.withValues(alpha: 0.08),
+                  color: (info.hasRealRecord ? RequestColors.primary : statusColor)
+                      .withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       FluentIcons.info_24_regular,
                       size: 18,
-                      color: RequestColors.primary,
+                      color: info.hasRealRecord ? RequestColors.primary : statusColor,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'This absence has verified management permission and does not reduce attendance rating.'.tr,
-                        style: const TextStyle(
+                        info.hasRealRecord
+                            ? 'Approved leave recorded in attendance system.'.tr
+                            : 'No leave request submitted for this date.'.tr,
+                        style: TextStyle(
                           fontSize: 12,
-                          color: RequestColors.primary,
+                          color: info.hasRealRecord ? RequestColors.primary : statusColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

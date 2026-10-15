@@ -1,12 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
 import 'package:face_recognition_attendance/core/utils/date_text.dart';
+import 'package:face_recognition_attendance/core/widgets/dashed_circle_painter.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/clock_screen/controller/clock_controller.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
+import 'package:face_recognition_attendance/features/home_screen/view/widgets/wifi_status_pill.dart';
 import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
@@ -157,7 +157,7 @@ class _ClockScreenState extends State<ClockScreen>
             const SizedBox(height: 24),
 
             // Wi-Fi Status Pill
-            _ClockWifiStatusPill(),
+            const WifiStatusPill(),
 
             const SizedBox(height: 16),
 
@@ -828,44 +828,6 @@ class _ClockSessionStatItem extends StatelessWidget {
   }
 }
 
-// ─── Wi-Fi Status Pill ───────────────────────────────────────────────────────
-
-class _ClockWifiStatusPill extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E5EA)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: RequestColors.approvedStatus,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Office Wi-Fi Connected • Main HQ'.tr,
-            style: const TextStyle(
-              fontSize: 13,
-              color: RequestColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ─── Check In Button ─────────────────────────────────────────────────────────
 
 class _ClockCheckInButton extends StatefulWidget {
@@ -993,7 +955,7 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
                     // Outer dashed ring (ambient)
                     CustomPaint(
                       size: const Size(240, 240),
-                      painter: _ClockDashedCirclePainter(
+                      painter: DashedCirclePainter(
                         color: buttonColor.withValues(
                             alpha: 0.15 + pulseValue * 0.10),
                         strokeWidth: 1.5,
@@ -1106,44 +1068,3 @@ class _ClockCheckInButtonState extends State<_ClockCheckInButton>
   }
 }
 
-class _ClockDashedCirclePainter extends CustomPainter {
-  _ClockDashedCirclePainter({
-    required this.color,
-    required this.strokeWidth,
-    required this.dashWidth,
-    required this.dashSpace,
-  });
-
-  final Color color;
-  final double strokeWidth;
-  final double dashWidth;
-  final double dashSpace;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - strokeWidth) / 2;
-    final circumference = 2 * math.pi * radius;
-    final dashCount = (circumference / (dashWidth + dashSpace)).floor();
-
-    for (int i = 0; i < dashCount; i++) {
-      final startAngle = (i * (dashWidth + dashSpace)) / radius - math.pi / 2;
-      final sweepAngle = dashWidth / radius;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        false,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_ClockDashedCirclePainter old) => old.color != color;
-}

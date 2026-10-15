@@ -1,5 +1,5 @@
-import 'dart:math' as math;
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
+import 'package:face_recognition_attendance/core/widgets/dashed_circle_painter.dart';
 import 'package:face_recognition_attendance/core/widgets/request_ui.dart';
 import 'package:face_recognition_attendance/features/home_screen/controller/home_controller.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
@@ -134,7 +134,7 @@ class _BiometricCheckInButtonState extends State<BiometricCheckInButton>
                     // Outer dashed ring (ambient)
                     CustomPaint(
                       size: const Size(240, 240),
-                      painter: _DashedCirclePainter(
+                      painter: DashedCirclePainter(
                         color: buttonColor.withValues(
                           alpha: 0.15 + pulseValue * 0.10,
                         ),
@@ -251,44 +251,3 @@ class _BiometricCheckInButtonState extends State<BiometricCheckInButton>
   }
 }
 
-class _DashedCirclePainter extends CustomPainter {
-  _DashedCirclePainter({
-    required this.color,
-    required this.strokeWidth,
-    required this.dashWidth,
-    required this.dashSpace,
-  });
-
-  final Color color;
-  final double strokeWidth;
-  final double dashWidth;
-  final double dashSpace;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - strokeWidth) / 2;
-    final circumference = 2 * math.pi * radius;
-    final dashCount = (circumference / (dashWidth + dashSpace)).floor();
-
-    for (int i = 0; i < dashCount; i++) {
-      final startAngle = (i * (dashWidth + dashSpace)) / radius - math.pi / 2;
-      final sweepAngle = dashWidth / radius;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        false,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedCirclePainter old) => old.color != color;
-}

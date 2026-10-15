@@ -350,9 +350,53 @@ class RequestButton extends StatelessWidget {
 class RequestSnack {
   RequestSnack._();
 
+  static const Color successColor = Color(0xFF16A34A);
+  static const Color errorColor = Color(0xFFDC2626);
+  static const Color infoColor = RequestColors.textPrimary;
+
+  static void success(String message, {dynamic messenger, String? title}) {
+    show(
+      messenger,
+      message,
+      isError: false,
+      forcedColor: successColor,
+      customIcon: FluentIcons.checkmark_circle_24_regular,
+      title: title,
+    );
+  }
+
+  static void error(String message, {dynamic messenger, String? title}) {
+    show(
+      messenger,
+      message,
+      isError: true,
+      forcedColor: errorColor,
+      customIcon: FluentIcons.error_circle_24_regular,
+      title: title,
+    );
+  }
+
+  static void info(String message, {dynamic messenger, String? title}) {
+    show(
+      messenger,
+      message,
+      isError: false,
+      forcedColor: infoColor,
+      customIcon: FluentIcons.info_24_regular,
+      title: title,
+    );
+  }
+
   /// Displays a modern, non-intrusive popup notification at the top of the screen.
   /// Fully backwards compatible with existing `RequestSnack.show(messenger, message)` calls.
-  static void show(dynamic messenger, String message, {bool? isError}) {
+  static void show(
+    dynamic messenger,
+    String message, {
+    bool? isError,
+    Color? forcedColor,
+    IconData? customIcon,
+    String? title,
+  }) {
     final lower = message.toLowerCase();
     final bool err = isError ??
         (lower.contains('failed') ||
@@ -364,20 +408,22 @@ class RequestSnack {
             lower.contains('must') ||
             lower.contains('required'));
 
-    final bool success = !err &&
+    final bool succ = !err &&
         (lower.contains('success') ||
             lower.contains('saved') ||
             lower.contains('submitted') ||
             lower.contains('updated') ||
             lower.contains('approved'));
 
-    final Color bgColor = err
-        ? const Color(0xFFDC2626)
-        : (success ? const Color(0xFF16A34A) : RequestColors.textPrimary);
+    final Color bgColor = forcedColor ??
+        (err
+            ? errorColor
+            : (succ ? successColor : infoColor));
 
-    final IconData icon = err
-        ? FluentIcons.error_circle_24_regular
-        : (success ? FluentIcons.checkmark_circle_24_regular : FluentIcons.info_24_regular);
+    final IconData icon = customIcon ??
+        (err
+            ? FluentIcons.error_circle_24_regular
+            : (succ ? FluentIcons.checkmark_circle_24_regular : FluentIcons.info_24_regular));
 
     try {
       if (Get.isSnackbarOpen) {
@@ -390,14 +436,32 @@ class RequestSnack {
             Icon(icon, color: Colors.white, size: 22),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                message.tr,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  letterSpacing: -0.2,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (title != null && title.isNotEmpty) ...[
+                    Text(
+                      title.tr,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  Text(
+                    message.tr,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

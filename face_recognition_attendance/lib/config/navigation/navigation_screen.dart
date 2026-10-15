@@ -43,7 +43,6 @@ class NavigationScreen extends GetView<NavigationController> {
           : (Theme.of(context).brightness == Brightness.dark);
       final loc = Get.locale?.toString() ?? 'en_US';
       final currentIndex = controller.currentIndex.value;
-      final isProfileSelected = currentIndex == 4;
       final isCeo = _isCeoUser();
 
       return GlassScaffold(
@@ -71,8 +70,8 @@ class NavigationScreen extends GetView<NavigationController> {
               fontFamily: 'Inter',
             ),
             child: GlassTabBar.bottom(
-              selectedIndex: isProfileSelected ? 0 : currentIndex,
-              showIndicator: !isProfileSelected,
+              selectedIndex: currentIndex,
+              showIndicator: true,
               onTabSelected: (index) => controller.changePage(index),
               tabs: [
                 GlassTab(
@@ -95,25 +94,12 @@ class NavigationScreen extends GetView<NavigationController> {
                   activeIcon: const Icon(FluentIcons.people_community_24_filled),
                   label: 'nav_myteam'.tr,
                 ),
-              ],
-              extraButton: GlassTabBarExtraButton(
-                icon: Icon(
-                  isProfileSelected
-                      ? FluentIcons.person_24_filled
-                      : FluentIcons.person_24_regular,
-                  size: 26,
-                  color: isProfileSelected
-                      ? AppColors.primary
-                      : (isDark ? Colors.white : AppColors.ink),
+                GlassTab(
+                  icon: const Icon(FluentIcons.person_24_regular),
+                  activeIcon: const Icon(FluentIcons.person_24_filled),
+                  label: 'nav_profile'.tr,
                 ),
-                onTap: () => controller.changePage(4),
-                label: 'nav_profile'.tr,
-                iconColor: isProfileSelected
-                    ? AppColors.primary
-                    : (isDark ? Colors.white : AppColors.ink),
-                placement: GlassExtraButtonPlacement.right,
-                size: 64,
-              ),
+              ],
               textStyle: const TextStyle(
                 decoration: TextDecoration.none,
                 fontSize: 11,

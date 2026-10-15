@@ -74,7 +74,7 @@ Future<void> main() async {
     }
   }
 
-  final initialRoute = isLoggedIn ? AppRoutes.navigation : AppRoutes.login;
+  final initialRoute = AppRoutes.splash;
 
   runApp(
     LiquidGlassWidgets.wrap(

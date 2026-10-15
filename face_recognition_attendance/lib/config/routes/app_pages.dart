@@ -50,13 +50,19 @@ import 'package:face_recognition_attendance/features/ceo_panel/binding/ceo_panel
 import 'package:face_recognition_attendance/features/ceo_panel/view/ceo_control_panel_screen.dart';
 import 'package:face_recognition_attendance/features/ceo_manage/controller/ceo_manage_controller.dart';
 import 'package:face_recognition_attendance/features/ceo_manage/view/ceo_manage_screen.dart';
+import 'package:face_recognition_attendance/features/splash_screen/splash_screen.dart';
 import 'package:get/get.dart';
 
 class AppPages {
   // ignore: non_constant_identifier_names
-  static final INITIAL = AppRoutes.login;
+  static final INITIAL = AppRoutes.splash;
 
   static final routes = [
+    GetPage(
+      name: AppRoutes.splash,
+      page: () => const SplashScreen(),
+    ),
+
     GetPage(
       name: AppRoutes.navigation,
       page: () => NavigationScreen(),

@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:camera/camera.dart';
 import 'package:face_recognition_attendance/core/utils/file_picker_helper.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
@@ -11,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class FaceCaptureScreen extends StatefulWidget {
   const FaceCaptureScreen({super.key});
@@ -27,6 +26,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
 
   bool _isProcessing = false;
   String _statusText = '';
+  bool _isPermissionDenied = false;
   Position? _currentPosition;
 
   // Mode: 'register', 'check_in', or 'check_out'
@@ -46,9 +46,22 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
 
   Future<void> _initCamera() async {
     try {
+      if (!kIsWeb) {
+        final status = await Permission.camera.request();
+        if (status.isPermanentlyDenied || status.isDenied) {
+          if (mounted) {
+            setState(() {
+              _isPermissionDenied = true;
+              _statusText = 'Camera permission denied.'.tr;
+            });
+          }
+          return;
+        }
+      }
+
       _cameras = await availableCameras();
       if (_cameras.isEmpty) {
-        if (mounted) setState(() => _statusText = 'No camera found on this device.');
+        if (mounted) setState(() => _statusText = 'No camera found on this device.'.tr);
         return;
       }
 
@@ -65,10 +78,17 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       );
 
       await _cameraController!.initialize();
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {
+          _isPermissionDenied = false;
+        });
+      }
     } catch (e) {
       if (mounted) {
-        setState(() => _statusText = 'Camera unavailable or permission required.');
+        setState(() {
+          _isPermissionDenied = true;
+          _statusText = 'Camera unavailable or permission required.'.tr;
+        });
       }
     }
   }
@@ -159,7 +179,6 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
 
   Future<void> _pickAndUploadPhoto() async {
     if (_isProcessing) return;
-    if (_action == 'register') return;
 
     if (_action != 'register' && _currentPosition == null) {
       _currentPosition = await Geolocator.getLastKnownPosition();
@@ -724,7 +743,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                     Text(
                       _statusText.isNotEmpty
                           ? _statusText.tr
-                          : 'Camera loading or permission required'.tr,
+                          : (_isPermissionDenied
+                              ? 'Camera permission denied'.tr
+                              : 'Camera loading or permission required'.tr),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white,
@@ -735,8 +756,8 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                     const SizedBox(height: 10),
                     Text(
                       _action == 'register'
-                          ? 'Please ensure your camera is connected and permitted to enroll your face biometric.'.tr
-                          : 'You can capture using your webcam or upload a clear photo of your face directly from your computer.'.tr,
+                          ? 'You can capture using your camera or upload a clear photo of your face to enroll your biometric profile.'.tr
+                          : 'You can capture using your camera or upload a clear photo of your face directly from your device.'.tr,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white60,
@@ -745,25 +766,47 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    if (_action != 'register') ...[
-                      ElevatedButton.icon(
-                        onPressed: _pickAndUploadPhoto,
-                        icon: const Icon(Icons.upload_file_rounded),
-                        label: Text('${'Upload Photo for'.tr} ${_getActionTitle()}'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: RequestColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 14,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
+                    ElevatedButton.icon(
+                      onPressed: _pickAndUploadPhoto,
+                      icon: const Icon(Icons.upload_file_rounded),
+                      label: Text('${'Upload Photo for'.tr} ${_getActionTitle()}'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: RequestColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                    ],
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        await openAppSettings();
+                      },
+                      icon: const Icon(Icons.settings_outlined, size: 18, color: Colors.white),
+                      label: Text(
+                        'Open Settings'.tr,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white38),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     TextButton.icon(
                       onPressed: _initCamera,
                       icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white70),

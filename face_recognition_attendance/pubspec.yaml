@@ -53,6 +53,7 @@ dependencies:
   sqlite3: ^3.6.0
   fluentui_system_icons: ^1.1.273
   connectivity_plus: ^7.3.2
+  permission_handler: ^13.0.2
 
 dev_dependencies:
   flutter_test:

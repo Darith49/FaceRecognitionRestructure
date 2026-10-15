@@ -502,11 +502,12 @@ class _CeoAttendanceCard extends StatelessWidget {
                 }
               }
 
+              final isLoading = controller.isClockLoading.value;
               return Material(
                 color: btnColor,
                 borderRadius: BorderRadius.circular(14),
                 child: InkWell(
-                  onTap: isDone ? null : () => controller.onMainButtonPressed(),
+                  onTap: (isDone || isLoading) ? null : () => controller.onMainButtonPressed(),
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -514,16 +515,36 @@ class _CeoAttendanceCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(btnIcon, color: Colors.white, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          btnText,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                        if (isLoading) ...[
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Verifying...'.tr,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ] else ...[
+                          Icon(btnIcon, color: Colors.white, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            btnText,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

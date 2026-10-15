@@ -57,6 +57,7 @@ class ClockController extends GetxController {
   String get session1SchedOut => _home.session1SchedOut.value;
   String get session2SchedIn => _home.session2SchedIn.value;
   String get session2SchedOut => _home.session2SchedOut.value;
+  RxBool get isClockLoading => _home.isClockLoading;
 
   void onMainButtonPressed() => _home.onMainButtonPressed();
   void resetAttendance() => _home.resetAttendance();

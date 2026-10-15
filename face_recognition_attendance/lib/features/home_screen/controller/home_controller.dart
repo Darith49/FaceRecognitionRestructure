@@ -453,95 +453,150 @@ class HomeController extends GetxController {
 
   // ─── State Progression ──────────────────────────────────────────────────────
 
+  final RxBool isClockLoading = false.obs;
+  final RxString clockError = ''.obs;
+
   Future<void> onMainButtonPressed() async {
-    // Account without registered face -> directly route to face enrollment
-    if (!hasFaceRegistered) {
-      final res = await Get.toNamed(
+    if (isClockLoading.value) return;
+    isClockLoading.value = true;
+    clockError.value = '';
+
+    try {
+      // Account without registered face -> directly route to face enrollment
+      if (!hasFaceRegistered) {
+        final res = await Get.toNamed(
+          AppRoutes.faceCapture,
+          arguments: {'action': 'register'},
+        );
+        if (res != null) {
+          await _authController.checkFaceStatus();
+          await fetchTodayAttendanceStatus();
+        }
+        return;
+      }
+
+      String? action;
+      int sessionNum = 1;
+      switch (state.value) {
+        case CheckState.session1NotCheckedIn:
+        case CheckState.notCheckedIn:
+          action = 'check_in';
+          sessionNum = 1;
+          break;
+        case CheckState.session1CheckedIn:
+        case CheckState.checkedIn:
+          action = 'check_out';
+          sessionNum = 1;
+          break;
+        case CheckState.session2NotCheckedIn:
+          action = 'check_in';
+          sessionNum = 2;
+          break;
+        case CheckState.session2CheckedIn:
+          action = 'check_out';
+          sessionNum = 2;
+          break;
+        case CheckState.completed:
+        case CheckState.checkedOut:
+          return;
+      }
+
+      if (action == 'check_out') {
+        final scheduledOutStr = sessionNum == 1 ? session1SchedOut.value : session2SchedOut.value;
+        final parts = scheduledOutStr.split(':');
+        if (parts.isNotEmpty) {
+          final targetHour = int.tryParse(parts[0]) ?? (sessionNum == 1 ? 11 : 17);
+          final targetMin = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+          final current = DateText.nowCambodia();
+          final schedTime = DateTime(current.year, current.month, current.day, targetHour, targetMin);
+          if (current.isBefore(schedTime)) {
+            final proceed = await _showEarlyCheckoutDialog(sessionNum, scheduledOutStr);
+            if (proceed != true) return;
+          }
+        }
+      }
+
+      final result = await Get.toNamed(
         AppRoutes.faceCapture,
-        arguments: {'action': 'register'},
+        arguments: {'action': action, 'session': sessionNum},
       );
-      if (res != null) {
-        await _authController.checkFaceStatus();
+      if (result != null) {
+        if (result is Map && result['success'] == false) {
+          final reason = result['message']?.toString() ?? 'Biometric verification failed'.tr;
+          clockError.value = reason;
+          _showClockErrorSnackbar(reason);
+          return;
+        }
+
+        if (action == 'check_in') {
+          DateTime time = DateText.nowCambodia();
+          if (result is Map && result['check_in_time'] != null) {
+            time = DateText.parseCambodia(result['check_in_time'].toString());
+          }
+          if (state.value == CheckState.session1NotCheckedIn ||
+              state.value == CheckState.notCheckedIn) {
+            session1CheckIn.value = time;
+            state.value = CheckState.session1CheckedIn;
+          } else {
+            session2CheckIn.value = time;
+            state.value = CheckState.session2CheckedIn;
+          }
+        } else if (action == 'check_out') {
+          DateTime time = DateText.nowCambodia();
+          if (result is Map && result['check_out_time'] != null) {
+            time = DateText.parseCambodia(result['check_out_time'].toString());
+          }
+          if (state.value == CheckState.session1CheckedIn ||
+              state.value == CheckState.checkedIn) {
+            session1CheckOut.value = time;
+            state.value = CheckState.session2NotCheckedIn;
+          } else {
+            session2CheckOut.value = time;
+            state.value = CheckState.completed;
+          }
+        }
         await fetchTodayAttendanceStatus();
       }
-      return;
+    } catch (e) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      clockError.value = msg;
+      _showClockErrorSnackbar(msg);
+    } finally {
+      isClockLoading.value = false;
     }
+  }
 
-    String? action;
-    int sessionNum = 1;
-    switch (state.value) {
-      case CheckState.session1NotCheckedIn:
-      case CheckState.notCheckedIn:
-        action = 'check_in';
-        sessionNum = 1;
-        break;
-      case CheckState.session1CheckedIn:
-      case CheckState.checkedIn:
-        action = 'check_out';
-        sessionNum = 1;
-        break;
-      case CheckState.session2NotCheckedIn:
-        action = 'check_in';
-        sessionNum = 2;
-        break;
-      case CheckState.session2CheckedIn:
-        action = 'check_out';
-        sessionNum = 2;
-        break;
-      case CheckState.completed:
-      case CheckState.checkedOut:
-        return;
+  void _showClockErrorSnackbar(String reason) {
+    if (Get.isSnackbarOpen) {
+      Get.back();
     }
-
-    if (action == 'check_out') {
-      final scheduledOutStr = sessionNum == 1 ? session1SchedOut.value : session2SchedOut.value;
-      final parts = scheduledOutStr.split(':');
-      if (parts.isNotEmpty) {
-        final targetHour = int.tryParse(parts[0]) ?? (sessionNum == 1 ? 11 : 17);
-        final targetMin = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
-        final current = DateText.nowCambodia();
-        final schedTime = DateTime(current.year, current.month, current.day, targetHour, targetMin);
-        if (current.isBefore(schedTime)) {
-          final proceed = await _showEarlyCheckoutDialog(sessionNum, scheduledOutStr);
-          if (proceed != true) return;
-        }
-      }
-    }
-
-    final result = await Get.toNamed(
-      AppRoutes.faceCapture,
-      arguments: {'action': action, 'session': sessionNum},
+    Get.snackbar(
+      'Attendance Failed'.tr,
+      reason.isNotEmpty ? reason : 'Biometric verification could not be completed.'.tr,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFFDC2626),
+      colorText: Colors.white,
+      icon: const Icon(FluentIcons.error_circle_24_regular, color: Colors.white),
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+      duration: const Duration(seconds: 6),
+      mainButton: TextButton(
+        onPressed: () {
+          if (Get.isSnackbarOpen) {
+            Get.back();
+          }
+          onMainButtonPressed();
+        },
+        child: Text(
+          'Retry'.tr,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+      ),
     );
-    if (result != null) {
-      if (action == 'check_in') {
-        DateTime time = DateText.nowCambodia();
-        if (result is Map && result['check_in_time'] != null) {
-          time = DateText.parseCambodia(result['check_in_time'].toString());
-        }
-        if (state.value == CheckState.session1NotCheckedIn ||
-            state.value == CheckState.notCheckedIn) {
-          session1CheckIn.value = time;
-          state.value = CheckState.session1CheckedIn;
-        } else {
-          session2CheckIn.value = time;
-          state.value = CheckState.session2CheckedIn;
-        }
-      } else if (action == 'check_out') {
-        DateTime time = DateText.nowCambodia();
-        if (result is Map && result['check_out_time'] != null) {
-          time = DateText.parseCambodia(result['check_out_time'].toString());
-        }
-        if (state.value == CheckState.session1CheckedIn ||
-            state.value == CheckState.checkedIn) {
-          session1CheckOut.value = time;
-          state.value = CheckState.session2NotCheckedIn;
-        } else {
-          session2CheckOut.value = time;
-          state.value = CheckState.completed;
-        }
-      }
-      await fetchTodayAttendanceStatus();
-    }
   }
 
   void resetAttendance() {

@@ -97,8 +97,10 @@ class _BiometricCheckInButtonState extends State<BiometricCheckInButton>
   Widget build(BuildContext context) {
     return Obx(() {
       final state = widget.controller.state.value;
+      final isLoading = widget.controller.isClockLoading.value;
       final done =
           state == CheckState.completed || state == CheckState.checkedOut;
+      final isDisabled = done || isLoading;
       final buttonColor = _buttonColor(state);
 
       if (done && _pulseController.isAnimating) {
@@ -115,14 +117,14 @@ class _BiometricCheckInButtonState extends State<BiometricCheckInButton>
           return Transform.scale(
             scale: _tapScale.value,
             child: GestureDetector(
-              onTapDown: done ? null : (_) => _tapController.forward(),
-              onTapUp: done
+              onTapDown: isDisabled ? null : (_) => _tapController.forward(),
+              onTapUp: isDisabled
                   ? null
                   : (_) {
                       _tapController.reverse();
                       widget.controller.onMainButtonPressed();
                     },
-              onTapCancel: done ? null : () => _tapController.reverse(),
+              onTapCancel: isDisabled ? null : () => _tapController.reverse(),
               child: SizedBox(
                 width: 240,
                 height: 240,
@@ -184,33 +186,58 @@ class _BiometricCheckInButtonState extends State<BiometricCheckInButton>
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              _buttonIcon(state),
-                              size: 34,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(height: 10),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child: Text(
-                                widget.controller.buttonLabel,
-                                key: ValueKey(widget.controller.buttonLabel),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: 0.3,
-                                ),
+                        child: isLoading
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(
+                                    width: 34,
+                                    height: 34,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Verifying...'.tr,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    _buttonIcon(state),
+                                    size: 34,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    child: Text(
+                                      widget.controller.buttonLabel,
+                                      key: ValueKey(widget.controller.buttonLabel),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],

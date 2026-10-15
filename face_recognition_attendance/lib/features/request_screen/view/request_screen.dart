@@ -138,6 +138,22 @@ class RequestScreen extends StatelessWidget {
                 ),
               ),
 
+              // Global Loading Indicator
+              Obx(() {
+                if (!controller.isLoading.value) return const SizedBox.shrink();
+                return const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.all(Radius.circular(2)),
+                    child: LinearProgressIndicator(
+                      minHeight: 3,
+                      color: RequestColors.primary,
+                      backgroundColor: Color(0xFFE5E5EA),
+                    ),
+                  ),
+                );
+              }),
+
               // SEGMENTED CONTROL (Only for Supervisors: CEO / Manager / Leader)
               Obx(() {
                 if (!controller.canApprove.value) return const SizedBox.shrink();
@@ -332,7 +348,21 @@ class RequestScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        if (!hasAny)
+        if (controller.isLoading.value && !hasAny)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 40),
+            child: Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: RequestColors.primary,
+                ),
+              ),
+            ),
+          )
+        else if (!hasAny)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             child: Container(

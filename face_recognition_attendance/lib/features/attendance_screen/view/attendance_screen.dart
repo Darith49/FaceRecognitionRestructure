@@ -114,63 +114,109 @@ class AttendanceScreen extends GetView<AttendanceController> {
             ],
           ),
           const SizedBox(height: 28),
-          _SectionTitle('Total Sessions'.tr),
-          const SizedBox(height: 10),
-          Obx(
-            () => Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _CountCard(
-                    title: 'Absent'.tr,
-                    code: 'A',
-                    codeColor: _absentColor,
-                    count: controller.countOf(AttendanceType.absent),
-                    onTap: () => _showDepartmentEmployeesSheet(
-                      context,
-                      'Absent'.tr,
-                      'A',
-                      _absentColor,
-                      controller.department.value,
-                    ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _SectionTitle('Total Sessions'.tr),
+              Obx(() {
+                if (!controller.isLoading.value) return const SizedBox.shrink();
+                return const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: RequestColors.primary,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _CountCard(
-                    title: 'Waive'.tr,
-                    code: 'W',
-                    codeColor: _waiveColor,
-                    count: controller.countOf(AttendanceType.waive),
-                    onTap: () => _showDepartmentEmployeesSheet(
-                      context,
-                      'Waive'.tr,
-                      'W',
-                      _waiveColor,
-                      controller.department.value,
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Obx(() {
+            if (controller.isLoading.value) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: RequestColors.primary,
+                      ),
                     ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Loading summary...'.tr,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: RequestColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _CountCard(
+                        title: 'Absent'.tr,
+                        code: 'A',
+                        codeColor: _absentColor,
+                        count: controller.countOf(AttendanceType.absent),
+                        onTap: () => _showDepartmentEmployeesSheet(
+                          context,
+                          'Absent'.tr,
+                          'A',
+                          _absentColor,
+                          controller.department.value,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _CountCard(
+                        title: 'Waive'.tr,
+                        code: 'W',
+                        codeColor: _waiveColor,
+                        count: controller.countOf(AttendanceType.waive),
+                        onTap: () => _showDepartmentEmployeesSheet(
+                          context,
+                          'Waive'.tr,
+                          'W',
+                          _waiveColor,
+                          controller.department.value,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _CountCard(
+                  title: 'Absent with Permission'.tr,
+                  code: 'AP',
+                  codeColor: _permissionColor,
+                  count: controller.countOf(AttendanceType.absentWithPermission),
+                  centered: true,
+                  onTap: () => _showDepartmentEmployeesSheet(
+                    context,
+                    'Absent with Permission'.tr,
+                    'AP',
+                    _permissionColor,
+                    controller.department.value,
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Obx(
-            () => _CountCard(
-              title: 'Absent with Permission'.tr,
-              code: 'AP',
-              codeColor: _permissionColor,
-              count: controller.countOf(AttendanceType.absentWithPermission),
-              centered: true,
-              onTap: () => _showDepartmentEmployeesSheet(
-                context,
-                'Absent with Permission'.tr,
-                'AP',
-                _permissionColor,
-                controller.department.value,
-              ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );

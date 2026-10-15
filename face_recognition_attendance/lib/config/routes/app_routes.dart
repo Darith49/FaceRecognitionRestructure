@@ -4,6 +4,7 @@ abstract class AppRoutes {
   static const String forgotpassword = "/forgotpassword";
   static const String navigation = "/navigation";
   static const String attendance = "/attendance";
+  static const String myAttendanceHistory = "/my-attendance-history";
   // Clock, Request Information, Permission
   static const String clock = "/clock";
   static const String request = "/request";

@@ -287,6 +287,14 @@ class ProfileScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _SettingsTile(
+                      icon: FluentIcons.history_24_regular,
+                      iconColor: const Color(0xFF0D9488),
+                      title: 'Attendance History'.tr,
+                      subtitle: 'Personal day-by-day in and out logs'.tr,
+                      onTap: () => Get.toNamed(AppRoutes.myAttendanceHistory),
+                    ),
+                    const SizedBox(height: 10),
+                    _SettingsTile(
                       icon: FluentIcons.calendar_clock_24_regular,
                       iconColor: RequestColors.primary,
                       title: 'Work Schedule'.tr,

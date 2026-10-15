@@ -16,6 +16,7 @@ import 'package:face_recognition_attendance/features/Suggestion_screen/view/sugg
 import 'package:face_recognition_attendance/features/Suggestion_screen/view/suggestion_status_screen.dart';
 import 'package:face_recognition_attendance/features/attendance_screen/binding/attendance_binding.dart';
 import 'package:face_recognition_attendance/features/attendance_screen/view/attendance_screen.dart';
+import 'package:face_recognition_attendance/features/attendance_screen/view/my_attendance_history_screen.dart';
 import 'package:face_recognition_attendance/features/auth/binding/forgotpassowrd_binding.dart';
 import 'package:face_recognition_attendance/features/auth/binding/login_binding.dart';
 import 'package:face_recognition_attendance/features/auth/binding/register_binding.dart';
@@ -298,6 +299,13 @@ class AppPages {
       binding: BindingsBuilder(() {
         Get.lazyPut<CeoManageController>(() => CeoManageController(), fenix: true);
       }),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    // ----------- My Attendance History -----------
+    GetPage(
+      name: AppRoutes.myAttendanceHistory,
+      page: () => const MyAttendanceHistoryScreen(),
       middlewares: [AuthMiddleware()],
     ),
   ];

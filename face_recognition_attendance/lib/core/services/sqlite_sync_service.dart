@@ -69,16 +69,16 @@ class SqliteSyncService extends GetxService {
   bool _isSyncing = false;
 
   /// Initializes connection to the local SQLite backend.
-  /// Tries both localhost and 127.0.0.1 to eliminate Private Network Access (PNA) and CORS issues on Web.
+  /// Tries 127.0.0.1 first with a fast timeout so app launch is instantaneous.
   /// If reachable, automatically pulls the complete SQLite state into the app.
   Future<bool> init({String? customUrl}) async {
     final candidateUrls = customUrl != null && customUrl.isNotEmpty
         ? [customUrl]
-        : ['http://localhost:8080/api', 'http://127.0.0.1:8080/api'];
+        : ['http://127.0.0.1:8080/api', 'http://localhost:8080/api'];
 
     for (final candidate in candidateUrls) {
       try {
-        final res = await _client.get('$candidate/health').timeout(const Duration(milliseconds: 3000));
+        final res = await _client.get('$candidate/health').timeout(const Duration(milliseconds: 800));
         if (res.isOk && res.body is Map && res.body['status'] == 'healthy') {
           baseUrl = candidate;
           isBackendAvailable.value = true;

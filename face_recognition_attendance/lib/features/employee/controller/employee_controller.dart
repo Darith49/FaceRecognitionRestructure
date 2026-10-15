@@ -1,4 +1,4 @@
-import 'package:face_recognition_attendance/core/services/firebase_service.dart';
+import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/employee/model/employee_model.dart';
@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 
 class EmployeeController extends GetxController {
   final ApiService _apiService = ApiService();
-  final FirebaseService _firebaseService = FirebaseService();
+  final LocalAuthService _authService = LocalAuthService();
 
   final RxList<EmployeeModel> employees = <EmployeeModel>[].obs;
   final RxBool isLoading = false.obs;
@@ -108,11 +108,11 @@ class EmployeeController extends GetxController {
           employees.insert(0, newEmp);
         }
 
-        // Automatically trigger Firebase to send password setup/reset email to user's Gmail
+        // Automatically trigger password setup/reset email to user's email
         try {
-          await _firebaseService.resetPassowrd(email: email);
+          await _authService.resetPassowrd(email: email);
         } catch (e) {
-          debugPrint('Notice: Firebase auto email dispatch: $e');
+          debugPrint('Notice: Auto email dispatch: $e');
         }
 
         return true;
@@ -218,11 +218,11 @@ class EmployeeController extends GetxController {
       // 1. Call backend to generate invitation link
       await _apiService.post('/employees/${employee.id}/resend-invitation/');
 
-      // 2. Trigger Firebase to send password reset/setup email
+      // 2. Trigger password reset/setup email
       try {
-        await _firebaseService.resetPassowrd(email: employee.email);
+        await _authService.resetPassowrd(email: employee.email);
       } catch (e) {
-        debugPrint('Firebase reset password note: $e');
+        debugPrint('Reset password note: $e');
       }
 
       Get.snackbar(

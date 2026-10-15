@@ -1,6 +1,6 @@
 import 'package:face_recognition_attendance/config/navigation/navigation_controller.dart';
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
-import 'package:face_recognition_attendance/core/services/firebase_service.dart';
+import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
 import 'package:face_recognition_attendance/core/services/api_service.dart';
 import 'package:face_recognition_attendance/core/services/local_database_service.dart';
 import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class LoginController extends GetxController {
-  final FirebaseService _firebaseService = FirebaseService();
+  final LocalAuthService _authService = LocalAuthService();
 
   final Rx<UserModel?> currentuser = Rx<UserModel?>(null);
   final RxBool hasFaceRegistered = false.obs;
@@ -70,9 +70,9 @@ class LoginController extends GetxController {
       return;
     }
 
-    final firebaseUser = _firebaseService.getCurrentUser();
+    final firebaseUser = _authService.getCurrentUser();
     if (firebaseUser != null) {
-      var user = await _firebaseService.getUserByUid(firebaseUser.uid);
+      var user = await _authService.getUserByUid(firebaseUser.uid);
       if (user != null) {
         final vault = LocalDatabaseService().getUserAccountData(user.email);
         if (vault != null) {
@@ -86,7 +86,7 @@ class LoginController extends GetxController {
         LocalDatabaseService().setDemoMode(isDemoAccountEmail(user.email));
         currentuser.value = user;
         hasFaceRegistered.value = user.hasFaceRegistered;
-        final token = await _firebaseService.getIdToken();
+        final token = await _authService.getIdToken();
         final refreshToken = firebaseUser.refreshToken;
         await secureStorage.saveUserSession(
           uid: user.uid,
@@ -138,7 +138,7 @@ class LoginController extends GetxController {
       isLoading.value = true;
       errorMessage.value = "";
 
-      final user = await _firebaseService.login(
+      final user = await _authService.login(
         email: email,
         password: password,
       );
@@ -150,8 +150,8 @@ class LoginController extends GetxController {
         if (user.profileUrl != null && user.profileUrl!.isNotEmpty) {
           _syncProfileToBackend(user.profileUrl!);
         }
-        final token = await _firebaseService.getIdToken(forceRefresh: true);
-        final firebaseUser = _firebaseService.getCurrentUser();
+        final token = await _authService.getIdToken(forceRefresh: true);
+        final firebaseUser = _authService.getCurrentUser();
 
         await SecureStorageService().setRememberMe(rememberMe.value);
         if (rememberMe.value) {
@@ -170,7 +170,7 @@ class LoginController extends GetxController {
         return true;
       } else {
         // 2. User exists in Auth, but NO document found in Firestore
-        await _firebaseService.logout(); // Clean up auth session so they aren't stuck in a half-logged-in state
+        await _authService.logout(); // Clean up auth session so they aren't stuck in a half-logged-in state
         await SecureStorageService().clearAll();
 
         errorMessage.value = "User profile not found in database. Please contact an administrator.";
@@ -215,7 +215,7 @@ class LoginController extends GetxController {
       final updated = user.copyWith(profileUrl: compressed);
       currentuser.value = updated;
       try {
-        await _firebaseService.updateProfilePicture(user.uid, compressed);
+        await _authService.updateProfilePicture(user.uid, compressed);
       } catch (e) {
         debugPrint('Error updating profile picture in Firestore: $e');
       }
@@ -236,7 +236,7 @@ class LoginController extends GetxController {
 
   Future<void> logOut() async {
     try {
-      await _firebaseService.logout();
+      await _authService.logout();
     } catch (e) {
       debugPrint('Logout service error: $e');
     } finally {

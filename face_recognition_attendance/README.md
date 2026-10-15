@@ -38,11 +38,11 @@ This automatically starts the SQLite backend server and runs the app on Microsof
 
 | Role | Email | Password |
 |---|---|---|
-| **CEO** | `sonarseang@gmail.com` | `password123` |
-| **Admin** | `admin@gmail.com` | `password123` |
-| **Manager** | `manager@gmail.com` | `password123` |
-| **Team Leader** | `leader@gmail.com` | `password123` |
-| **Employee** | `employee@gmail.com` | `password123` |
+| **CEO** | `sonarseang@gmail.com` | `123456` |
+| **Admin** | `admin@gmail.com` | `123456` |
+| **Manager** | `manager@gmail.com` | `123456` |
+| **Team Leader** | `leader@gmail.com` | `123456` |
+| **Employee** | `employee@gmail.com` | `123456` |
 
 ---
 

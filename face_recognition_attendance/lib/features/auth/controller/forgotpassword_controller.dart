@@ -1,10 +1,10 @@
-import 'package:face_recognition_attendance/core/services/firebase_service.dart';
+import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ForgotpasswordController extends GetxController {
   final emailController = TextEditingController();
-  final FirebaseService _firebaseService = FirebaseService();
+  final LocalAuthService _authService = LocalAuthService();
 
   final RxBool isLoading = false.obs;
   final RxnString errorMessage = RxnString();
@@ -21,7 +21,7 @@ class ForgotpasswordController extends GetxController {
     successMessage.value = null;
 
     try {
-      await _firebaseService.resetPassowrd(email: emailController.text.trim());
+      await _authService.resetPassowrd(email: emailController.text.trim());
 
       successMessage.value =
           'Password reset email sent! Check your inbox to reset your password.';

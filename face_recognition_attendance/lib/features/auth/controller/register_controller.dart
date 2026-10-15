@@ -1,6 +1,6 @@
 import 'package:face_recognition_attendance/config/routes/app_routes.dart';
 import 'package:face_recognition_attendance/config/theme/app_colors.dart';
-import 'package:face_recognition_attendance/core/services/firebase_service.dart';
+import 'package:face_recognition_attendance/core/services/local_auth_service.dart';
 import 'package:face_recognition_attendance/core/services/secure_storage_service.dart';
 import 'package:face_recognition_attendance/features/auth/controller/login_controller.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class RegisterController extends GetxController {
-  final FirebaseService _firebaseService = FirebaseService();
+  final LocalAuthService _authService = LocalAuthService();
 
   final fullnameController = TextEditingController();
   final emailController = TextEditingController();
@@ -59,7 +59,7 @@ class RegisterController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final user = await _firebaseService.register(
+      final user = await _authService.register(
         fullname: fullname,
         email: email,
         password: password,
@@ -69,8 +69,8 @@ class RegisterController extends GetxController {
 
       // Save user session
       await SecureStorageService().setRememberMe(true);
-      final token = await _firebaseService.getIdToken(forceRefresh: true);
-      final firebaseUser = _firebaseService.getCurrentUser();
+      final token = await _authService.getIdToken(forceRefresh: true);
+      final firebaseUser = _authService.getCurrentUser();
 
       await SecureStorageService().saveUserSession(
         uid: user.uid,

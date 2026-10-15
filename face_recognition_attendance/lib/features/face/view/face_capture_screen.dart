@@ -105,16 +105,20 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
         return;
       }
 
-      _currentPosition = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
+      try {
+        _currentPosition = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 4),
+          ),
+        );
+      } catch (_) {
+        _currentPosition = await Geolocator.getLastKnownPosition();
+      }
 
       if (mounted) setState(() => _statusText = '');
     } catch (e) {
-      if (mounted) setState(() => _statusText = 'Error obtaining GPS: $e');
+      if (mounted) setState(() => _statusText = '');
     }
   }
 
@@ -132,13 +136,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     }
 
     if (_action != 'register' && _currentPosition == null) {
-      Get.snackbar(
-        'Location Required',
-        'Waiting for GPS fix. Please ensure location is enabled.',
-        snackPosition: SnackPosition.TOP,
-      );
-      _getCurrentLocation();
-      return;
+      _currentPosition = await Geolocator.getLastKnownPosition();
     }
 
     try {
@@ -164,13 +162,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     if (_action == 'register') return;
 
     if (_action != 'register' && _currentPosition == null) {
-      Get.snackbar(
-        'Location Required',
-        'Waiting for GPS fix. Please ensure location is enabled.',
-        snackPosition: SnackPosition.TOP,
-      );
-      _getCurrentLocation();
-      return;
+      _currentPosition = await Geolocator.getLastKnownPosition();
     }
 
     try {

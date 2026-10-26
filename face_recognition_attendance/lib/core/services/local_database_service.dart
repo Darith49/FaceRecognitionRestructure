@@ -259,6 +259,51 @@ class LocalDatabaseService {
       if (realPerm.isNotEmpty) _box.write('real_permissions', realPerm);
     }
 
+    if (data.containsKey('notifications') && data['notifications'] is List) {
+      final incomingNotifs = (data['notifications'] as List)
+          .map((n) => Map<String, dynamic>.from(n as Map))
+          .toList();
+      final demoNotifs = <Map<String, dynamic>>[];
+      final realNotifs = <Map<String, dynamic>>[];
+      for (final n in incomingNotifs) {
+        if (n['is_demo'] == 1 || n['is_demo'] == true) {
+          demoNotifs.add(n);
+        } else {
+          realNotifs.add(n);
+        }
+      }
+      if (demoNotifs.isNotEmpty) {
+        final existing = _box.read<List>('demo_notifications') ?? [];
+        final list = List<Map<String, dynamic>>.from(existing.map((x) => Map<String, dynamic>.from(x as Map)));
+        for (final dn in demoNotifs) {
+          final idx = list.indexWhere((x) => x['id']?.toString() == dn['id']?.toString());
+          if (idx >= 0) {
+            final existingRead = list[idx]['is_read'] == true || list[idx]['is_read'] == 1 || list[idx]['is_read'] == 'true' || list[idx]['is_read'] == '1';
+            final incomingRead = dn['is_read'] == true || dn['is_read'] == 1 || dn['is_read'] == 'true' || dn['is_read'] == '1';
+            list[idx] = {...list[idx], ...dn, 'is_read': existingRead || incomingRead};
+          } else {
+            list.add(dn);
+          }
+        }
+        _box.write('demo_notifications', list);
+      }
+      if (realNotifs.isNotEmpty) {
+        final existing = _box.read<List>('real_notifications') ?? [];
+        final list = List<Map<String, dynamic>>.from(existing.map((x) => Map<String, dynamic>.from(x as Map)));
+        for (final rn in realNotifs) {
+          final idx = list.indexWhere((x) => x['id']?.toString() == rn['id']?.toString());
+          if (idx >= 0) {
+            final existingRead = list[idx]['is_read'] == true || list[idx]['is_read'] == 1 || list[idx]['is_read'] == 'true' || list[idx]['is_read'] == '1';
+            final incomingRead = rn['is_read'] == true || rn['is_read'] == 1 || rn['is_read'] == 'true' || rn['is_read'] == '1';
+            list[idx] = {...list[idx], ...rn, 'is_read': existingRead || incomingRead};
+          } else {
+            list.add(rn);
+          }
+        }
+        _box.write('real_notifications', list);
+      }
+    }
+
     // Ensure all real user vault accounts exist in real_employees
     final vault = _getUserVault();
     final currentRealRaw = _box.read<List>('real_employees') ?? [];
@@ -2539,15 +2584,17 @@ class LocalDatabaseService {
       'sender_name': senderName,
       'sender_profile_url': senderProfileUrl,
       'is_read': false,
+      'seen_by': <String>[],
       'created_at': DateTime.now().toIso8601String(),
       'is_demo': useDemo,
     };
     list.add(notif);
     _box.write(key, list);
+    onSyncHook?.call(type: 'notification', payload: notif);
     return notif;
   }
 
-  List<Map<String, dynamic>> getNotifications({dynamic employeeId, String? firebaseUid, bool? forDemo}) {
+  List<Map<String, dynamic>> getNotifications({dynamic employeeId, String? firebaseUid, String? userEmail, bool? forDemo}) {
     final key = _k('notifications', forDemo: forDemo);
     final raw = _box.read<List>(key) ?? [];
     var list = raw.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -2564,21 +2611,41 @@ class LocalDatabaseService {
       }).toList();
     }
 
+    // Determine read/seen state per user or globally
+    for (var n in list) {
+      final rawRead = n['is_read'];
+      final bool baseRead = rawRead == true || rawRead == 1 || rawRead == '1' || rawRead == 'true';
+      final seenList = (n['seen_by'] as List? ?? []).map((x) => x.toString()).toList();
+      final bool seenByUser = (employeeId != null && seenList.contains(employeeId.toString())) ||
+          (firebaseUid != null && seenList.contains(firebaseUid)) ||
+          (userEmail != null && seenList.contains(userEmail));
+      n['is_read'] = baseRead || seenByUser;
+    }
+
     return list;
   }
 
-  void markNotificationRead(dynamic id, {bool? forDemo}) {
+  void markNotificationRead(dynamic id, {bool? forDemo, dynamic userId, String? userEmail}) {
     final useDemo = forDemo ?? isDemoMode;
     final key = _k('notifications', forDemo: useDemo);
     final list = _box.read<List>(key) ?? [];
     final idx = list.indexWhere((n) => n['id'].toString() == id.toString());
     if (idx >= 0) {
       list[idx]['is_read'] = true;
+      final seenList = List<String>.from((list[idx]['seen_by'] as List? ?? []).map((x) => x.toString()));
+      if (userId != null && !seenList.contains(userId.toString())) {
+        seenList.add(userId.toString());
+      }
+      if (userEmail != null && !seenList.contains(userEmail)) {
+        seenList.add(userEmail);
+      }
+      list[idx]['seen_by'] = seenList;
       _box.write(key, list);
+      onSyncHook?.call(type: 'notification_read', payload: {'id': id, 'forDemo': useDemo});
     }
   }
 
-  void markAllNotificationsReadForUser({dynamic employeeId, String? firebaseUid, bool? forDemo}) {
+  void markAllNotificationsReadForUser({dynamic employeeId, String? firebaseUid, String? userEmail, bool? forDemo}) {
     final useDemo = forDemo ?? isDemoMode;
     final key = _k('notifications', forDemo: useDemo);
     final list = _box.read<List>(key) ?? [];
@@ -2590,9 +2657,21 @@ class LocalDatabaseService {
           (firebaseUid != null && rUid == firebaseUid);
       if (forUser) {
         n['is_read'] = true;
+        final seenList = List<String>.from((n['seen_by'] as List? ?? []).map((x) => x.toString()));
+        if (employeeId != null && !seenList.contains(employeeId.toString())) {
+          seenList.add(employeeId.toString());
+        }
+        if (firebaseUid != null && !seenList.contains(firebaseUid)) {
+          seenList.add(firebaseUid);
+        }
+        if (userEmail != null && !seenList.contains(userEmail)) {
+          seenList.add(userEmail);
+        }
+        n['seen_by'] = seenList;
       }
     }
     _box.write(key, list);
+    onSyncHook?.call(type: 'notifications_mark_all_read', payload: {'forDemo': useDemo});
   }
 
   void markAllNotificationsRead({bool? forDemo}) {
@@ -2603,6 +2682,7 @@ class LocalDatabaseService {
       n['is_read'] = true;
     }
     _box.write(key, list);
+    onSyncHook?.call(type: 'notifications_mark_all_read', payload: {'forDemo': useDemo});
   }
 }
 

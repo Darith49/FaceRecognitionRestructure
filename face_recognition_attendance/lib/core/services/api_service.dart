@@ -236,8 +236,12 @@ class ApiService {
       final list = _db.getNotifications(
         employeeId: currentEmp?['id'],
         firebaseUid: currentUser?.uid,
+        userEmail: currentUser?.email,
       );
-      final unread = list.where((n) => n['is_read'] != true).length;
+      final unread = list.where((n) {
+        final val = n['is_read'];
+        return !(val == true || val == 1 || val == '1' || val == 'true');
+      }).length;
       return {
         'results': list,
         'unread_count': unread,
@@ -449,13 +453,20 @@ class ApiService {
       _db.markAllNotificationsReadForUser(
         employeeId: currentEmp?['id'],
         firebaseUid: currentUser?.uid,
+        userEmail: currentUser?.email,
       );
       return {'status': 'ok'};
     }
     if (clean.contains('/notifications/') && clean.contains('/read/')) {
       final parts = endpoint.split('/').where((p) => p.isNotEmpty).toList();
       final id = parts.length >= 2 ? parts[1] : null;
-      if (id != null) _db.markNotificationRead(id);
+      if (id != null) {
+        _db.markNotificationRead(
+          id,
+          userId: currentEmp?['id'] ?? currentUser?.uid,
+          userEmail: currentUser?.email,
+        );
+      }
       return {'status': 'ok'};
     }
 

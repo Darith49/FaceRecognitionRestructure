@@ -54,6 +54,13 @@ class SqliteSyncService extends GetxService {
         syncBranch(payload);
       } else if (type == 'department') {
         syncDepartment(payload);
+      } else if (type == 'notification_read') {
+        final id = payload['id'];
+        if (id != null) syncNotificationRead(id);
+      } else if (type == 'notifications_mark_all_read') {
+        syncMarkAllNotificationsRead();
+      } else if (type == 'notification') {
+        syncNotification(payload);
       }
     };
   }
@@ -350,6 +357,42 @@ class SqliteSyncService extends GetxService {
       debugPrint('[SqliteSync] Department synchronized with SQLite backend');
     } catch (e) {
       _notifySyncError('department', e);
+    }
+  }
+
+  /// Synchronizes notification read state with SQLite
+  Future<void> syncNotificationRead(dynamic id) async {
+    if (!isBackendAvailable.value) return;
+    try {
+      await _client.post('$baseUrl/notifications/$id/read', {});
+      _markSyncSuccess();
+      debugPrint('[SqliteSync] Notification #$id mark-read synchronized with SQLite backend');
+    } catch (e) {
+      debugPrint('[SqliteSync] Failed to sync notification #$id read status: $e');
+    }
+  }
+
+  /// Synchronizes mark-all-read state with SQLite
+  Future<void> syncMarkAllNotificationsRead() async {
+    if (!isBackendAvailable.value) return;
+    try {
+      await _client.post('$baseUrl/notifications/mark-all-read', {});
+      _markSyncSuccess();
+      debugPrint('[SqliteSync] All notifications marked read in SQLite backend');
+    } catch (e) {
+      debugPrint('[SqliteSync] Failed to sync mark-all-read to SQLite: $e');
+    }
+  }
+
+  /// Synchronizes a new or updated notification with SQLite
+  Future<void> syncNotification(Map<String, dynamic> data) async {
+    if (!isBackendAvailable.value) return;
+    try {
+      await _client.post('$baseUrl/notifications', data);
+      _markSyncSuccess();
+      debugPrint('[SqliteSync] Notification synchronized with SQLite backend');
+    } catch (e) {
+      debugPrint('[SqliteSync] Failed to sync notification to SQLite: $e');
     }
   }
 }

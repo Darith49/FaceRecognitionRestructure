@@ -25,6 +25,8 @@ class NotificationItem {
   });
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
+    final rawRead = json['is_read'];
+    final bool isReadVal = rawRead == true || rawRead == 1 || rawRead == '1' || rawRead == 'true';
     return NotificationItem(
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: json['title']?.toString() ?? '',
@@ -33,7 +35,7 @@ class NotificationItem {
       refId: json['ref_id']?.toString() ?? json['reference_id']?.toString(),
       senderName: json['sender_name']?.toString() ?? '',
       senderProfileUrl: json['sender_profile_url']?.toString() ?? json['sender_profile']?.toString(),
-      isRead: json['is_read'] == true,
+      isRead: isReadVal,
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
     );
   }

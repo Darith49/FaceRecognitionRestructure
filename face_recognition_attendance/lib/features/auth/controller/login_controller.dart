@@ -9,6 +9,7 @@ import 'package:face_recognition_attendance/core/utils/image_compressor.dart';
 import 'package:face_recognition_attendance/features/auth/model/enum_user_role.dart';
 import 'package:face_recognition_attendance/features/auth/model/user_model.dart';
 import 'package:face_recognition_attendance/features/myteam_screen/controller/myteam_controller.dart';
+import 'package:face_recognition_attendance/features/notification/controller/notification_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -195,6 +196,9 @@ class LoginController extends GetxController {
           await SecureStorageService().clearSession();
         }
         await checkFaceStatus();
+        if (Get.isRegistered<NotificationController>()) {
+          Get.find<NotificationController>().fetchNotifications();
+        }
         _navigationBasedOnRole(user.role);
         return true;
       } else {
@@ -289,6 +293,10 @@ class LoginController extends GetxController {
       passwordController.clear();
       if (Get.isRegistered<NavigationController>()) {
         Get.find<NavigationController>().changePage(0);
+      }
+      if (Get.isRegistered<NotificationController>()) {
+        Get.find<NotificationController>().reset();
+        Get.delete<NotificationController>(force: true);
       }
       Get.offAllNamed(AppRoutes.login);
     }

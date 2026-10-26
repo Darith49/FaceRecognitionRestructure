@@ -74,4 +74,10 @@ class NotificationController extends GetxController {
       debugPrint('Error marking all notifications read: $e');
     }
   }
+
+  void reset() {
+    notifications.clear();
+    unreadCount.value = 0;
+    isLoading.value = false;
+  }
 }

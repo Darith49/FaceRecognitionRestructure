@@ -5,14 +5,31 @@ import 'package:face_recognition_attendance/features/notification/controller/not
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class NotificationScreen extends GetView<NotificationController> {
+class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
 
   @override
+  State<NotificationScreen> createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends State<NotificationScreen> {
   NotificationController get controller =>
       Get.isRegistered<NotificationController>()
       ? Get.find<NotificationController>()
       : Get.put(NotificationController());
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctrl = controller;
+      ctrl.fetchNotifications().then((_) {
+        // Automatically mark notifications as seen upon viewing this screen
+        // so they don't remain unread in subsequent login sessions.
+        ctrl.markAllAsRead();
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -366,8 +366,35 @@ class BackendServer {
       }
 
       if (path.contains('/api/notifications')) {
+        if (method == 'POST' && path.contains('/mark-all-read')) {
+          db.markAllNotificationsRead();
+          _sendJson(request.response, {'status': 'ok'});
+          return;
+        }
+        if (method == 'POST' && path.contains('/read')) {
+          final segments = request.uri.pathSegments;
+          // Example: api/notifications/101/read
+          final notifIdx = segments.indexOf('notifications');
+          if (notifIdx >= 0 && segments.length > notifIdx + 1) {
+            final id = segments[notifIdx + 1];
+            db.markNotificationRead(id);
+          }
+          _sendJson(request.response, {'status': 'ok'});
+          return;
+        }
+        if (method == 'POST') {
+          final body = await _readJsonBody(request);
+          final saved = db.saveNotification(body);
+          _sendJson(request.response, saved, statusCode: HttpStatus.created);
+          return;
+        }
+
         final list = db.getNotifications();
-        _sendJson(request.response, {'results': list, 'count': list.length});
+        final unread = list.where((n) {
+          final r = n['is_read'];
+          return !(r == true || r == 1 || r == '1' || r == 'true');
+        }).length;
+        _sendJson(request.response, {'results': list, 'unread_count': unread, 'count': list.length});
         return;
       }
 

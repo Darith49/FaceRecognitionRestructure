@@ -277,6 +277,13 @@ class AppSqliteDatabase {
       } catch (_) {}
     }
 
+    final notifCols = ['recipient_id', 'recipient_uid', 'notif_type', 'ref_id', 'sender_name', 'sender_profile_url'];
+    for (final col in notifCols) {
+      try {
+        _db!.execute('ALTER TABLE notifications ADD COLUMN $col TEXT;');
+      } catch (_) {}
+    }
+
     try {
       _db!.execute('ALTER TABLE employees ADD COLUMN password TEXT;');
     } catch (_) {}
@@ -1050,13 +1057,94 @@ class AppSqliteDatabase {
     }).toList();
   }
 
-  List<Map<String, dynamic>> getNotifications() {
-    final rows = _db!.select('SELECT * FROM notifications ORDER BY id DESC;');
-    return rows.map((r) {
+  void markNotificationRead(dynamic id) {
+    _db!.execute('UPDATE notifications SET is_read = 1 WHERE id = ?;', [id.toString()]);
+  }
+
+  void markAllNotificationsRead({bool? forDemo}) {
+    if (forDemo != null) {
+      _db!.execute('UPDATE notifications SET is_read = 1 WHERE is_demo = ?;', [forDemo ? 1 : 0]);
+    } else {
+      _db!.execute('UPDATE notifications SET is_read = 1;');
+    }
+  }
+
+  Map<String, dynamic> saveNotification(Map<String, dynamic> data) {
+    final title = data['title']?.toString() ?? '';
+    final message = data['message']?.toString() ?? '';
+    final notifType = data['notif_type']?.toString() ?? data['type']?.toString() ?? 'system';
+    final refId = data['ref_id']?.toString() ?? '';
+    final senderName = data['sender_name']?.toString() ?? 'System';
+    final senderProfileUrl = data['sender_profile_url']?.toString();
+    final recipientId = data['recipient_id']?.toString();
+    final recipientUid = data['recipient_uid']?.toString();
+    final isDemo = (data['is_demo'] == 1 || data['is_demo'] == true) ? 1 : 0;
+    final isRead = (data['is_read'] == 1 || data['is_read'] == true) ? 1 : 0;
+    final createdAt = data['created_at']?.toString() ?? DateTime.now().toIso8601String();
+
+    if (data['id'] != null) {
+      _db!.execute('''
+        INSERT INTO notifications (
+          id, title, message, is_read, created_at, type,
+          recipient_id, recipient_uid, notif_type, ref_id, sender_name, sender_profile_url, is_demo
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          title = excluded.title,
+          message = excluded.message,
+          is_read = excluded.is_read,
+          type = excluded.type,
+          recipient_id = excluded.recipient_id,
+          recipient_uid = excluded.recipient_uid,
+          notif_type = excluded.notif_type,
+          ref_id = excluded.ref_id,
+          sender_name = excluded.sender_name,
+          sender_profile_url = excluded.sender_profile_url,
+          is_demo = excluded.is_demo;
+      ''', [
+        data['id'], title, message, isRead, createdAt, notifType,
+        recipientId, recipientUid, notifType, refId, senderName, senderProfileUrl, isDemo,
+      ]);
+    } else {
+      _db!.execute('''
+        INSERT INTO notifications (
+          title, message, is_read, created_at, type,
+          recipient_id, recipient_uid, notif_type, ref_id, sender_name, sender_profile_url, is_demo
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      ''', [
+        title, message, isRead, createdAt, notifType,
+        recipientId, recipientUid, notifType, refId, senderName, senderProfileUrl, isDemo,
+      ]);
+    }
+    return data;
+  }
+
+  List<Map<String, dynamic>> getNotifications({dynamic employeeId, String? firebaseUid, bool? forDemo}) {
+    String query = 'SELECT * FROM notifications';
+    final List<dynamic> params = [];
+    if (forDemo != null) {
+      query += ' WHERE is_demo = ?';
+      params.add(forDemo ? 1 : 0);
+    }
+    query += ' ORDER BY id DESC;';
+
+    final rows = _db!.select(query, params);
+    var list = rows.map((r) {
       final m = Map<String, dynamic>.from(r);
       m['is_read'] = (r['is_read'] as int? ?? 0) == 1;
       return m;
     }).toList();
+
+    if (employeeId != null || (firebaseUid != null && firebaseUid.isNotEmpty)) {
+      list = list.where((n) {
+        final rId = n['recipient_id']?.toString();
+        final rUid = n['recipient_uid']?.toString();
+        if (rId == null && rUid == null) return true;
+        if (employeeId != null && rId == employeeId.toString()) return true;
+        if (firebaseUid != null && rUid == firebaseUid) return true;
+        return false;
+      }).toList();
+    }
+    return list;
   }
 
   /// Exports entire SQLite database snapshot as a unified JSON Map for client bootstrapping.
